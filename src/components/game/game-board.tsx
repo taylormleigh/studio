@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, DragEvent } from 'react';
@@ -11,6 +12,7 @@ import { useStats } from '@/hooks/use-stats';
 import { SettingsDialog } from './settings-dialog';
 import { StatsDialog } from './stats-dialog';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DraggingCardInfo = {
   type: 'tableau' | 'waste' | 'foundation';
@@ -22,15 +24,18 @@ const UNDO_LIMIT = 15;
 
 const calculateScore = (moves: number, time: number) => {
   if (time === 0) return 0;
-  const timeBonus = Math.max(0, 700 - time) * 10;
+  // Score starts at 10000, decreases with time and moves.
+  const timePenalty = Math.floor(time / 10) * 2; // 2 points every 10 seconds
   const movePenalty = moves * 5;
-  return Math.max(10, 5000 + timeBonus - movePenalty);
-}
+  const score = 10000 - timePenalty - movePenalty;
+  return Math.max(0, score);
+};
+
 
 export default function GameBoard() {
   const { settings } = useSettings();
   const { updateStats } = useStats();
-  const [gameState, setGameState] = useState<GameState>(() => createInitialState(settings.klondikeDrawCount));
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
@@ -38,18 +43,30 @@ export default function GameBoard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
+  const handleNewGame = useCallback(() => {
+    setGameState(createInitialState(settings.klondikeDrawCount));
+    setHistory([]);
+    setTime(0);
+    setIsRunning(true);
+    setIsWon(false);
+  }, [settings.klondikeDrawCount]);
+  
+  useEffect(() => {
+    handleNewGame();
+  }, [settings.gameType, settings.klondikeDrawCount, handleNewGame]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning && !isWon) {
+    if (isRunning && !isWon && gameState) {
       interval = setInterval(() => {
         setTime(prevTime => prevTime + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRunning, isWon]);
+  }, [isRunning, isWon, gameState]);
   
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    if (saveHistory) {
+    if (saveHistory && gameState) {
       setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
     }
 
@@ -71,18 +88,6 @@ export default function GameBoard() {
     setGameState(newState);
 
   }, [gameState, settings.gameType, time, updateStats]);
-  
-  const handleNewGame = useCallback(() => {
-    setGameState(createInitialState(settings.klondikeDrawCount));
-    setHistory([]);
-    setTime(0);
-    setIsRunning(true);
-    setIsWon(false);
-  }, [settings.klondikeDrawCount]);
-
-  useEffect(() => {
-    handleNewGame();
-  }, [settings.gameType, settings.klondikeDrawCount, handleNewGame]);
 
   const handleUndo = () => {
     if (history.length > 0) {
@@ -99,6 +104,7 @@ export default function GameBoard() {
     destType: 'tableau' | 'foundation',
     destPileIndex: number,
   ) => {
+    if (!gameState) return;
     const newGameState = JSON.parse(JSON.stringify(gameState)) as GameState;
     let sourcePile: Pile;
 
@@ -148,6 +154,7 @@ export default function GameBoard() {
   }, [gameState, updateState]);
   
   const handleDraw = useCallback(() => {
+    if (!gameState) return;
     const newGameState: GameState = JSON.parse(JSON.stringify(gameState));
     if (newGameState.stock.length > 0) {
       const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
@@ -186,6 +193,8 @@ export default function GameBoard() {
   };
   
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => {
+    if (!gameState) return;
+
     const card = sourceType === 'waste' 
       ? gameState.waste[cardIndex]
       : sourceType === 'foundation'
@@ -236,6 +245,36 @@ export default function GameBoard() {
     }
   }, [settings.autoMove, gameState, moveCards, updateState]);
 
+  if (!gameState) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <GameHeader 
+          onNewGame={() => {}} 
+          onUndo={() => {}} 
+          onSettings={() => setIsSettingsOpen(true)}
+          onStats={() => setIsStatsOpen(true)}
+          canUndo={false}
+        />
+        <main className="flex-grow space-y-2">
+          <div className="flex justify-between gap-0.5">
+            <div className="flex gap-2">
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+            </div>
+          </div>
+           <div className="grid grid-cols-7 gap-0.5 min-h-[28rem]">
+              {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-lg"/>)}
+           </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -343,3 +382,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
