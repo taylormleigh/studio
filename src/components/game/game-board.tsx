@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Pile as SolitairePile, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
-import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon } from '@/lib/spider';
+import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
 import { Card } from './card';
 import GameHeader from './game-header';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,7 @@ const calculateScore = (moves: number, time: number) => {
 
 export default function GameBoard() {
   const { settings } = useSettings();
+  const { toast } = useToast();
   const { updateStats } = useStats();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
@@ -92,16 +93,41 @@ export default function GameBoard() {
     }
 
     let gameWon = false;
-    if (settings.gameType === 'Solitaire') {
-      gameWon = isSolitaireGameWon(newState as SolitaireGameState);
-    } else if (settings.gameType === 'Freecell') {
-      gameWon = isFreecellGameWon(newState as FreecellGameState);
-    } else { // Spider
-      gameWon = isSpiderGameWon(newState as SpiderGameState);
+    let finalScore = 0;
+
+    if (settings.gameType === 'Solitaire' && newState.gameType === 'Solitaire') {
+      gameWon = isSolitaireGameWon(newState);
+      if(gameWon) finalScore = calculateScore(newState.moves, time);
+    } else if (settings.gameType === 'Freecell' && newState.gameType === 'Freecell') {
+      gameWon = isFreecellGameWon(newState);
+      if(gameWon) finalScore = calculateScore(newState.moves, time);
+    } else if (settings.gameType === 'Spider' && newState.gameType === 'Spider') {
+      // Check for completed sets after every move
+      let setsCompletedThisMove = 0;
+      newState.tableau.forEach((pile, index) => {
+        const result = checkForSpiderCompletedSet(pile);
+        if(result.setsCompleted > 0) {
+            newState.tableau[index] = result.updatedPile;
+            setsCompletedThisMove += result.setsCompleted;
+            newState.score += 100; // Bonus for completing a set
+        }
+      });
+      if(setsCompletedThisMove > 0) {
+        newState.completedSets += setsCompletedThisMove;
+        toast({
+            title: "Set Completed!",
+            description: `You've completed ${setsCompletedThisMove} set${setsCompletedThisMove > 1 ? 's' : ''}!`,
+        });
+        if (newState.tableau[newState.tableau.length -1]?.length > 0 && !newState.tableau[newState.tableau.length -1][newState.tableau.length -1].faceUp) {
+          newState.tableau[newState.tableau.length -1][newState.tableau.length -1].faceUp = true;
+        }
+      }
+      
+      gameWon = isSpiderGameWon(newState);
+      if(gameWon) finalScore = newState.score; // Spider score is calculated differently
     }
     
     if(gameWon) {
-        const finalScore = calculateScore(newState.moves, time);
         newState.score = finalScore;
         setIsRunning(false);
         setIsWon(true);
@@ -117,7 +143,7 @@ export default function GameBoard() {
 
     setGameState(newState);
 
-  }, [gameState, settings.gameType, time, updateStats]);
+  }, [gameState, settings.gameType, time, updateStats, toast]);
 
   const handleUndo = () => {
     if (history.length > 0) {
@@ -182,7 +208,7 @@ export default function GameBoard() {
       const movableCount = getMovableCardCount(newGameState);
       const movingCount = sourceType === 'tableau' ? newGameState.tableau[sourcePileIndex].length - sourceCardIndex : 1;
       if(movingCount > movableCount) {
-        console.log(`Cannot move ${movingCount} cards, only ${movableCount} are movable.`);
+        toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${movingCount} cards, only ${movableCount} are movable.` });
         return;
       }
 
@@ -242,9 +268,8 @@ export default function GameBoard() {
 
       const sourcePile = newGameState.tableau[sourcePileIndex];
       const cardsToMove = sourcePile.slice(sourceCardIndex);
-      const cardToMove = cardsToMove[0];
 
-      if (!cardToMove) return;
+      if (cardsToMove.length === 0) return;
 
       const destPile = newGameState.tableau[destPileIndex];
       const destTopCard = destPile[destPile.length - 1];
@@ -258,12 +283,13 @@ export default function GameBoard() {
         }
 
         newGameState.moves++;
+        newGameState.score--;
         updateState(newGameState);
       }
     }
 
 
-  }, [gameState, updateState, settings.gameType]);
+  }, [gameState, updateState, settings.gameType, toast]);
   
   const handleDraw = useCallback(() => {
     if (!gameState) return;
@@ -289,6 +315,16 @@ export default function GameBoard() {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
       // In Spider, you deal one card to each tableau pile
       if (newGameState.stock.length > 0) {
+         // Check if any tableau pile is empty
+        const hasEmptyPile = newGameState.tableau.some(pile => pile.length === 0);
+        if (hasEmptyPile) {
+            toast({
+                variant: "destructive",
+                title: "Invalid Move",
+                description: "You cannot deal new cards while there is an empty tableau pile.",
+            });
+            return;
+        }
         const dealCount = newGameState.tableau.length;
         if(newGameState.stock.length >= dealCount) {
           for(let i = 0; i < dealCount; i++) {
@@ -301,7 +337,7 @@ export default function GameBoard() {
         }
       }
     }
-  }, [gameState, updateState, settings.gameType]);
+  }, [gameState, updateState, settings.gameType, toast]);
     
   const handleDragStart = (e: DragEvent, info: DraggingCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
@@ -415,7 +451,7 @@ export default function GameBoard() {
         }
 
         // Priority 3: Try moving to an empty freecell
-        if (sourceType === 'tableau') {
+        if (sourceType === 'tableau' && cardIndex === gs.tableau[pileIndex].length - 1) {
           for (let i = 0; i < gs.freecells.length; i++) {
             if (gs.freecells[i] === null) {
               moveCards(sourceType, pileIndex, cardIndex, 'freecell', i);
@@ -669,15 +705,18 @@ export default function GameBoard() {
     const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
     return (
       <>
-        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
+        <div className={`grid ${gridCols} gap-x-2 mb-4`}>
           {/* Stock pile */}
           <div onClick={handleDraw} className="cursor-pointer">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
+          <div className="col-span-8 flex justify-center items-center text-muted-foreground text-xs sm:text-sm">
+              <span>{`Completed Sets: ${gs.completedSets} / 8`}</span>
+          </div>
           {/* Placeholder for completed sets, maybe show grayed out cards */}
-          <div className="col-span-9" />
+          <div/>
         </div>
-        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
+        <div className={`grid ${gridCols} gap-x-2 min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -740,14 +779,14 @@ export default function GameBoard() {
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
-          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon ? gameState.score : 'N/A'}`}</span>
+          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}</span>
         </div>
       <AlertDialog open={isWon}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Congratulations! You Won!</AlertDialogTitle>
             <AlertDialogDescription>
-              Your final score is {gameState.score} in {gameState.moves} moves. Time: {time}s.
+              Your final score is {gameState.score} in {gameState.moves} moves. Time: {new Date(time * 1000).toISOString().substr(14, 5)}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
