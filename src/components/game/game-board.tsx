@@ -119,10 +119,6 @@ export default function GameBoard() {
       });
       if(setsCompletedThisMove > 0) {
         newSpiderState.completedSets += setsCompletedThisMove;
-        toast({
-            title: "Set Completed!",
-            description: `You've completed a set!`,
-        });
       }
       
       gameWon = isSpiderGameWon(newSpiderState);
@@ -146,7 +142,7 @@ export default function GameBoard() {
 
     setGameState(newState);
 
-  }, [gameState, settings.gameType, time, updateStats, toast]);
+  }, [gameState, settings.gameType, time, updateStats]);
 
   const handleUndo = () => {
     if (history.length > 0) {
