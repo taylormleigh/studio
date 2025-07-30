@@ -458,20 +458,28 @@ export default function GameBoard() {
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
-                    const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 1.6 : 0.5), 0);
                     return (
                       <div 
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full" 
-                        style={{ top: `${topPosition}rem` }}
+                        style={{ top: 0 }}
                       >
-                        <Card
-                          card={card}
-                          draggable={card.faceUp}
-                          isStacked={card.faceUp && !isTopCard}
-                          onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                          onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                        />
+                        <div className={cn(
+                          "relative w-full",
+                           card.faceUp ? "h-8 sm:h-9 md:h-10" : "h-3"
+                          )}
+                          style={{
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : window.innerWidth < 768 ? 36 : 40) : 12), 0)}px)`
+                          }}
+                        >
+                          <Card
+                            card={card}
+                            draggable={card.faceUp}
+                            isStacked={card.faceUp && !isTopCard}
+                            onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
+                          />
+                        </div>
                       </div>
                     )
                   })
@@ -541,15 +549,20 @@ export default function GameBoard() {
                       <div 
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full"
-                        style={{ top: `${cardIndex * 1.6}rem` }}
                       >
-                        <Card
-                          card={card}
-                          draggable={true}
-                          isStacked={!isTopCard}
-                          onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                          onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                        />
+                         <div className="relative w-full h-8 sm:h-9 md:h-10"
+                            style={{
+                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : window.innerWidth < 768 ? 36 : 40)}px)`
+                            }}
+                         >
+                          <Card
+                            card={card}
+                            draggable={true}
+                            isStacked={!isTopCard}
+                            onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
+                          />
+                        </div>
                       </div>
                     )
                   })
@@ -603,3 +616,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
