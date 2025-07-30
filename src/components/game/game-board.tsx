@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent, useRef } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Pile as SolitairePile, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -23,6 +23,16 @@ type DraggingCardInfo = {
   pileIndex: number;
   cardIndex: number;
 };
+
+type SelectedCardInfo = {
+  card: CardType;
+  initialX: number;
+  initialY: number;
+  finalX: number;
+  finalY: number;
+  isAnimating: boolean;
+};
+
 
 const UNDO_LIMIT = 15;
 
@@ -48,6 +58,9 @@ export default function GameBoard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [selectedCardInfo, setSelectedCardInfo] = useState<SelectedCardInfo | null>(null);
+  const gameBoardRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -161,12 +174,12 @@ export default function GameBoard() {
     if (!gameState) return;
     
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
-      setGameState(prevState => {
+       setGameState(prevState => {
         if (!prevState || prevState.gameType !== 'Solitaire') return prevState;
 
         const newGameState = JSON.parse(JSON.stringify(prevState)) as SolitaireGameState;
 
-        let sourcePile: CardType[];
+        let sourcePile: CardType[] | undefined;
         let cardsToMove: CardType[];
 
         if (sourceType === 'tableau') {
@@ -174,32 +187,30 @@ export default function GameBoard() {
           cardsToMove = sourcePile.slice(sourceCardIndex);
         } else if (sourceType === 'waste') {
           sourcePile = newGameState.waste;
-          // Only the top card of the waste can be moved
           if (sourceCardIndex !== sourcePile.length - 1) return prevState;
           cardsToMove = [sourcePile[sourceCardIndex]];
         } else if (sourceType === 'foundation') {
           sourcePile = newGameState.foundation[sourcePileIndex];
-          // Only the top card of the foundation can be moved
           if (sourceCardIndex !== sourcePile.length - 1) return prevState;
           cardsToMove = [sourcePile[sourceCardIndex]];
         } else {
           return prevState; // Should not happen
         }
 
-        if (cardsToMove.length === 0) {
+        if (!sourcePile || cardsToMove.length === 0) {
           return prevState;
         }
-        
+
         const cardToMove = cardsToMove[0];
         let moveSuccessful = false;
 
         if (destType === 'foundation') {
-          // Only single cards can be moved to the foundation
           if (cardsToMove.length === 1) {
             const destPile = newGameState.foundation[destPileIndex];
             const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
             if (canMoveSolitaireToFoundation(cardToMove, topCard)) {
               destPile.push(cardToMove);
+              sourcePile.splice(sourceCardIndex);
               moveSuccessful = true;
             }
           }
@@ -208,29 +219,27 @@ export default function GameBoard() {
           const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
           if (canMoveSolitaireToTableau(cardToMove, topCard)) {
             destPile.push(...cardsToMove);
+            sourcePile.splice(sourceCardIndex);
             moveSuccessful = true;
           }
         }
 
         if (moveSuccessful) {
           if (sourceType === 'tableau') {
-            const currentSourcePile = newGameState.tableau[sourcePileIndex];
-            currentSourcePile.splice(sourceCardIndex);
-            // Flip the new top card if it's face-down
-            if (currentSourcePile.length > 0 && !currentSourcePile[currentSourcePile.length - 1].faceUp) {
-              currentSourcePile[currentSourcePile.length - 1].faceUp = true;
-            }
-          } else if (sourceType === 'waste') {
+             if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
+                sourcePile[sourcePile.length - 1].faceUp = true;
+              }
+          } else if (sourceType === 'waste' && newGameState.waste) {
             newGameState.waste.pop();
-          } else if (sourceType === 'foundation') {
+          } else if (sourceType === 'foundation' && newGameState.foundation[sourcePileIndex]) {
             newGameState.foundation[sourcePileIndex].pop();
           }
 
           newGameState.moves++;
           updateState(newGameState);
-          return null;
+          return null; // Signals success to stop further processing
         }
-
+        
         return prevState;
       });
       return;
@@ -397,6 +406,48 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
 
+  const animateAndMoveCard = useCallback((
+    card: CardType,
+    sourceSelector: string,
+    destSelector: string,
+    moveFn: () => void
+  ) => {
+    if (!gameBoardRef.current) return;
+
+    const sourceEl = document.querySelector(sourceSelector);
+    const destEl = document.querySelector(destSelector);
+
+    if (!sourceEl || !destEl) return;
+
+    const gameBoardRect = gameBoardRef.current.getBoundingClientRect();
+    const sourceRect = sourceEl.getBoundingClientRect();
+    const destRect = destEl.getBoundingClientRect();
+
+    const info: SelectedCardInfo = {
+      card: card,
+      initialX: sourceRect.left - gameBoardRect.left,
+      initialY: sourceRect.top - gameBoardRect.top,
+      finalX: destRect.left - gameBoardRect.left,
+      finalY: destRect.top - gameBoardRect.top,
+      isAnimating: false,
+    };
+
+    setSelectedCardInfo(info);
+    
+    setTimeout(() => {
+        setSelectedCardInfo(prev => prev ? { ...prev, isAnimating: true } : null);
+        // Move the actual card data after the animation has had a chance to start
+        setTimeout(moveFn, 50); 
+    }, 10);
+    
+    // Clean up the animation card after the transition is complete
+    setTimeout(() => {
+        setSelectedCardInfo(null);
+    }, 1350);
+
+  }, []);
+
+
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
@@ -424,8 +475,16 @@ export default function GameBoard() {
           // Priority 1: Try moving to foundation
           if(sourcePile.length - 1 === cardIndex) {
             for (let i = 0; i < gs.foundation.length; i++) {
-              if (canMoveSolitaireToFoundation(card, gs.foundation[i][gs.foundation[i].length-1])) {
-                  moveCards(sourceType as any, pileIndex, cardIndex, 'foundation', i);
+              const destTopCard = gs.foundation[i][gs.foundation[i].length - 1];
+              if (canMoveSolitaireToFoundation(card, destTopCard)) {
+                  const sourceSelector = sourceType === 'waste' ? `[data-id=waste-pile]` : `[data-id=tableau-pile-${pileIndex}-${cardIndex}]`;
+                  const destSelector = `[data-id=foundation-pile-${i}]`;
+                  animateAndMoveCard(
+                    card, 
+                    sourceSelector,
+                    destSelector,
+                    () => moveCards(sourceType as any, pileIndex, cardIndex, 'foundation', i)
+                  );
                   return;
               }
             }
@@ -445,7 +504,16 @@ export default function GameBoard() {
             if (validMoves.length > 0) {
                 validMoves.sort((a, b) => b.pileLength - a.pileLength || a.pileIndex - b.pileIndex);
                 const bestMove = validMoves[0];
-                moveCards(sourceType as any, pileIndex, cardIndex, 'tableau', bestMove.pileIndex);
+                const sourceSelector = sourceType === 'waste' ? `[data-id=waste-pile]` : `[data-id=tableau-pile-${pileIndex}-${cardIndex}]`;
+                const destPile = gs.tableau[bestMove.pileIndex];
+                const destSelector = destPile.length === 0 ? `[data-id=tableau-empty-${bestMove.pileIndex}]` : `[data-id=tableau-pile-${bestMove.pileIndex}-${destPile.length - 1}]`;
+
+                animateAndMoveCard(
+                    card,
+                    sourceSelector,
+                    destSelector,
+                    () => moveCards(sourceType as any, pileIndex, cardIndex, 'tableau', bestMove.pileIndex)
+                );
                 return;
             }
           }
@@ -537,7 +605,7 @@ export default function GameBoard() {
         }
       }
     }
-  }, [settings.autoMove, gameState, moveCards, updateState, settings.gameType]);
+  }, [settings.autoMove, gameState, moveCards, updateState, settings.gameType, animateAndMoveCard]);
 
   const renderLoader = () => (
     <>
@@ -578,10 +646,10 @@ export default function GameBoard() {
     return (
       <>
         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
-          <div onClick={handleDraw} className="cursor-pointer">
+          <div onClick={handleDraw} className="cursor-pointer" data-id="stock-pile">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
-          <div>
+          <div data-id="waste-pile">
             {gs.waste.length > 0 ?
               <Card 
                 card={gs.waste[gs.waste.length - 1]} 
@@ -597,6 +665,7 @@ export default function GameBoard() {
               key={i} 
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'foundation', i)}
+              data-id={`foundation-pile-${i}`}
             >
               <Card 
                 card={pile[pile.length - 1]} 
@@ -617,7 +686,7 @@ export default function GameBoard() {
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <Card />
+                  <div data-id={`tableau-empty-${pileIndex}`}><Card /></div>
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
@@ -626,6 +695,7 @@ export default function GameBoard() {
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full" 
                         style={{ top: 0 }}
+                         data-id={`tableau-pile-${pileIndex}-${cardIndex}`}
                       >
                         <div className={cn(
                           "relative w-full",
@@ -816,10 +886,23 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow p-2 md:p-4">
+      <main className="flex-grow p-2 md:p-4 relative" ref={gameBoardRef}>
         {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
+        {selectedCardInfo && (
+            <div
+                className="absolute z-50 pointer-events-none"
+                style={{
+                    left: selectedCardInfo.initialX,
+                    top: selectedCardInfo.initialY,
+                    transform: selectedCardInfo.isAnimating ? `translate(${selectedCardInfo.finalX - selectedCardInfo.initialX}px, ${selectedCardInfo.finalY - selectedCardInfo.initialY}px)` : 'translate(0, 0)',
+                    transition: 'transform 1.3s ease-in-out',
+                }}
+            >
+                <Card card={selectedCardInfo.card} />
+            </div>
+        )}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
           <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}</span>
