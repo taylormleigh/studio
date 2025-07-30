@@ -14,6 +14,7 @@ type CardProps = {
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   draggable?: boolean;
+  style?: React.CSSProperties;
 };
 
 // Using Unicode characters for a classic, high-contrast look
@@ -32,7 +33,7 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
 }
 
 
-export function Card({ card, isSelected, isStacked, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
+export function Card({ card, isSelected, isStacked, className, onClick, draggable, onDragStart, onDragEnd, style }: CardProps) {
   const ringClass = isSelected 
     ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500'
     : '';
@@ -79,9 +80,10 @@ export function Card({ card, isSelected, isStacked, className, onClick, draggabl
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      style={style}
       className={cn(
         cardSize,
-        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all overflow-hidden',
+        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all duration-300 ease-in-out overflow-hidden',
         ringClass,
         suitColorClass,
         className,

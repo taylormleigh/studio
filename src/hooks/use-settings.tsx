@@ -26,7 +26,6 @@ const defaultSettings: GameSettings = {
 interface SettingsContextType {
   settings: GameSettings;
   setSettings: (settings: Partial<GameSettings>) => void;
-  resetToDefault: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -58,18 +57,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const resetToDefault = useCallback(() => {
-    setSettingsState(defaultSettings);
-    try {
-        localStorage.setItem('deck-of-cards-settings', JSON.stringify(defaultSettings));
-      } catch (error) {
-        console.error("Could not save settings to localStorage", error);
-      }
-  }, []);
-
-
   return (
-    <SettingsContext.Provider value={{ settings, setSettings, resetToDefault }}>
+    <SettingsContext.Provider value={{ settings, setSettings }}>
       {children}
     </SettingsContext.Provider>
   );

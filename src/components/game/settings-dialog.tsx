@@ -25,15 +25,14 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
-  const { settings, setSettings, resetToDefault } = useSettings();
+  const { settings, setSettings } = useSettings();
 
-  const handleNewGameClick = () => {
+  const handleSettingChange = <T extends keyof typeof settings>(
+    key: T,
+    value: (typeof settings)[T]
+  ) => {
+    setSettings({ [key]: value });
     onNewGame();
-    onOpenChange(false);
-  };
-
-  const handleReset = () => {
-    resetToDefault();
   };
 
   return (
@@ -42,7 +41,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Changes to game rules will start a new game.
+            Changing a setting will automatically start a new game.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -52,7 +51,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             </Label>
             <Select
               value={settings.gameType}
-              onValueChange={(value) => setSettings({ gameType: value as GameType })}
+              onValueChange={(value) => handleSettingChange('gameType', value as GameType)}
             >
               <SelectTrigger id="game-type" className="col-span-3">
                 <SelectValue placeholder="Select a game" />
@@ -73,7 +72,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <RadioGroup
                 id="draw-count"
                 value={String(settings.solitaireDrawCount)}
-                onValueChange={(value) => setSettings({ solitaireDrawCount: Number(value) as SolitaireDrawType })}
+                onValueChange={(value) => handleSettingChange('solitaireDrawCount', Number(value) as SolitaireDrawType)}
                 className="col-span-3 flex items-center gap-4"
               >
                 <div className="flex items-center space-x-2">
@@ -94,7 +93,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 <RadioGroup
                   id="spider-suits"
                   value={String(settings.spiderSuits)}
-                  onValueChange={(value) => setSettings({ spiderSuits: Number(value) as SpiderSuitCount })}
+                  onValueChange={(value) => handleSettingChange('spiderSuits', Number(value) as SpiderSuitCount)}
                   className="col-span-3 flex items-center gap-4"
                 >
                     <div className="flex items-center space-x-2">
@@ -143,14 +142,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           </div>
 
         </div>
-        <DialogFooter className="sm:justify-between">
-            <Button variant="ghost" onClick={handleReset}>Reset to Default</Button>
-            <div className="flex gap-2">
-                <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleNewGameClick}>Start New Game</Button>
-            </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button>Close</Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
