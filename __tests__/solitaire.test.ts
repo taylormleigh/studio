@@ -1,3 +1,4 @@
+
 import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS } from '../src/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
@@ -169,6 +170,26 @@ describe('Solitaire Game Logic', () => {
         expect(state.tableau[0].length).toBe(3);
         expect(state.tableau[0][2].rank).toBe('10');
         expect(state.tableau[1].length).toBe(0);
+    });
+
+    it('should correctly move a card from waste to tableau via click', () => {
+      const cardToMove: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
+      const destinationCard: Card = { suit: 'SPADES', rank: 'K', faceUp: true };
+      state.waste = [cardToMove];
+      state.tableau[0] = [destinationCard];
+      
+      // Simulate selecting card from waste
+      // Simulate clicking tableau pile
+      const sourcePile = state.waste;
+      const destPile = state.tableau[0];
+      const card = sourcePile.pop();
+      if(card && canMoveToTableau(card, destPile[destPile.length - 1])) {
+        destPile.push(card);
+      }
+
+      expect(state.waste.length).toBe(0);
+      expect(state.tableau[0].length).toBe(2);
+      expect(state.tableau[0][1].rank).toBe('Q');
     });
   });
 

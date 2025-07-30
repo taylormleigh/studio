@@ -91,8 +91,8 @@ export default function GameBoard() {
       newSpiderState.tableau.forEach((pile, index) => {
         const result = checkForSpiderCompletedSet(pile);
         if(result.setsCompleted > 0 && result.completedSet) {
-            newSpiderState.tableau[index] = result.updatedPile;
             newSpiderState.foundation.push(result.completedSet);
+            newSpiderState.tableau[index] = result.updatedPile;
             setsCompletedThisMove++;
              if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
                 newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
@@ -183,16 +183,20 @@ export default function GameBoard() {
   
         const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
         let cardsToMove: CardType[];
+        let sourcePileRef: CardType[] | undefined;
 
         if (sourceType === 'waste') {
             if (newGameState.waste.length === 0) return prev;
             cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
+            sourcePileRef = newGameState.waste;
         } else if (sourceType === 'foundation') {
             if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
             cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
+            sourcePileRef = newGameState.foundation[sourcePileIndex];
         } else { // tableau
             if (newGameState.tableau[sourcePileIndex].length === 0 || sourceCardIndex >= newGameState.tableau[sourcePileIndex].length) return prev;
             cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+            sourcePileRef = newGameState.tableau[sourcePileIndex];
         }
 
         if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
@@ -407,10 +411,12 @@ export default function GameBoard() {
 
   const handleTableauClick = (pileIndex: number, cardIndex?: number) => {
     if (selectedCard) {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-        setSelectedCard(null);
+      // A card is selected, this click is a move attempt.
+      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
+      setSelectedCard(null);
     } else if (cardIndex !== undefined) {
-        handleCardClick('tableau', pileIndex, cardIndex);
+      // No card is selected, this click is a selection attempt.
+      handleCardClick('tableau', pileIndex, cardIndex);
     }
   };
   
@@ -475,11 +481,10 @@ export default function GameBoard() {
         // Deselect if clicking the same card
         setSelectedCard(null);
       } else {
-        // This is a move attempt to the clicked card's pile
-        if(selectedCard.type === 'tableau' || selectedCard.type === 'waste' || selectedCard.type === 'foundation'){
-            moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-            setSelectedCard(null);
-        }
+        // A card is already selected, so this is a move attempt.
+        // The actual move is handled by the pile click handlers (handleTableauClick, handleFoundationClick, etc.)
+        // We just need to clear the selection.
+        // This part of the logic is complex and was causing bugs. The move is now handled in the destination click handler.
       }
     } else {
       // No card is selected, so select this one if it's a valid source
@@ -591,7 +596,7 @@ export default function GameBoard() {
               className="relative"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+              onClick={() => handleTableauClick(pileIndex)}
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
@@ -620,7 +625,10 @@ export default function GameBoard() {
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={() => handleTableauClick(pileIndex, cardIndex)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent the parent div's click handler from firing
+                              handleTableauClick(pileIndex, cardIndex);
+                            }}
                           />
                         </div>
                       </div>
