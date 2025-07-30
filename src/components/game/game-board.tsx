@@ -462,31 +462,27 @@ export default function GameBoard() {
     }
 
     if (settings.autoMove) {
-        let moved = false;
-        
         let cardToMove: CardType | undefined;
-        let singleCardSourceIndex = cardIndex;
-
+        let cardToMoveIndex = cardIndex;
+        
         if (sourceType === 'tableau') {
-          if(gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell' || gameState.gameType === 'Spider') {
-             cardToMove = gameState.tableau[pileIndex]?.[cardIndex];
-          }
+            cardToMove = gameState.tableau[pileIndex]?.[cardIndex];
         } else if (sourceType === 'waste' && gameState.gameType === 'Solitaire') {
             cardToMove = gameState.waste[cardIndex];
-            singleCardSourceIndex = gameState.waste.length - 1;
+            cardToMoveIndex = gameState.waste.length - 1;
         } else if (sourceType === 'freecell' && gameState.gameType === 'Freecell') {
             cardToMove = gameState.freecells[pileIndex]!;
         }
 
         if(!cardToMove || !cardToMove.faceUp) {
-          setSelectedCard({ type: sourceType, pileIndex, cardIndex });
-          return;
-        };
+            setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+            return;
+        }
 
         // 1. Try to move a single card to the foundation
         if (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') {
             const topCardToMove = sourceType === 'tableau' ? gameState.tableau[pileIndex][gameState.tableau[pileIndex].length -1] : cardToMove;
-            const topCardIndex = sourceType === 'tableau' ? gameState.tableau[pileIndex].length -1 : singleCardSourceIndex;
+            const topCardIndex = sourceType === 'tableau' ? gameState.tableau[pileIndex].length -1 : cardToMoveIndex;
 
             for (let i = 0; i < gameState.foundation.length; i++) {
                 let canMove = false;
@@ -503,12 +499,10 @@ export default function GameBoard() {
                 }
                 if (canMove) {
                     moveCards(sourceType, pileIndex, topCardIndex, 'foundation', i);
-                    moved = true;
-                    break;
+                    return; // Move executed, exit function
                 }
             }
         }
-        if (moved) return;
 
         // 2. Try to move the whole stack to another tableau pile
         if (sourceType === 'tableau') {
@@ -536,13 +530,11 @@ export default function GameBoard() {
 
                     if (canMove) {
                         moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
-                        moved = true;
-                        break;
+                        return; // Move executed, exit function
                     }
                 }
             }
         }
-        if (moved) return;
     }
     
     // Default manual selection logic (drag/drop or two-click move)
@@ -668,6 +660,8 @@ export default function GameBoard() {
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
+                    const isSelected = selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex;
+
                     return (
                       <div 
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
@@ -688,7 +682,7 @@ export default function GameBoard() {
                         >
                           <Card
                             card={card}
-                            isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
+                            isSelected={isSelected}
                             isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
@@ -919,5 +913,7 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
 
     

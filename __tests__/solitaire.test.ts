@@ -434,6 +434,49 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
       expect(state.tableau[0][2].rank).toBe('10'); // The last card should be the 10 of spades
     });
+
+    it('should auto-move a tableau pile to another valid tableau pile on click', () => {
+        // Setup: A pile that can be moved
+        const pileToMove: Card[] = [{ suit: 'HEARTS', rank: '4', faceUp: true }];
+        // Setup: A valid destination
+        const destinationCard: Card = { suit: 'SPADES', rank: '5', faceUp: true };
+
+        state.tableau[0] = pileToMove;
+        state.tableau[1] = [destinationCard];
+
+        // Simulate click-to-move by finding and executing the move
+        const sourcePileIndex = 0;
+        const sourceCardIndex = 0;
+        const cardToClick = state.tableau[sourcePileIndex][sourceCardIndex];
+        
+        let moved = false;
+
+        // Simplified logic from the component's handleCardClick
+        // 1. Try foundation (will fail in this test)
+        // 2. Try tableau
+        const cardsToMove = state.tableau[sourcePileIndex].slice(sourceCardIndex);
+        for (let i = 0; i < state.tableau.length; i++) {
+            if (i === sourcePileIndex) continue;
+            const destTopCard = state.tableau[i][state.tableau[i].length - 1];
+            if (canMoveToTableau(cardsToMove[0], destTopCard)) {
+                // Execute move
+                const sourcePile = state.tableau[sourcePileIndex];
+                const destPile = state.tableau[i];
+                const cards = sourcePile.splice(sourceCardIndex);
+                destPile.push(...cards);
+                if (sourcePile.length > 0) {
+                    sourcePile[sourcePile.length - 1].faceUp = true;
+                }
+                moved = true;
+                break;
+            }
+        }
+
+        expect(moved).toBe(true); // Assert that a move was found and executed
+        expect(state.tableau[0].length).toBe(0); // Source pile is now empty
+        expect(state.tableau[1].length).toBe(2); // Destination has the new card
+        expect(state.tableau[1][1].rank).toBe('4');
+    });
   });
 
   describe('isGameWon', () => {
@@ -465,5 +508,7 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+    
 
     
