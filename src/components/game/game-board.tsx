@@ -186,39 +186,30 @@ export default function GameBoard() {
     }
     updateState(newGameState);
   };
-  
-  useEffect(() => {
-    if (!settings.autoMove || isWon) return;
 
-    const findAutoMove = () => {
-        const wasteCard = gameState.waste[gameState.waste.length - 1];
-        if (wasteCard) {
-            for (let i = 0; i < gameState.foundation.length; i++) {
-                if (canMoveToFoundation(wasteCard, gameState.foundation[i])) {
-                    return () => moveCards('waste', 0, gameState.waste.length - 1, 'foundation', i);
-                }
-            }
-        }
+  const handleCardClick = useCallback((sourceType: 'tableau' | 'waste', pileIndex: number, cardIndex: number) => {
+    if (!settings.autoMove) return;
 
-        for (let j = 0; j < gameState.tableau.length; j++) {
-            const tableauPile = gameState.tableau[j];
-            const topCard = tableauPile[tableauPile.length - 1];
-            if (topCard?.faceUp) {
-                for (let i = 0; i < gameState.foundation.length; i++) {
-                    if (canMoveToFoundation(topCard, gameState.foundation[i])) {
-                        return () => moveCards('tableau', j, tableauPile.length - 1, 'foundation', i);
-                    }
-                }
-            }
-        }
-        return null;
-    };
-    
-    const move = findAutoMove();
-    if (move) {
-        setTimeout(move, 300);
+    let card: CardType | undefined;
+    let sourcePile: Pile;
+
+    if (sourceType === 'waste') {
+      sourcePile = gameState.waste;
+      card = sourcePile[sourcePile.length - 1];
+    } else { // tableau
+      sourcePile = gameState.tableau[pileIndex];
+      card = sourcePile[sourcePile.length - 1];
     }
-  }, [gameState, settings.autoMove, isWon, moveCards]);
+
+    if (!card || !card.faceUp) return;
+
+    for (let i = 0; i < gameState.foundation.length; i++) {
+      if (canMoveToFoundation(card, gameState.foundation[i])) {
+        moveCards(sourceType, pileIndex, sourcePile.length - 1, 'foundation', i);
+        return;
+      }
+    }
+  }, [settings.autoMove, gameState, moveCards]);
 
 
   return (
@@ -245,6 +236,7 @@ export default function GameBoard() {
                   card={gameState.waste[gameState.waste.length - 1]} 
                   draggable={true}
                   onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+                  onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
                 />
               }
             </div>
@@ -256,7 +248,11 @@ export default function GameBoard() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, 'foundation', i)}
               >
-                <Card card={pile[pile.length - 1]} />
+                <Card 
+                  card={pile[pile.length - 1]} 
+                  draggable={pile.length > 0}
+                  onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                />
               </div>
             ))}
           </div>
@@ -282,6 +278,7 @@ export default function GameBoard() {
                       card={card}
                       draggable={card.faceUp}
                       onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                      onClick={() => card.faceUp && cardIndex === pile.length - 1 && handleCardClick('tableau', pileIndex, cardIndex)}
                     />
                   </div>
                 ))

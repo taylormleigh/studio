@@ -125,7 +125,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 checked={settings.leftHandMode}
                 onCheckedChange={(checked) => setSettings({ leftHandMode: checked })}
               />
-              <Label htmlFor="left-hand-mode">Left-Handed Mode</Label>
+              <Label htmlFor="left-hand-mode">{settings.leftHandMode ? 'Left-Handed Mode' : 'Right-Handed Mode'}</Label>
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -138,7 +138,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 checked={settings.autoMove}
                 onCheckedChange={(checked) => setSettings({ autoMove: checked })}
               />
-              <Label htmlFor="auto-move">Auto-move to Foundation</Label>
+              <Label htmlFor="auto-move">Auto-move to Foundation on click</Label>
             </div>
           </div>
 
