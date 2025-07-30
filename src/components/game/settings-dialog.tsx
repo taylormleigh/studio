@@ -59,7 +59,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Solitaire">Solitaire</SelectItem>
-                <SelectItem value="Freecell" disabled>Freecell (coming soon)</SelectItem>
+                <SelectItem value="Freecell">Freecell</SelectItem>
                 <SelectItem value="Spider" disabled>Spider (coming soon)</SelectItem>
                 <SelectItem value="Pyramid" disabled>Pyramid (coming soon)</SelectItem>
               </SelectContent>
@@ -157,5 +157,3 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     </Dialog>
   );
 }
-
-    

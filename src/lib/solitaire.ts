@@ -1,3 +1,4 @@
+
 export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
 
@@ -10,6 +11,7 @@ export interface Card {
 export type Pile = Card[];
 
 export interface GameState {
+  gameType: 'Solitaire';
   tableau: Pile[];
   foundation: Pile[];
   stock: Pile;
@@ -74,6 +76,7 @@ export function createInitialState(drawCount: 1 | 3 = 1): GameState {
   });
 
   return {
+    gameType: 'Solitaire',
     tableau,
     foundation: [[], [], [], []],
     stock: deck,
@@ -98,9 +101,11 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
   return !colorsMatch && ranksCorrect;
 }
 
-export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined): boolean {
+export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined, foundationPile: Pile): boolean {
     if (!topCard) {
-        return cardToMove.rank === 'A';
+        // Find if this is the first card for this suit
+        const isFirstOfSuit = foundationPile.length === 0;
+        return cardToMove.rank === 'A' && isFirstOfSuit;
     }
     const suitsMatch = cardToMove.suit === topCard.suit;
     const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
@@ -110,5 +115,3 @@ export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined)
 export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
 }
-
-    
