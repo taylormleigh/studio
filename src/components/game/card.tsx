@@ -7,7 +7,6 @@ import React from 'react';
 type CardProps = {
   card?: CardType;
   isSelected?: boolean;
-  isHinted?: boolean;
   className?: string;
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -31,11 +30,9 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
 }
 
 
-export function Card({ card, isSelected, isHinted, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
+export function Card({ card, isSelected, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
   const ringClass = isSelected 
-    ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500' 
-    : isHinted 
-    ? 'ring-2 ring-offset-background ring-offset-2 ring-green-500' 
+    ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500'
     : '';
     
   const cardSize = "w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36";

@@ -1,8 +1,9 @@
+
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
-export type GameType = 'Klondike' | 'Freecell' | 'Spider' | 'Pyramid';
+export type GameType = 'Solitaire' | 'Freecell' | 'Spider' | 'Pyramid';
 export type KlondikeDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
 
@@ -15,7 +16,7 @@ export interface GameSettings {
 }
 
 const defaultSettings: GameSettings = {
-  gameType: 'Klondike',
+  gameType: 'Solitaire',
   klondikeDrawCount: 1,
   spiderSuits: 2,
   leftHandMode: false,

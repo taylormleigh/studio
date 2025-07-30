@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, DragEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState, createInitialState, Pile, Card as CardType, canMoveToTableau, canMoveToFoundation, isGameWon } from '@/lib/solitaire';
 import { Card } from './card';
 import GameHeader from './game-header';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useSettings } from '@/hooks/use-settings';
+import { useStats } from '@/hooks/use-stats';
 import { SettingsDialog } from './settings-dialog';
+import { StatsDialog } from './stats-dialog';
 import { cn } from '@/lib/utils';
-import { getMoveHint } from '@/ai/flows/get-move-hint';
 
 type DraggingCardInfo = {
   type: 'tableau' | 'waste' | 'foundation';
@@ -19,16 +20,23 @@ type DraggingCardInfo = {
 
 const UNDO_LIMIT = 15;
 
+const calculateScore = (moves: number, time: number) => {
+  if (time === 0) return 0;
+  const timeBonus = Math.max(0, 700 - time) * 10;
+  const movePenalty = moves * 5;
+  return Math.max(10, 5000 + timeBonus - movePenalty);
+}
+
 export default function GameBoard() {
   const { settings } = useSettings();
+  const { updateStats } = useStats();
   const [gameState, setGameState] = useState<GameState>(() => createInitialState(settings.klondikeDrawCount));
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isWon, setIsWon] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -44,12 +52,25 @@ export default function GameBoard() {
     if (saveHistory) {
       setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
     }
-    setGameState(newState);
-    if (isGameWon(newState)) {
-      setIsRunning(false);
-      setIsWon(true);
+
+    if(isGameWon(newState)) {
+        const finalScore = calculateScore(newState.moves, time);
+        newState.score = finalScore;
+        setIsRunning(false);
+        setIsWon(true);
+        updateStats({
+          gameType: settings.gameType,
+          stats: {
+            wins: 1,
+            bestScore: finalScore,
+            bestTime: time,
+          }
+        });
     }
-  }, [gameState]);
+
+    setGameState(newState);
+
+  }, [gameState, settings.gameType, time, updateStats]);
   
   const handleNewGame = useCallback(() => {
     setGameState(createInitialState(settings.klondikeDrawCount));
@@ -80,7 +101,6 @@ export default function GameBoard() {
   ) => {
     const newGameState = JSON.parse(JSON.stringify(gameState)) as GameState;
     let sourcePile: Pile;
-    let scoreChange = 0;
 
     if (sourceType === 'tableau') sourcePile = newGameState.tableau[sourcePileIndex];
     else if (sourceType === 'waste') sourcePile = newGameState.waste;
@@ -95,8 +115,6 @@ export default function GameBoard() {
         if (canMoveToTableau(cardToMove, destTopCard)) {
             const cardsToMove = sourcePile.splice(sourceCardIndex);
             destPile.push(...cardsToMove);
-            scoreChange = 5;
-            if(sourceType === 'foundation') scoreChange = -15;
         } else return;
     } else { // destType === 'foundation'
         const destPile = newGameState.foundation[destPileIndex];
@@ -104,7 +122,6 @@ export default function GameBoard() {
         if (sourceCardIndex === sourcePile.length - 1 && canMoveToFoundation(cardToMove, topCard)) {
             const cardsToMove = sourcePile.splice(sourceCardIndex);
             destPile.push(...cardsToMove);
-            scoreChange = 10;
         } else if (sourceCardIndex === sourcePile.length - 1 && cardToMove.rank === 'A' && !topCard) {
             // Find an empty foundation pile for the Ace
             let moved = false;
@@ -112,7 +129,6 @@ export default function GameBoard() {
                 if (newGameState.foundation[i].length === 0) {
                     const cardsToMove = sourcePile.splice(sourceCardIndex);
                     newGameState.foundation[i].push(...cardsToMove);
-                    scoreChange = 10;
                     moved = true;
                     break;
                 }
@@ -124,11 +140,9 @@ export default function GameBoard() {
     
     if (sourceType === 'tableau' && sourcePile.length > 0 && !sourcePile[sourcePile.length-1].faceUp) {
       sourcePile[sourcePile.length - 1].faceUp = true;
-      scoreChange += 5;
     }
     
     newGameState.moves += 1;
-    newGameState.score += scoreChange;
     updateState(newGameState);
 
   }, [gameState, updateState]);
@@ -147,74 +161,11 @@ export default function GameBoard() {
     } else if (newGameState.waste.length > 0) {
       newGameState.stock = newGameState.waste.reverse().map(c => ({...c, faceUp: false}));
       newGameState.waste = [];
-      newGameState.score = Math.max(0, newGameState.score - 100);
     }
+    newGameState.moves += 1;
     updateState(newGameState);
   }, [gameState, updateState]);
     
-  const findHint = useCallback(async () => {
-    try {
-      const hint = await getMoveHint(gameState);
-
-      if (hint.from) {
-        if (hint.from.type === 'draw') {
-          return () => handleDraw();
-        }
-
-        if (hint.from.type === 'reveal') {
-           return () => {
-              const newGameState = JSON.parse(JSON.stringify(gameState));
-              const pile = newGameState.tableau[hint.from.pileIndex!];
-              if(pile && pile.length > 0 && !pile[pile.length - 1].faceUp) {
-                  pile[pile.length - 1].faceUp = true;
-                  newGameState.moves++;
-                  newGameState.score += 5;
-                  updateState(newGameState);
-              }
-           }
-        }
-        
-        if (hint.to) {
-          return () => moveCards(
-            hint.from.type as 'tableau' | 'waste' | 'foundation',
-            hint.from.pileIndex!,
-            hint.from.cardIndex!,
-            hint.to.type as 'tableau' | 'foundation',
-            hint.to.pileIndex!
-          );
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      toast({
-        variant: 'destructive',
-        title: 'Hint Error',
-        description: 'Could not get hint from AI.',
-      });
-    }
-
-    return null;
-  }, [gameState, moveCards, handleDraw, updateState, toast]);
-
-  const handleHint = async () => {
-    startTransition(async () => {
-      const hintMove = await findHint();
-      if (hintMove) {
-        hintMove();
-        toast({
-          title: "💡 Hint Used",
-          description: "A move was made for you.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "No Moves Found",
-          description: "There are no available moves.",
-        });
-      }
-    });
-  };
-
   const handleDragStart = (e: DragEvent, info: DraggingCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
@@ -234,7 +185,6 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
   
-
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => {
     const card = sourceType === 'waste' 
       ? gameState.waste[cardIndex]
@@ -248,44 +198,39 @@ export default function GameBoard() {
             const newGameState = JSON.parse(JSON.stringify(gameState));
             newGameState.tableau[pileIndex][cardIndex].faceUp = true;
             newGameState.moves++;
-            newGameState.score += 5;
             updateState(newGameState);
         }
         return;
     }
     
-    if (sourceType === 'tableau' && cardIndex !== gameState.tableau[pileIndex].length - 1) {
-        // If not the top card, do nothing on click, unless it's to start a drag stack
-        return;
-    }
-
-    if (!settings.autoMove) return;
-
-    // Try moving to foundation first
-    for (let i = 0; i < gameState.foundation.length; i++) {
-      if (canMoveToFoundation(card, gameState.foundation[i][gameState.foundation[i].length - 1])) {
-        moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-        return;
-      }
-    }
-     // Try moving to an empty foundation pile if it's an Ace
-    if (card.rank === 'A') {
+    // Auto-move logic
+    if (settings.autoMove) {
+        // Try moving to foundation first
         for (let i = 0; i < gameState.foundation.length; i++) {
-            if (gameState.foundation[i].length === 0) {
-                moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                return;
+          if (canMoveToFoundation(card, gameState.foundation[i][gameState.foundation[i].length - 1])) {
+            moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+            return;
+          }
+        }
+         // Try moving to an empty foundation pile if it's an Ace
+        if (card.rank === 'A') {
+            for (let i = 0; i < gameState.foundation.length; i++) {
+                if (gameState.foundation[i].length === 0) {
+                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                    return;
+                }
             }
         }
-    }
-    
-    // if not from foundation, try moving to tableau
-    if (sourceType !== 'foundation') {
-        for (let i = 0; i < gameState.tableau.length; i++) {
-            const destPile = gameState.tableau[i];
-            const destTopCard = destPile[destPile.length - 1];
-            if (canMoveToTableau(card, destTopCard)) {
-                moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
-                return;
+        
+        // if not from foundation, try moving to tableau
+        if (sourceType !== 'foundation') {
+            for (let i = 0; i < gameState.tableau.length; i++) {
+                const destPile = gameState.tableau[i];
+                const destTopCard = destPile[destPile.length - 1];
+                if (canMoveToTableau(card, destTopCard)) {
+                    moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
+                    return;
+                }
             }
         }
     }
@@ -295,15 +240,11 @@ export default function GameBoard() {
   return (
     <div className="flex flex-col min-h-screen">
       <GameHeader 
-        score={gameState.score} 
-        moves={gameState.moves} 
-        time={time}
         onNewGame={handleNewGame} 
         onUndo={handleUndo} 
-        onHint={handleHint}
         onSettings={() => setIsSettingsOpen(true)}
+        onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
-        isHintPending={isPending}
       />
       <main className="flex-grow space-y-2">
         <div className={cn("flex justify-between gap-0.5", settings.leftHandMode && "flex-row-reverse")}>
@@ -374,6 +315,9 @@ export default function GameBoard() {
           ))}
         </div>
       </main>
+       <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
+          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon ? gameState.score : 'N/A'}`}</span>
+        </div>
       <AlertDialog open={isWon}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -391,6 +335,10 @@ export default function GameBoard() {
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         onNewGame={handleNewGame}
+      />
+      <StatsDialog
+        open={isStatsOpen}
+        onOpenChange={setIsStatsOpen}
       />
     </div>
   );

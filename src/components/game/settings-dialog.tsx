@@ -57,7 +57,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 <SelectValue placeholder="Select a game" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Klondike">Klondike</SelectItem>
+                <SelectItem value="Solitaire">Solitaire</SelectItem>
                 <SelectItem value="Freecell" disabled>Freecell (coming soon)</SelectItem>
                 <SelectItem value="Spider" disabled>Spider (coming soon)</SelectItem>
                 <SelectItem value="Pyramid" disabled>Pyramid (coming soon)</SelectItem>
@@ -65,7 +65,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             </Select>
           </div>
 
-          {settings.gameType === 'Klondike' && (
+          {settings.gameType === 'Solitaire' && (
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="draw-count" className="text-right">
                 Draw

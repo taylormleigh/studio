@@ -83,12 +83,12 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
 }
 
 export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined): boolean {
-  if (!topCard) {
-    return cardToMove.rank === 'A';
-  }
-  const suitsMatch = cardToMove.suit === topCard.suit;
-  const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
-  return suitsMatch && ranksCorrect;
+    if (!topCard) {
+        return cardToMove.rank === 'A';
+    }
+    const suitsMatch = cardToMove.suit === topCard.suit;
+    const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
+    return suitsMatch && ranksCorrect;
 }
 
 export function isGameWon(state: GameState): boolean {
