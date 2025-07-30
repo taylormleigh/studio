@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useSettings, GameType, KlondikeDrawType, SpiderSuitCount } from '@/hooks/use-settings';
+import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -73,8 +73,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               </Label>
               <RadioGroup
                 id="draw-count"
-                value={String(settings.klondikeDrawCount)}
-                onValueChange={(value) => setSettings({ klondikeDrawCount: Number(value) as KlondikeDrawType })}
+                value={String(settings.solitaireDrawCount)}
+                onValueChange={(value) => setSettings({ solitaireDrawCount: Number(value) as SolitaireDrawType })}
                 className="col-span-3 flex items-center gap-4"
               >
                 <div className="flex items-center space-x-2">

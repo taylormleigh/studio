@@ -49,18 +49,18 @@ export default function GameBoard() {
   }, []);
 
   const handleNewGame = useCallback(() => {
-    setGameState(createInitialState(settings.klondikeDrawCount));
+    setGameState(createInitialState(settings.solitaireDrawCount));
     setHistory([]);
     setTime(0);
     setIsRunning(true);
     setIsWon(false);
-  }, [settings.klondikeDrawCount]);
+  }, [settings.solitaireDrawCount]);
   
   useEffect(() => {
     if (isClient) {
       handleNewGame();
     }
-  }, [settings.gameType, settings.klondikeDrawCount, handleNewGame, isClient]);
+  }, [settings.gameType, settings.solitaireDrawCount, handleNewGame, isClient]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
