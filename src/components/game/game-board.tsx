@@ -241,9 +241,9 @@ export default function GameBoard() {
         onSettings={() => setIsSettingsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow space-y-4">
+      <main className="flex-grow space-y-2">
         <div className={cn("flex justify-between", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <div onClick={handleDraw} className="cursor-pointer">
               <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} />
             </div>
@@ -258,7 +258,7 @@ export default function GameBoard() {
               }
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {gameState.foundation.map((pile, i) => (
               <div 
                 key={i} 
@@ -275,7 +275,7 @@ export default function GameBoard() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-2 min-h-[24rem]">
+        <div className="grid grid-cols-7 gap-1 min-h-[28rem]">
           {gameState.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -290,7 +290,7 @@ export default function GameBoard() {
                   <div 
                     key={`${card.suit}-${card.rank}-${cardIndex}`} 
                     className="absolute" 
-                    style={{ top: `${cardIndex * 1.75}rem` }}
+                    style={{ top: `${cardIndex * 2.25}rem` }}
                   >
                     <Card
                       card={card}

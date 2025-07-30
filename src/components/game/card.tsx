@@ -42,7 +42,7 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
     return (
       <div
         className={cn(
-          'w-20 h-28 rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
+          'w-24 h-36 rounded-lg bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
           ringClass,
           className
         )}
@@ -55,13 +55,13 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
       <div
         onClick={onClick}
         className={cn(
-          'w-20 h-28 rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
+          'w-24 h-36 rounded-lg bg-blue-700 border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
           ringClass,
           className
         )}
       >
-        <div className="w-full h-full rounded border-2 border-blue-900 bg-blue-800" />
+        <div className="w-full h-full rounded-md border-2 border-blue-900 bg-blue-800" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        'w-20 h-28 rounded-md bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
+        'w-24 h-36 rounded-lg bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
         ringClass,
         suitColorClass,
         className,
@@ -84,13 +84,13 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
       )}
     >
       <div className="flex justify-between items-start h-8">
-        <div className="text-3xl font-bold leading-none">{card.rank}</div>
+        <div className="text-4xl font-bold leading-none">{card.rank}</div>
       </div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-         <SuitIcon suit={card.suit} className="text-6xl" />
+         <SuitIcon suit={card.suit} className="text-7xl" />
       </div>
       <div className="flex justify-between items-end h-8 rotate-180">
-        <div className="text-3xl font-bold leading-none">{card.rank}</div>
+        <div className="text-4xl font-bold leading-none">{card.rank}</div>
       </div>
     </div>
   );
