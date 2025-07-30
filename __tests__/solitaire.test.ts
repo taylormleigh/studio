@@ -195,18 +195,31 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from tableau to foundation via click (auto-move)', () => {
       const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
       state.tableau[0] = [aceOfSpades];
+      state.foundation[0] = []; // Empty foundation for SPADES
       
       const sourcePile = state.tableau[0];
-      const destPile = state.foundation[0];
-      const card = sourcePile.pop();
+      const card = sourcePile[sourcePile.length-1];
+      
+      let destPileIndex = -1;
+      for (let i = 0; i < state.foundation.length; i++) {
+        const destPile = state.foundation[i];
+        if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
+            destPileIndex = i;
+            break;
+        }
+      }
 
-      if (card && canMoveToFoundation(card, destPile[destPile.length - 1])) {
-        destPile.push(card);
+      if (destPileIndex !== -1) {
+          const cardToMove = sourcePile.pop();
+          if (cardToMove) {
+            state.foundation[destPileIndex].push(cardToMove);
+          }
       }
 
       expect(state.tableau[0].length).toBe(0);
       expect(state.foundation[0].length).toBe(1);
       expect(state.foundation[0][0].rank).toBe('A');
+      expect(state.foundation[0][0].suit).toBe('SPADES');
     });
   });
 
@@ -239,3 +252,5 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+    

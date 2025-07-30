@@ -436,6 +436,20 @@ export default function GameBoard() {
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
+    if (selectedCard) {
+        if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
+            setSelectedCard(null); // Deselect if clicking the same card
+        } else {
+            // This is a move attempt. The specific pile handlers will manage the move.
+            if(sourceType === 'tableau') {
+                handleTableauClick(pileIndex, cardIndex);
+            } else if (sourceType === 'foundation') {
+                handleFoundationClick(pileIndex);
+            }
+        }
+        return;
+    }
+  
     // Auto-move to foundation logic
     if (settings.autoMove && !selectedCard) {
         let cardToMove: CardType | null = null;
@@ -461,43 +475,32 @@ export default function GameBoard() {
                 }
             }
         }
-        // If auto-move didn't happen, proceed to normal click logic
+    }
+    
+    // If not auto-moved, or auto-move is off, select the card
+    let card: CardType | null = null;
+    if (gameState.gameType === 'Solitaire') {
+      const gs = gameState as SolitaireGameState;
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
+      else if (sourceType === 'waste') card = gs.waste[cardIndex];
+      else if (sourceType === 'foundation') card = gs.foundation[pileIndex][cardIndex];
+    } else if (gameState.gameType === 'Freecell') {
+      const gs = gameState as FreecellGameState;
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
+      else if (sourceType === 'freecell') card = gs.freecells[pileIndex];
+    } else if (gameState.gameType === 'Spider') {
+      const gs = gameState as SpiderGameState;
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
     }
 
-    if (selectedCard) {
-      if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-        setSelectedCard(null);
-      } else {
-        // This is a move attempt to the clicked card's pile. The actual move is handled by pile click handlers.
-        // For example, if a card is selected and user clicks on a tableau pile, handleTableauClick is called.
-        // We clear selection here as the move will be processed.
-        setSelectedCard(null);
-      }
-    } else {
-      let card: CardType | null = null;
+    if (card?.faceUp) {
+      setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+    } else if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
       if (gameState.gameType === 'Solitaire') {
-        const gs = gameState as SolitaireGameState;
-        if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
-        else if (sourceType === 'waste') card = gs.waste[cardIndex];
-        else if (sourceType === 'foundation') card = gs.foundation[pileIndex][cardIndex];
-      } else if (gameState.gameType === 'Freecell') {
-        const gs = gameState as FreecellGameState;
-        if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
-        else if (sourceType === 'freecell') card = gs.freecells[pileIndex];
-      } else if (gameState.gameType === 'Spider') {
-        const gs = gameState as SpiderGameState;
-        if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
-      }
-
-      if (card?.faceUp) {
-        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
-      } else if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
-        if (gameState.gameType === 'Solitaire') {
-            const newGameState = JSON.parse(JSON.stringify(gameState));
-            newGameState.tableau[pileIndex][cardIndex].faceUp = true;
-            newGameState.moves++;
-            updateState(newGameState);
-        }
+          const newGameState = JSON.parse(JSON.stringify(gameState));
+          newGameState.tableau[pileIndex][cardIndex].faceUp = true;
+          newGameState.moves++;
+          updateState(newGameState);
       }
     }
   };
@@ -834,3 +837,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
