@@ -38,7 +38,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const storedSettings = localStorage.getItem('deck-of-cards-settings');
       if (storedSettings) {
-        setSettingsState(prev => ({...prev, ...JSON.parse(storedSettings)}));
+        const parsedSettings = JSON.parse(storedSettings);
+        setSettingsState(prev => ({...defaultSettings, ...parsedSettings}));
       }
     } catch (error) {
       console.error("Could not load settings from localStorage", error);

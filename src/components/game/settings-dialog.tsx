@@ -60,7 +60,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <SelectContent>
                 <SelectItem value="Solitaire">Solitaire</SelectItem>
                 <SelectItem value="Freecell">Freecell</SelectItem>
-                <SelectItem value="Spider" disabled>Spider (coming soon)</SelectItem>
+                <SelectItem value="Spider">Spider</SelectItem>
                 <SelectItem value="Pyramid" disabled>Pyramid (coming soon)</SelectItem>
               </SelectContent>
             </Select>
