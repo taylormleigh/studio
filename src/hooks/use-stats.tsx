@@ -11,7 +11,7 @@ export interface GameStats {
 }
 
 export type StatsState = {
-  [key in GameType]: GameStats;
+  [key in GameType]?: GameStats;
 };
 
 const defaultStats: StatsState = {
@@ -51,7 +51,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
 
   const updateStats = useCallback(({ gameType, stats: newStats }: { gameType: GameType; stats: Partial<GameStats> }) => {
     setStatsState(prev => {
-      const currentGameStats = prev[gameType];
+      const currentGameStats = prev[gameType] || { wins: 0, bestScore: -Infinity, bestTime: Infinity };
       const updatedGameStats: GameStats = {
         ...currentGameStats,
         wins: currentGameStats.wins + (newStats.wins || 0),

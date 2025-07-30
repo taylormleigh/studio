@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useStats } from '@/hooks/use-stats';
+import { useStats, GameStats } from '@/hooks/use-stats';
 import { useSettings } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,11 +20,17 @@ interface StatsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const emptyStats: GameStats = {
+  wins: 0,
+  bestScore: -Infinity,
+  bestTime: Infinity,
+}
+
 export function StatsDialog({ open, onOpenChange }: StatsDialogProps) {
   const { stats } = useStats();
   const { settings } = useSettings();
 
-  const gameStats = stats[settings.gameType];
+  const gameStats = stats[settings.gameType] || emptyStats;
 
   const formatTime = (seconds: number) => {
     if (seconds === Infinity || isNaN(seconds)) return "N/A";
