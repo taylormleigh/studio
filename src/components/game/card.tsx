@@ -45,6 +45,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
   if (!card) {
     return (
       <div
+        onClick={onClick}
         className={cn(
           cardSize,
           'rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
@@ -88,7 +89,8 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         ringClass,
         suitColorClass,
         className,
-        draggable && "cursor-grab"
+        draggable && "cursor-grab",
+        isSelected && "ring-2 ring-blue-500" // Re-add selection ring for debugging, will remove later
       )}
     >
       <div className="flex justify-start items-center h-auto">
