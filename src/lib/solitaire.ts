@@ -93,13 +93,18 @@ export function getCardColor(card: Card): 'red' | 'black' {
 
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
   if (!destinationCard) {
+    // Only a King can move to an empty tableau pile
     return cardToMove.rank === 'K';
   }
-  if (!destinationCard.faceUp) return false;
+  if (!destinationCard.faceUp) {
+    return false;
+  }
+
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   return !colorsMatch && ranksCorrect;
 }
+
 
 export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined, foundationPile: Pile): boolean {
     if (!topCard) {
