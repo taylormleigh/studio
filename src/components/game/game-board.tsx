@@ -38,10 +38,15 @@ export default function GameBoard() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
   const [isWon, setIsWon] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleNewGame = useCallback(() => {
     setGameState(createInitialState(settings.klondikeDrawCount));
@@ -52,18 +57,20 @@ export default function GameBoard() {
   }, [settings.klondikeDrawCount]);
   
   useEffect(() => {
-    handleNewGame();
-  }, [settings.gameType, settings.klondikeDrawCount, handleNewGame]);
+    if (isClient) {
+      handleNewGame();
+    }
+  }, [settings.gameType, settings.klondikeDrawCount, handleNewGame, isClient]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning && !isWon && gameState) {
+    if (isRunning && !isWon && gameState && isClient) {
       interval = setInterval(() => {
         setTime(prevTime => prevTime + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRunning, isWon, gameState]);
+  }, [isRunning, isWon, gameState, isClient]);
   
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
     if (saveHistory && gameState) {
@@ -195,14 +202,15 @@ export default function GameBoard() {
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
-    const card = sourceType === 'waste' 
-      ? gameState.waste[cardIndex]
+    const sourcePile = sourceType === 'waste' 
+      ? gameState.waste
       : sourceType === 'foundation'
-      ? gameState.foundation[pileIndex][cardIndex]
-      : gameState.tableau[pileIndex][cardIndex];
+      ? gameState.foundation[pileIndex]
+      : gameState.tableau[pileIndex];
 
-    if (!card || !card.faceUp) {
-        // if card is face down, flip it if it's the last one in a tableau pile
+    const card = sourcePile[cardIndex];
+
+    if (!card || (!card.faceUp && sourceType !== 'foundation')) {
         if(sourceType === 'tableau' && cardIndex === gameState.tableau[pileIndex].length - 1){
             const newGameState = JSON.parse(JSON.stringify(gameState));
             newGameState.tableau[pileIndex][cardIndex].faceUp = true;
@@ -212,26 +220,27 @@ export default function GameBoard() {
         return;
     }
     
-    // Auto-move logic
     if (settings.autoMove) {
         // Try moving to foundation first
         for (let i = 0; i < gameState.foundation.length; i++) {
           if (canMoveToFoundation(card, gameState.foundation[i][gameState.foundation[i].length - 1])) {
-            moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-            return;
+            if(sourcePile.length - 1 === cardIndex) {
+              moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+              return;
+            }
           }
         }
-         // Try moving to an empty foundation pile if it's an Ace
         if (card.rank === 'A') {
             for (let i = 0; i < gameState.foundation.length; i++) {
                 if (gameState.foundation[i].length === 0) {
-                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                    return;
+                    if(sourcePile.length - 1 === cardIndex) {
+                      moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                      return;
+                    }
                 }
             }
         }
         
-        // if not from foundation, try moving to tableau
         if (sourceType !== 'foundation') {
             for (let i = 0; i < gameState.tableau.length; i++) {
                 const destPile = gameState.tableau[i];
@@ -245,7 +254,7 @@ export default function GameBoard() {
     }
   }, [settings.autoMove, gameState, moveCards, updateState]);
 
-  if (!gameState) {
+  if (!isClient || !gameState) {
     return (
       <div className="flex flex-col min-h-screen">
         <GameHeader 
@@ -382,5 +391,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
