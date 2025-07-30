@@ -35,7 +35,7 @@ export function createDeck(): Card[] {
 }
 
 // Fisher-Yates shuffle
-function shuffle(array: any[]) {
+export function shuffleDeck(array: any[]) {
     let currentIndex = array.length,  randomIndex;
   
     // While there remain elements to shuffle.
@@ -51,12 +51,6 @@ function shuffle(array: any[]) {
     }
   
     return array;
-}
-
-export function shuffleDeck(deck: Card[]): Card[] {
-    const newDeck = [...deck];
-    shuffle(newDeck);
-    return newDeck;
 }
 
 export function createInitialState(drawCount: 1 | 3 = 1): GameState {
