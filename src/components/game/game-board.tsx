@@ -174,14 +174,14 @@ export default function GameBoard() {
 
       if (destType === 'tableau') {
           const destPile = newGameState.tableau[destPileIndex];
-          const destTopCard = destPile[destPile.length - 1];
+          const destTopCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
           if (canMoveSolitaireToTableau(cardToMove, destTopCard)) {
               const cardsToMove = sourcePile.splice(sourceCardIndex);
               destPile.push(...cardsToMove);
           } else return;
       } else { // destType === 'foundation'
           const destPile = newGameState.foundation[destPileIndex];
-          const topCard = destPile[destPile.length - 1];
+          const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
           if (sourceCardIndex === sourcePile.length - 1 && canMoveSolitaireToFoundation(cardToMove, topCard, destPile)) {
               const cardsToMove = sourcePile.splice(sourceCardIndex);
               destPile.push(...cardsToMove);
@@ -809,5 +809,7 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
 
     
