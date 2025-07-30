@@ -476,8 +476,10 @@ export default function GameBoard() {
         setSelectedCard(null);
       } else {
         // This is a move attempt to the clicked card's pile
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-        setSelectedCard(null);
+        if(selectedCard.type === 'tableau' || selectedCard.type === 'waste' || selectedCard.type === 'foundation'){
+            moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
+            setSelectedCard(null);
+        }
       }
     } else {
       // No card is selected, so select this one if it's a valid source
@@ -839,3 +841,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
