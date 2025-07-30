@@ -111,7 +111,6 @@ export default function GameBoard() {
             newSpiderState.tableau[index] = result.updatedPile;
             newSpiderState.foundation.push(result.completedSet);
             setsCompletedThisMove++;
-            newSpiderState.score += 100; // Bonus for completing a set
              if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
                 newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
              }
@@ -164,14 +163,14 @@ export default function GameBoard() {
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as SolitaireGameState;
       
-      let sourcePile: SolitairePile | undefined;
-      if (sourceType === 'tableau') sourcePile = newGameState.tableau[sourcePileIndex];
-      else if (sourceType === 'waste') sourcePile = newGameState.waste;
-      else if (sourceType === 'foundation') sourcePile = newGameState.foundation[sourcePileIndex];
+      let sourcePileRef: SolitairePile | undefined;
+      if (sourceType === 'tableau') sourcePileRef = newGameState.tableau[sourcePileIndex];
+      else if (sourceType === 'waste') sourcePileRef = newGameState.waste;
+      else if (sourceType === 'foundation') sourcePileRef = newGameState.foundation[sourcePileIndex];
       
-      if (!sourcePile) return;
+      if (!sourcePileRef) return;
 
-      const cardsToMove = sourcePile.slice(sourceCardIndex);
+      const cardsToMove = sourcePileRef.slice(sourceCardIndex);
       if (cardsToMove.length === 0) return;
       
       const cardToMove = cardsToMove[0];
@@ -182,7 +181,7 @@ export default function GameBoard() {
           const destTopCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
           
           if (canMoveSolitaireToTableau(cardToMove, destTopCard)) {
-              sourcePile.splice(sourceCardIndex);
+              sourcePileRef.splice(sourceCardIndex);
               destPile.push(...cardsToMove);
               moveSuccessful = true;
           }
@@ -192,15 +191,18 @@ export default function GameBoard() {
           const destTopCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
           
           if (canMoveSolitaireToFoundation(cardToMove, destTopCard, destPile)) {
-              sourcePile.splice(sourceCardIndex);
+              sourcePileRef.splice(sourceCardIndex);
               destPile.push(cardToMove);
               moveSuccessful = true;
           }
       }
 
       if (moveSuccessful) {
-        if (sourceType === 'tableau' && sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
-            sourcePile[sourcePile.length - 1].faceUp = true;
+        if (sourceType === 'tableau' && sourcePileRef.length > 0) {
+            const topCard = sourcePileRef[sourcePileRef.length - 1];
+            if (!topCard.faceUp) {
+                topCard.faceUp = true;
+            }
         }
         newGameState.moves += 1;
         updateState(newGameState);
