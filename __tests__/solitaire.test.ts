@@ -1,4 +1,5 @@
 
+
 import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS } from '../src/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
