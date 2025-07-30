@@ -86,7 +86,6 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       className={cn(
         cardSize,
         'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all duration-300 ease-in-out',
-        isSelected && 'ring-2 ring-blue-500',
         ringClass,
         suitColorClass,
         className,
@@ -111,5 +110,3 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     </div>
   );
 }
-
-    
