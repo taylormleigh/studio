@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Pile as SolitairePile, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
+import { GameState as PyramidGameState, createInitialState as createPyramidInitialState, isGameWon as isPyramidGameWon, canRemovePair, RANK_VALUES } from '@/lib/pyramid';
 import { Card } from './card';
 import GameHeader from './game-header';
 import { useToast } from '@/hooks/use-toast';
@@ -16,13 +17,20 @@ import { StatsDialog } from './stats-dialog';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type GameState = SolitaireGameState | FreecellGameState | SpiderGameState;
+type GameState = SolitaireGameState | FreecellGameState | SpiderGameState | PyramidGameState;
 
 type DraggingCardInfo = {
-  type: 'tableau' | 'waste' | 'foundation' | 'freecell';
+  type: 'tableau' | 'waste' | 'foundation' | 'freecell' | 'pyramid';
   pileIndex: number;
   cardIndex: number;
 };
+
+// For Pyramid
+type SelectedCard = {
+  type: 'pyramid' | 'waste';
+  index: number;
+} | null;
+
 
 const UNDO_LIMIT = 15;
 
@@ -42,6 +50,7 @@ export default function GameBoard() {
   const { updateStats } = useStats();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
+  const [selectedCard, setSelectedCard] = useState<SelectedCard>(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isWon, setIsWon] = useState(false);
@@ -59,12 +68,15 @@ export default function GameBoard() {
       newState = createSolitaireInitialState(settings.solitaireDrawCount);
     } else if (settings.gameType === 'Freecell') { 
       newState = createFreecellInitialState();
-    } else { // Spider
+    } else if (settings.gameType === 'Spider') {
       newState = createSpiderInitialState(settings.spiderSuits);
+    } else { // Pyramid
+      newState = createPyramidInitialState();
     }
 
     setGameState(newState);
     setHistory([]);
+    setSelectedCard(null);
     setTime(0);
     setIsRunning(true);
     setIsWon(false);
@@ -124,17 +136,22 @@ export default function GameBoard() {
       gameWon = isSpiderGameWon(newSpiderState);
       if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
       newState = newSpiderState;
+    } else if (settings.gameType === 'Pyramid' && newState.gameType === 'Pyramid') {
+      gameWon = isPyramidGameWon(newState);
+      if(gameWon) {
+        newState.score = 5000 - (newState.moves * 5) - Math.floor(time / 2);
+      }
     }
     
     if(gameWon) {
-        newState.score = finalScore;
+        if(finalScore > 0) newState.score = finalScore;
         setIsRunning(false);
         setIsWon(true);
         updateStats({
           gameType: settings.gameType,
           stats: {
             wins: 1,
-            bestScore: finalScore,
+            bestScore: newState.score,
             bestTime: time,
           }
         });
@@ -149,6 +166,7 @@ export default function GameBoard() {
       const [lastState, ...rest] = history;
       setGameState(lastState);
       setHistory(rest);
+      setSelectedCard(null);
     }
   };
 
@@ -292,6 +310,7 @@ export default function GameBoard() {
   
   const handleDraw = useCallback(() => {
     if (!gameState) return;
+    setSelectedCard(null);
 
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       const newGameState: SolitaireGameState = JSON.parse(JSON.stringify(gameState as SolitaireGameState));
@@ -335,6 +354,19 @@ export default function GameBoard() {
           updateState(newGameState);
         }
       }
+    } else if (settings.gameType === 'Pyramid' && gameState.gameType === 'Pyramid') {
+      const newGameState = JSON.parse(JSON.stringify(gameState)) as PyramidGameState;
+      if(newGameState.stock.length > 0) {
+        const card = newGameState.stock.pop()!;
+        card.faceUp = true;
+        newGameState.waste.push(card);
+      } else if (newGameState.waste.length > 0 && newGameState.recycles > 0) {
+        newGameState.stock = newGameState.waste.reverse().map(c => ({...c, faceUp: false}));
+        newGameState.waste = [];
+        newGameState.recycles--;
+      }
+      newGameState.moves++;
+      updateState(newGameState);
     }
   }, [gameState, updateState, settings.gameType, toast]);
     
@@ -356,9 +388,77 @@ export default function GameBoard() {
     const info: DraggingCardInfo = JSON.parse(infoJSON);
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
+
+  const handlePyramidCardClick = useCallback((type: 'pyramid' | 'waste', index: number) => {
+    if (gameState?.gameType !== 'Pyramid') return;
+    const gs = gameState as PyramidGameState;
+    const newGameState = JSON.parse(JSON.stringify(gs));
+
+    const card = type === 'pyramid' ? gs.pyramid[index] : gs.waste[index];
+    if (!card || !card.faceUp) return;
+
+    // Check if card is playable (not covered)
+    if(type === 'pyramid') {
+        const row = Math.floor((Math.sqrt(8 * index + 1) - 1) / 2);
+        const children = [index + row + 1, index + row + 2];
+        const isCovered = children.some(childIndex => childIndex < 28 && newGameState.pyramid[childIndex]);
+        if(isCovered) {
+          toast({ variant: 'destructive', title: 'Invalid Move', description: 'This card is covered.' });
+          return;
+        }
+    }
+
+    if (RANK_VALUES[card.rank] === 13) { // King
+        if (type === 'pyramid') newGameState.pyramid[index] = null;
+        else newGameState.waste.splice(index, 1);
+        
+        newGameState.moves++;
+        newGameState.score += 5;
+        updateState(newGameState);
+        setSelectedCard(null);
+    } else if (selectedCard) {
+        const firstCard = selectedCard.type === 'pyramid' 
+          ? gs.pyramid[selectedCard.index]
+          : gs.waste[selectedCard.index];
+        
+        if (!firstCard) {
+          setSelectedCard(null);
+          return;
+        }
+
+        if(canRemovePair(firstCard, card)) {
+            if (selectedCard.type === 'pyramid') newGameState.pyramid[selectedCard.index] = null;
+            else newGameState.waste.splice(selectedCard.index, 1);
+
+            if (type === 'pyramid') newGameState.pyramid[index] = null;
+            else {
+              // Adjust index if waste card was removed before it
+              const originalWasteIndex = index;
+              const selectedWasteIndex = selectedCard.type === 'waste' ? selectedCard.index : -1;
+              const adjustedIndex = selectedWasteIndex !== -1 && originalWasteIndex > selectedWasteIndex ? originalWasteIndex - 1 : originalWasteIndex;
+              newGameState.waste.splice(adjustedIndex, 1);
+            }
+            newGameState.moves++;
+            newGameState.score += 5;
+            updateState(newGameState);
+            setSelectedCard(null);
+        } else {
+            setSelectedCard({ type, index });
+        }
+    } else {
+        setSelectedCard({ type, index });
+    }
+  }, [gameState, selectedCard, updateState, toast]);
   
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
+
+    if (settings.gameType === 'Pyramid') {
+      if(sourceType === 'pyramid' || sourceType === 'waste') {
+         handlePyramidCardClick(sourceType, sourceType === 'pyramid' ? pileIndex : cardIndex);
+      }
+      return;
+    }
 
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
@@ -497,7 +597,7 @@ export default function GameBoard() {
         }
       }
     }
-  }, [settings.autoMove, gameState, moveCards, updateState, settings.gameType]);
+  }, [settings.autoMove, gameState, moveCards, updateState, settings.gameType, handlePyramidCardClick]);
 
   const renderLoader = () => (
     <>
@@ -766,6 +866,90 @@ export default function GameBoard() {
       </>
     );
   };
+  
+  const renderPyramid = () => {
+    if (gameState.gameType !== 'Pyramid') return null;
+    const gs = gameState as PyramidGameState;
+    
+    // Calculate layout parameters dynamically
+    const cardAspectRatio = 7/10;
+    const pyramidWidth = '95%';
+    const cardMaxWidth = 96;
+
+    let row = 0;
+    let indexInRow = 0;
+    let cardIndex = 0;
+
+    const pyramidCards: JSX.Element[] = [];
+    while(cardIndex < gs.pyramid.length) {
+      const card = gs.pyramid[cardIndex];
+      const isSelected = selectedCard?.type === 'pyramid' && selectedCard.index === cardIndex;
+      
+      const cardWidth = `min(100% / ${row + 1}, ${cardMaxWidth}px)`;
+
+      pyramidCards.push(
+        <div
+          key={`pyramid-${cardIndex}`}
+          className="absolute"
+          style={{
+            width: `calc(${cardWidth} - 4px)`,
+            left: `calc(${pyramidWidth} * ${indexInRow / (row + 1)} + (${pyramidWidth} * (1 / (${row + 1} * 2))))`,
+            top: `calc(${cardWidth} * ${cardAspectRatio} * ${row * 0.5})`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <Card
+            card={card || undefined}
+            isSelected={isSelected}
+            onClick={() => handleCardClick('pyramid', cardIndex, 0)}
+          />
+        </div>
+      );
+      
+      cardIndex++;
+      indexInRow++;
+      if (indexInRow > row) {
+        row++;
+        indexInRow = 0;
+      }
+    }
+
+    return (
+      <>
+        <div className="flex justify-between items-start mb-4">
+            {/* Left side: Stock and Waste */}
+            <div className="flex gap-4 w-1/2">
+                <div onClick={handleDraw} className="cursor-pointer">
+                    <Card card={gs.stock.length > 0 ? { ...gs.stock[gs.stock.length - 1], faceUp: false } : undefined} />
+                </div>
+                <div>
+                  {gs.waste.length > 0 ? (
+                      <Card
+                          card={gs.waste[gs.waste.length - 1]}
+                          isSelected={selectedCard?.type === 'waste' && selectedCard.index === gs.waste.length - 1}
+                          onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
+                      />
+                  ) : <Card />}
+                </div>
+            </div>
+             {/* Right side: Recycles left */}
+            <div className="text-right">
+                <p className="text-muted-foreground">{`Recycles: ${gs.recycles}`}</p>
+            </div>
+        </div>
+        <div 
+          className="relative mx-auto"
+          style={{ 
+            width: pyramidWidth, 
+            height: `calc(min(100vw / 7, ${cardMaxWidth}px) * ${cardAspectRatio} * 4)`
+          }}
+        >
+          {pyramidCards}
+        </div>
+      </>
+    );
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -780,9 +964,10 @@ export default function GameBoard() {
         {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
+        {settings.gameType === 'Pyramid' && gameState.gameType === 'Pyramid' && renderPyramid()}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
-          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}</span>
+          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon || gameState.gameType === 'Spider' || gameState.gameType === 'Pyramid' ? gameState.score : 'N/A'}`}</span>
         </div>
       <AlertDialog open={isWon}>
         <AlertDialogContent>
