@@ -40,3 +40,5 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
     </header>
   );
 }
+
+    

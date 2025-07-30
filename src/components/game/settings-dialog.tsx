@@ -157,3 +157,5 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     </Dialog>
   );
 }
+
+    

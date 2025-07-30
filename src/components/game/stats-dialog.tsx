@@ -81,3 +81,5 @@ export function StatsDialog({ open, onOpenChange }: StatsDialogProps) {
     </Dialog>
   );
 }
+
+    

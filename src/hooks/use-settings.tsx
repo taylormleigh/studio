@@ -4,12 +4,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
 export type GameType = 'Solitaire' | 'Freecell' | 'Spider' | 'Pyramid';
-export type KlondikeDrawType = 1 | 3;
+export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
 
 export interface GameSettings {
   gameType: GameType;
-  klondikeDrawCount: KlondikeDrawType;
+  solitaireDrawCount: SolitaireDrawType;
   spiderSuits: SpiderSuitCount;
   leftHandMode: boolean;
   autoMove: boolean;
@@ -17,7 +17,7 @@ export interface GameSettings {
 
 const defaultSettings: GameSettings = {
   gameType: 'Solitaire',
-  klondikeDrawCount: 1,
+  solitaireDrawCount: 1,
   spiderSuits: 2,
   leftHandMode: false,
   autoMove: true,
@@ -81,3 +81,5 @@ export function useSettings() {
   }
   return context;
 }
+
+    
