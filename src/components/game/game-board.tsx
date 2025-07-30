@@ -183,20 +183,16 @@ export default function GameBoard() {
   
         const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
         let cardsToMove: CardType[];
-        let sourcePileRef: CardType[] | undefined;
-
+        
         if (sourceType === 'waste') {
             if (newGameState.waste.length === 0) return prev;
             cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
-            sourcePileRef = newGameState.waste;
         } else if (sourceType === 'foundation') {
             if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
             cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
-            sourcePileRef = newGameState.foundation[sourcePileIndex];
         } else { // tableau
             if (newGameState.tableau[sourcePileIndex].length === 0 || sourceCardIndex >= newGameState.tableau[sourcePileIndex].length) return prev;
             cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
-            sourcePileRef = newGameState.tableau[sourcePileIndex];
         }
 
         if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
@@ -411,11 +407,9 @@ export default function GameBoard() {
 
   const handleTableauClick = (pileIndex: number, cardIndex?: number) => {
     if (selectedCard) {
-      // A card is selected, this click is a move attempt.
       moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
       setSelectedCard(null);
     } else if (cardIndex !== undefined) {
-      // No card is selected, this click is a selection attempt.
       handleCardClick('tableau', pileIndex, cardIndex);
     }
   };
@@ -439,11 +433,10 @@ export default function GameBoard() {
     }
   }
 
-
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
-    // Auto-move logic
+    // Auto-move to foundation logic
     if (settings.autoMove && !selectedCard) {
         let cardToMove: CardType | null = null;
         let sourcePile: CardType[] | null = null;
@@ -452,42 +445,35 @@ export default function GameBoard() {
             const gs = gameState as SolitaireGameState;
             if (sourceType === 'tableau') sourcePile = gs.tableau[pileIndex];
             else if (sourceType === 'waste') sourcePile = gs.waste;
-            else if (sourceType === 'foundation') sourcePile = gs.foundation[pileIndex];
+            // No auto-move from foundation
             
             if (sourcePile && cardIndex === sourcePile.length - 1) {
                 cardToMove = sourcePile[cardIndex];
             }
-        }
-        
-        if (cardToMove) {
-            if (gameState.gameType === 'Solitaire') {
-                const gs = gameState as SolitaireGameState;
+
+            if (cardToMove) {
                  for (let i = 0; i < gs.foundation.length; i++) {
                     const destTopCard = gs.foundation[i][gs.foundation[i].length - 1];
                     if (canMoveSolitaireToFoundation(cardToMove, destTopCard)) {
                         moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                        setSelectedCard(null);
-                        return;
+                        return; // Move complete, exit function
                     }
                 }
             }
         }
+        // If auto-move didn't happen, proceed to normal click logic
     }
 
-
-    // Manual move logic (select/deselect or move)
     if (selectedCard) {
       if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-        // Deselect if clicking the same card
         setSelectedCard(null);
       } else {
-        // A card is already selected, so this is a move attempt.
-        // The actual move is handled by the pile click handlers (handleTableauClick, handleFoundationClick, etc.)
-        // We just need to clear the selection.
-        // This part of the logic is complex and was causing bugs. The move is now handled in the destination click handler.
+        // This is a move attempt to the clicked card's pile. The actual move is handled by pile click handlers.
+        // For example, if a card is selected and user clicks on a tableau pile, handleTableauClick is called.
+        // We clear selection here as the move will be processed.
+        setSelectedCard(null);
       }
     } else {
-      // No card is selected, so select this one if it's a valid source
       let card: CardType | null = null;
       if (gameState.gameType === 'Solitaire') {
         const gs = gameState as SolitaireGameState;
@@ -506,7 +492,6 @@ export default function GameBoard() {
       if (card?.faceUp) {
         setSelectedCard({ type: sourceType, pileIndex, cardIndex });
       } else if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
-        // Flip face-down card at the top of a tableau pile in Solitaire
         if (gameState.gameType === 'Solitaire') {
             const newGameState = JSON.parse(JSON.stringify(gameState));
             newGameState.tableau[pileIndex][cardIndex].faceUp = true;
@@ -583,8 +568,8 @@ export default function GameBoard() {
                 isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
                 isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
                 draggable={pile.length > 0}
-                onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                 onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
+                onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                 onClick={() => pile.length > 0 ? handleCardClick('foundation', i, pile.length-1) : handleFoundationClick(i)}
               />
             </div>
           ))}
@@ -626,7 +611,7 @@ export default function GameBoard() {
                             isStacked={card.faceUp && !isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                             onClick={(e) => {
-                              e.stopPropagation(); // Prevent the parent div's click handler from firing
+                              e.stopPropagation(); 
                               handleTableauClick(pileIndex, cardIndex);
                             }}
                           />
@@ -682,8 +667,8 @@ export default function GameBoard() {
                 isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
                 isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
                 draggable={pile.length > 0}
-                onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                 onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
+                onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                 onClick={() => pile.length > 0 ? handleCardClick('foundation', i, pile.length-1) : handleFoundationClick(i)}
               />
             </div>
           ))}
@@ -849,5 +834,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    

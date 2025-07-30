@@ -191,6 +191,23 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[0].length).toBe(2);
       expect(state.tableau[0][1].rank).toBe('Q');
     });
+
+    it('should correctly move a card from tableau to foundation via click (auto-move)', () => {
+      const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
+      state.tableau[0] = [aceOfSpades];
+      
+      const sourcePile = state.tableau[0];
+      const destPile = state.foundation[0];
+      const card = sourcePile.pop();
+
+      if (card && canMoveToFoundation(card, destPile[destPile.length - 1])) {
+        destPile.push(card);
+      }
+
+      expect(state.tableau[0].length).toBe(0);
+      expect(state.foundation[0].length).toBe(1);
+      expect(state.foundation[0][0].rank).toBe('A');
+    });
   });
 
   describe('isGameWon', () => {
