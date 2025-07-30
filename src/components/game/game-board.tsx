@@ -436,50 +436,6 @@ export default function GameBoard() {
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
-    // If clicking the same card that is already selected, deselect it.
-    if (selectedCard && selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-        setSelectedCard(null);
-        return;
-    }
-
-    // If another card is already selected, this click is a move attempt.
-    if (selectedCard) {
-        if (sourceType === 'tableau') {
-            handleTableauClick(pileIndex, cardIndex);
-        } else if (sourceType === 'foundation') {
-            handleFoundationClick(pileIndex);
-        }
-        // After attempting a move, always deselect.
-        setSelectedCard(null);
-        return;
-    }
-  
-    // Auto-move to foundation logic for Solitaire (if enabled)
-    if (settings.autoMove && !selectedCard && gameState.gameType === 'Solitaire') {
-        const gs = gameState as SolitaireGameState;
-        let cardToMove: CardType | null = null;
-        let sourcePile: CardType[] | null = null;
-
-        if (sourceType === 'tableau') sourcePile = gs.tableau[pileIndex];
-        else if (sourceType === 'waste') sourcePile = gs.waste;
-        // No auto-move from foundation
-        
-        if (sourcePile && cardIndex === sourcePile.length - 1) {
-            cardToMove = sourcePile[cardIndex];
-        }
-
-        if (cardToMove) {
-              for (let i = 0; i < gs.foundation.length; i++) {
-                const destTopCard = gs.foundation[i].length > 0 ? gs.foundation[i][gs.foundation[i].length - 1] : undefined;
-                if (canMoveSolitaireToFoundation(cardToMove, destTopCard)) {
-                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                    return; // Move complete, exit function
-                }
-            }
-        }
-    }
-    
-    // If no card is selected, and it wasn't an auto-move, select the card.
     let card: CardType | null = null;
     if (gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
@@ -495,15 +451,47 @@ export default function GameBoard() {
       if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
     }
 
-    if (card?.faceUp) {
-      setSelectedCard({ type: sourceType, pileIndex, cardIndex });
-    } else if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
-      if (gameState.gameType === 'Solitaire') {
-          const newGameState = JSON.parse(JSON.stringify(gameState));
-          newGameState.tableau[pileIndex][cardIndex].faceUp = true;
-          newGameState.moves++;
-          updateState(newGameState);
+    if (!card || !card.faceUp) {
+      if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
+        if (gameState.gameType === 'Solitaire') {
+            const newGameState = JSON.parse(JSON.stringify(gameState));
+            newGameState.tableau[pileIndex][cardIndex].faceUp = true;
+            newGameState.moves++;
+            updateState(newGameState);
+        }
       }
+      return;
+    }
+
+    if (settings.autoMove && gameState.gameType === 'Solitaire') {
+        const gs = gameState as SolitaireGameState;
+        // Prioritize moving to foundation
+        for (let i = 0; i < gs.foundation.length; i++) {
+            const destTopCard = gs.foundation[i].length > 0 ? gs.foundation[i][gs.foundation[i].length - 1] : undefined;
+            if (canMoveSolitaireToFoundation(card, destTopCard)) {
+                moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                return; // Move complete, exit function
+            }
+        }
+        // If no foundation move is possible, it will do nothing, as per standard auto-move behavior.
+    }
+
+    // Default behavior for manual drag mode or if auto-move is not possible
+    if (selectedCard && selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
+        setSelectedCard(null); // Deselect if clicking the same card
+    } else if (selectedCard) {
+        // If another card is selected, try to move
+        if (sourceType === 'tableau') {
+          handleTableauClick(pileIndex, cardIndex);
+        } else if (sourceType === 'foundation') {
+          handleFoundationClick(pileIndex);
+        } else if (sourceType === 'freecell') {
+          handleFreecellClick(pileIndex);
+        }
+        setSelectedCard(null); // Always deselect after a move attempt
+    } else {
+        // If no card is selected, select this one
+        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }
   };
 

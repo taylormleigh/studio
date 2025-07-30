@@ -195,7 +195,9 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from tableau to foundation via click (auto-move)', () => {
       const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
       state.tableau[0] = [aceOfSpades];
-      state.foundation[0] = []; // Empty foundation for SPADES
+      // Manually find the correct foundation pile for Spades
+      const spadeFoundationIndex = SUITS.indexOf('SPADES');
+      state.foundation[spadeFoundationIndex] = [];
       
       const sourcePile = state.tableau[0];
       const card = sourcePile[sourcePile.length-1];
@@ -204,8 +206,16 @@ describe('Solitaire Game Logic', () => {
       for (let i = 0; i < state.foundation.length; i++) {
         const destPile = state.foundation[i];
         if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
-            destPileIndex = i;
-            break;
+            // Check if the suit matches if the foundation is not empty
+            if (destPile.length > 0 && destPile[0].suit === card.suit) {
+              destPileIndex = i;
+              break;
+            }
+            // If foundation is empty, it's a valid move for an Ace
+            if (destPile.length === 0) {
+              destPileIndex = i;
+              break;
+            }
         }
       }
 
@@ -217,9 +227,9 @@ describe('Solitaire Game Logic', () => {
       }
 
       expect(state.tableau[0].length).toBe(0);
-      expect(state.foundation[0].length).toBe(1);
-      expect(state.foundation[0][0].rank).toBe('A');
-      expect(state.foundation[0][0].suit).toBe('SPADES');
+      expect(state.foundation[spadeFoundationIndex].length).toBe(1);
+      expect(state.foundation[spadeFoundationIndex][0].rank).toBe('A');
+      expect(state.foundation[spadeFoundationIndex][0].suit).toBe('SPADES');
     });
   });
 
@@ -252,5 +262,3 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
-
-    
