@@ -411,9 +411,10 @@ export default function GameBoard() {
   const renderSolitaire = () => {
     if (gameState.gameType !== 'Solitaire') return null;
     const gs = gameState as SolitaireGameState;
+    const gridCols = 'grid-cols-7';
     return (
       <>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
+        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
           <div onClick={handleDraw} className="cursor-pointer">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
@@ -443,7 +444,7 @@ export default function GameBoard() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
+        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -456,6 +457,7 @@ export default function GameBoard() {
                   <Card />
                 ) : (
                   pile.map((card, cardIndex) => {
+                    const isTopCard = cardIndex === pile.length - 1;
                     const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 1.6 : 0.5), 0);
                     return (
                       <div 
@@ -466,6 +468,7 @@ export default function GameBoard() {
                         <Card
                           card={card}
                           draggable={card.faceUp}
+                          isStacked={card.faceUp && !isTopCard}
                           onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
                         />
@@ -484,9 +487,10 @@ export default function GameBoard() {
   const renderFreecell = () => {
     if (gameState.gameType !== 'Freecell') return null;
     const gs = gameState as FreecellGameState;
+    const gridCols = 'grid-cols-8';
     return (
       <>
-         <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
+         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
           {/* Freecells */}
           {gs.freecells.map((card, i) => (
             <div 
@@ -519,7 +523,7 @@ export default function GameBoard() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
+        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -531,20 +535,24 @@ export default function GameBoard() {
                 {pile.length === 0 ? (
                   <Card />
                 ) : (
-                  pile.map((card, cardIndex) => (
-                    <div 
-                      key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                      className="absolute w-full"
-                      style={{ top: `${cardIndex * 1.6}rem` }}
-                    >
-                      <Card
-                        card={card}
-                        draggable={true}
-                        onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                        onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                      />
-                    </div>
-                  ))
+                  pile.map((card, cardIndex) => {
+                    const isTopCard = cardIndex === pile.length - 1;
+                    return(
+                      <div 
+                        key={`${card.suit}-${card.rank}-${cardIndex}`} 
+                        className="absolute w-full"
+                        style={{ top: `${cardIndex * 1.6}rem` }}
+                      >
+                        <Card
+                          card={card}
+                          draggable={true}
+                          isStacked={!isTopCard}
+                          onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                          onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
+                        />
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </div>

@@ -8,6 +8,7 @@ import React from 'react';
 type CardProps = {
   card?: CardType;
   isSelected?: boolean;
+  isStacked?: boolean; // New prop to indicate if card is not on top
   className?: string;
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -31,7 +32,7 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
 }
 
 
-export function Card({ card, isSelected, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
+export function Card({ card, isSelected, isStacked, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
   const ringClass = isSelected 
     ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500'
     : '';
@@ -80,22 +81,28 @@ export function Card({ card, isSelected, className, onClick, draggable, onDragSt
       onDragEnd={onDragEnd}
       className={cn(
         cardSize,
-        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all',
+        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all overflow-hidden',
         ringClass,
         suitColorClass,
         className,
         draggable && "cursor-grab"
       )}
     >
-      <div className="flex justify-start items-start h-[25%]">
+      <div className="flex justify-start items-center h-auto">
         <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
+        {isStacked && <SuitIcon suit={card.suit} className="text-xl sm:text-2xl md:text-3xl ml-1" />}
       </div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-         <SuitIcon suit={card.suit} className="text-4xl sm:text-5xl md:text-6xl" />
-      </div>
-      <div className="flex justify-start items-end h-[25%] rotate-180">
-        <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
-      </div>
+
+      {!isStacked && (
+          <>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <SuitIcon suit={card.suit} className="text-4xl sm:text-5xl md:text-6xl" />
+            </div>
+            <div className="flex justify-start items-end h-[25%] rotate-180">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
+            </div>
+         </>
+      )}
     </div>
   );
 }
