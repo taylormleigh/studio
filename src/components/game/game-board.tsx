@@ -172,9 +172,7 @@ export default function GameBoard() {
     destType: 'tableau' | 'foundation' | 'freecell',
     destPileIndex: number,
   ) => {
-    if (!gameState) return;
-    
-    if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
+    if (settings.gameType === 'Solitaire') {
       setGameState(prev => {
           if (!prev || prev.gameType !== 'Solitaire') return prev;
   
@@ -229,13 +227,13 @@ export default function GameBoard() {
               }
               newGameState.moves++;
               updateState(newGameState, true);
-              setHighlightedPile({ type: destType, pileIndex: destPileIndex });
+              setHighlightedPile({ type: destType as 'tableau' | 'foundation', pileIndex: destPileIndex });
               return null; // Let updateState handle the re-render
           }
   
           return prev;
       });
-    } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
+    } else if (settings.gameType === 'Freecell' && gameState?.gameType === 'Freecell') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as FreecellGameState;
       let cardToMove: CardType;
       let cardsToMove: CardType[];
@@ -302,7 +300,7 @@ export default function GameBoard() {
       newGameState.moves++;
       updateState(newGameState);
       setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-    } else if (settings.gameType === 'Spider' && gameState.gameType === 'Spider') {
+    } else if (settings.gameType === 'Spider' && gameState?.gameType === 'Spider') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
       
       if (sourceType !== 'tableau' || destType !== 'tableau') return;
@@ -329,7 +327,7 @@ export default function GameBoard() {
         setHighlightedPile({ type: destType, pileIndex: destPileIndex });
       }
     }
-  }, [gameState, updateState, settings.gameType, toast]);
+  }, [settings.gameType, updateState, toast, gameState]);
   
   const handleDraw = useCallback(() => {
     if (!gameState) return;
@@ -857,3 +855,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
