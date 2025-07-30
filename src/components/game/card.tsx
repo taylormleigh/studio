@@ -17,7 +17,7 @@ type CardProps = {
 
 // Using Unicode characters for a classic, high-contrast look
 const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
-  const isRed = suit === 'HEARTS' || 'DIAMONDS';
+  const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
   const colorClass = isRed ? 'text-red-600' : 'text-black';
 
   const icons = {
@@ -53,6 +53,7 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
   if (!card.faceUp) {
     return (
       <div
+        onClick={onClick}
         className={cn(
           'w-20 h-28 rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
@@ -82,16 +83,14 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
         draggable && "cursor-grab"
       )}
     >
-      <div className="h-8">
-        <div className="text-2xl font-bold leading-none text-left">{card.rank}</div>
-        <SuitIcon suit={card.suit} className="text-xl leading-none" />
+      <div className="flex justify-between items-start h-8">
+        <div className="text-3xl font-bold leading-none">{card.rank}</div>
       </div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-         <SuitIcon suit={card.suit} className="text-5xl opacity-80" />
+         <SuitIcon suit={card.suit} className="text-6xl" />
       </div>
-      <div className="h-8 rotate-180">
-        <div className="text-2xl font-bold leading-none text-left">{card.rank}</div>
-        <SuitIcon suit={card.suit} className="text-xl leading-none" />
+      <div className="flex justify-between items-end h-8 rotate-180">
+        <div className="text-3xl font-bold leading-none">{card.rank}</div>
       </div>
     </div>
   );
