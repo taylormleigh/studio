@@ -98,7 +98,7 @@ export function Card({ card, isSelected, isStacked, className, onClick, draggabl
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <SuitIcon suit={card.suit} className="text-4xl sm:text-5xl md:text-6xl" />
             </div>
-            <div className="flex justify-start items-end h-[25%] rotate-180">
+            <div className="hidden sm:flex justify-start items-end h-[25%] rotate-180">
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
             </div>
          </>
