@@ -187,8 +187,8 @@ export default function GameBoard() {
     updateState(newGameState);
   };
 
-  const handleCardClick = useCallback((sourceType: 'tableau' | 'waste', pileIndex: number, cardIndex: number) => {
-    if (!settings.autoMove) return;
+  const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => {
+    if (!settings.autoMove && sourceType !== 'foundation') return;
 
     let card: CardType | undefined;
     let sourcePile: Pile;
@@ -196,18 +196,35 @@ export default function GameBoard() {
     if (sourceType === 'waste') {
       sourcePile = gameState.waste;
       card = sourcePile[sourcePile.length - 1];
-    } else { // tableau
+    } else if (sourceType === 'foundation') {
+      sourcePile = gameState.foundation[pileIndex];
+      card = sourcePile[sourcePile.length - 1];
+    }
+    else { // tableau
       sourcePile = gameState.tableau[pileIndex];
       card = sourcePile[sourcePile.length - 1];
     }
 
     if (!card || !card.faceUp) return;
 
+    // Try moving to foundation first
     for (let i = 0; i < gameState.foundation.length; i++) {
       if (canMoveToFoundation(card, gameState.foundation[i])) {
-        moveCards(sourceType, pileIndex, sourcePile.length - 1, 'foundation', i);
+        moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
         return;
       }
+    }
+    
+    // if not from foundation, try moving to tableau
+    if (sourceType !== 'foundation') {
+        for (let i = 0; i < gameState.tableau.length; i++) {
+            const destPile = gameState.tableau[i];
+            const destTopCard = destPile[destPile.length - 1];
+            if (canMoveToTableau(card, destTopCard)) {
+                moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
+                return;
+            }
+        }
     }
   }, [settings.autoMove, gameState, moveCards]);
 
@@ -224,24 +241,24 @@ export default function GameBoard() {
         onSettings={() => setIsSettingsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow space-y-8">
+      <main className="flex-grow space-y-4">
         <div className={cn("flex justify-between", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <div onClick={handleDraw} className="cursor-pointer">
               <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} />
             </div>
             <div>
-              {gameState.waste.length > 0 &&
+              {gameState.waste.length > 0 ?
                 <Card 
                   card={gameState.waste[gameState.waste.length - 1]} 
                   draggable={true}
                   onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                   onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
-                />
+                /> : <Card />
               }
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             {gameState.foundation.map((pile, i) => (
               <div 
                 key={i} 
@@ -252,12 +269,13 @@ export default function GameBoard() {
                   card={pile[pile.length - 1]} 
                   draggable={pile.length > 0}
                   onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                   onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
                 />
               </div>
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-4 min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-2 min-h-[24rem]">
           {gameState.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -272,7 +290,7 @@ export default function GameBoard() {
                   <div 
                     key={`${card.suit}-${card.rank}-${cardIndex}`} 
                     className="absolute" 
-                    style={{ top: `${cardIndex * 2}rem` }}
+                    style={{ top: `${cardIndex * 1.75}rem` }}
                   >
                     <Card
                       card={card}

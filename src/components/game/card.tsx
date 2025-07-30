@@ -17,7 +17,7 @@ type CardProps = {
 
 // Using Unicode characters for a classic, high-contrast look
 const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
-  const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
+  const isRed = suit === 'HEARTS' || 'DIAMONDS';
   const colorClass = isRed ? 'text-red-600' : 'text-black';
 
   const icons = {
@@ -42,7 +42,7 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
     return (
       <div
         className={cn(
-          'w-24 h-36 rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
+          'w-20 h-28 rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
           ringClass,
           className
         )}
@@ -54,7 +54,7 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
     return (
       <div
         className={cn(
-          'w-24 h-36 rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
+          'w-20 h-28 rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
           ringClass,
           className
@@ -75,23 +75,23 @@ export function Card({ card, isSelected, isHinted, className, onClick, draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        'w-24 h-36 rounded-md bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
+        'w-20 h-28 rounded-md bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
         ringClass,
         suitColorClass,
         className,
         draggable && "cursor-grab"
       )}
     >
-      <div className="h-6">
-        <div className="text-xl font-bold leading-none text-left">{card.rank}</div>
-        <SuitIcon suit={card.suit} className="text-lg leading-none" />
+      <div className="h-8">
+        <div className="text-2xl font-bold leading-none text-left">{card.rank}</div>
+        <SuitIcon suit={card.suit} className="text-xl leading-none" />
       </div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-         <SuitIcon suit={card.suit} className="text-6xl opacity-90" />
+         <SuitIcon suit={card.suit} className="text-5xl opacity-80" />
       </div>
-      <div className="h-6 rotate-180">
-        <div className="text-xl font-bold leading-none text-left">{card.rank}</div>
-        <SuitIcon suit={card.suit} className="text-lg leading-none" />
+      <div className="h-8 rotate-180">
+        <div className="text-2xl font-bold leading-none text-left">{card.rank}</div>
+        <SuitIcon suit={card.suit} className="text-xl leading-none" />
       </div>
     </div>
   );
