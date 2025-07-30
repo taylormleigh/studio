@@ -705,7 +705,7 @@ export default function GameBoard() {
     const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
     return (
       <>
-        <div className={`grid ${gridCols} gap-x-2 mb-4`}>
+        <div className={`grid ${gridCols} mb-4`}>
           {/* Stock pile */}
           <div onClick={handleDraw} className="cursor-pointer">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
@@ -716,7 +716,7 @@ export default function GameBoard() {
           {/* Placeholder for completed sets, maybe show grayed out cards */}
           <div/>
         </div>
-        <div className={`grid ${gridCols} gap-x-2 min-h-[28rem]`}>
+        <div className={`grid ${gridCols} min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -806,3 +806,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
