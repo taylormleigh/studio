@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
-export type GameType = 'Solitaire' | 'Freecell' | 'Spider' | 'Pyramid';
+export type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
 

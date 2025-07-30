@@ -18,7 +18,6 @@ const defaultStats: StatsState = {
   Solitaire: { wins: 0, bestScore: -Infinity, bestTime: Infinity },
   Freecell: { wins: 0, bestScore: -Infinity, bestTime: Infinity },
   Spider: { wins: 0, bestScore: -Infinity, bestTime: Infinity },
-  Pyramid: { wins: 0, bestScore: -Infinity, bestTime: Infinity },
 };
 
 interface StatsContextType {
