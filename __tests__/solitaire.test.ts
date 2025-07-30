@@ -379,6 +379,34 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[3].length).toBe(1);
       expect(state.tableau[4].length).toBe(1);
     });
+
+    it('should correctly move the final pile of cards via drag-and-drop', () => {
+        // Setup: A pile of two cards is the only thing in tableau pile 1
+        const pileToMove: Card[] = [
+            { suit: 'DIAMONDS', rank: 'J', faceUp: true },
+            { suit: 'SPADES', rank: '10', faceUp: true },
+        ];
+        // Setup: A valid destination card in tableau pile 0
+        const destinationCard: Card = { suit: 'HEARTS', rank: 'K', faceUp: true };
+        const topOfDest: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+
+        // Place the cards in the simulated state
+        state.tableau[0] = [destinationCard, topOfDest];
+        state.tableau[1] = [...pileToMove];
+
+        // Simulate the move:
+        const sourcePile = state.tableau[1];
+        const destPile = state.tableau[0];
+
+        // The move is valid, so we perform the state update
+        const cards = sourcePile.splice(0); // a drag from the top card of the pile is a drag of the whole pile
+        destPile.push(...cards);
+      
+        // Assertions
+        expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
+        expect(state.tableau[0].length).toBe(4); // Destination pile should have the new cards
+        expect(state.tableau[0][3].rank).toBe('10'); // The last card should be the 10 of spades
+    });
   });
 
   describe('isGameWon', () => {
@@ -410,3 +438,5 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+    

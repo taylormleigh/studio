@@ -59,6 +59,8 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
+  
+  const bestScore = gameState ? (stats[gameState.gameType]?.bestScore ?? 0) : 0;
 
   useEffect(() => {
     if (highlightedPile) {
@@ -202,7 +204,11 @@ export default function GameBoard() {
                 cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
             } else { // tableau
                 if (newGameState.tableau[sourcePileIndex].length === 0 || sourceCardIndex >= newGameState.tableau[sourcePileIndex].length) return prev;
-                cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+                 if (newGameState.tableau[sourcePileIndex][sourceCardIndex].faceUp) {
+                    cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+                } else {
+                    return prev;
+                }
             }
 
             if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
@@ -547,6 +553,26 @@ export default function GameBoard() {
         setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }
   };
+  
+  const Confetti = () => {
+    const confettiCount = 50;
+    const colors = ['#e53935', '#d81b60', '#8e24aa', '#5e35b1', '#3949ab', '#1e88e5', '#039be5', '#00acc1', '#00897b', '#43a047', '#7cb342', '#c0ca33', '#fdd835', '#ffb300', '#fb8c00', '#f4511e'];
+    return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {Array.from({ length: confettiCount }).map((_, i) => (
+                <div
+                    key={i}
+                    className="confetti"
+                    style={{
+                        left: `${Math.random() * 100}vw`,
+                        backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                        animationDelay: `${Math.random() * 5}s`,
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
 
   const renderLoader = () => (
     <>
@@ -867,10 +893,12 @@ export default function GameBoard() {
         </div>
       <AlertDialog open={isWon}>
         <AlertDialogContent>
+         {isWon && <Confetti />}
           <AlertDialogHeader>
             <AlertDialogTitle>Congratulations! You Won!</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your final score is {gameState.score} in {gameState.moves} moves. Time: {new Date(time * 1000).toISOString().substr(14, 5)}.
+            <AlertDialogDescription className='space-y-2'>
+              <div>Your final score is {gameState.score} in {gameState.moves} moves. Time: {new Date(time * 1000).toISOString().substr(14, 5)}.</div>
+              {bestScore > 0 && <div>Your best score is {bestScore}.</div>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -890,3 +918,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    

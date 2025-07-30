@@ -60,3 +60,19 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 1; }
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #f00; /* Example color */
+  opacity: 0;
+  animation: confetti-fall 5s linear infinite;
+}
+
+    
