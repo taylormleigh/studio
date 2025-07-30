@@ -162,73 +162,78 @@ export default function GameBoard() {
     
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       setGameState(prevState => {
-          if (!prevState || prevState.gameType !== 'Solitaire') return prevState;
+        if (!prevState || prevState.gameType !== 'Solitaire') return prevState;
 
-          const newGameState = JSON.parse(JSON.stringify(prevState)) as SolitaireGameState;
-          
-          let cardsToMove: CardType[] = [];
-          let sourcePile: CardType[] | undefined;
+        const newGameState = JSON.parse(JSON.stringify(prevState)) as SolitaireGameState;
 
-          // 1. Identify source and cards to move
+        let sourcePile: CardType[];
+        let cardsToMove: CardType[];
+
+        if (sourceType === 'tableau') {
+          sourcePile = newGameState.tableau[sourcePileIndex];
+          cardsToMove = sourcePile.slice(sourceCardIndex);
+        } else if (sourceType === 'waste') {
+          sourcePile = newGameState.waste;
+          // Only the top card of the waste can be moved
+          if (sourceCardIndex !== sourcePile.length - 1) return prevState;
+          cardsToMove = [sourcePile[sourceCardIndex]];
+        } else if (sourceType === 'foundation') {
+          sourcePile = newGameState.foundation[sourcePileIndex];
+          // Only the top card of the foundation can be moved
+          if (sourceCardIndex !== sourcePile.length - 1) return prevState;
+          cardsToMove = [sourcePile[sourceCardIndex]];
+        } else {
+          return prevState; // Should not happen
+        }
+
+        if (cardsToMove.length === 0) {
+          return prevState;
+        }
+        
+        const cardToMove = cardsToMove[0];
+        let moveSuccessful = false;
+
+        if (destType === 'foundation') {
+          // Only single cards can be moved to the foundation
+          if (cardsToMove.length === 1) {
+            const destPile = newGameState.foundation[destPileIndex];
+            const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+            if (canMoveSolitaireToFoundation(cardToMove, topCard)) {
+              destPile.push(cardToMove);
+              moveSuccessful = true;
+            }
+          }
+        } else if (destType === 'tableau') {
+          const destPile = newGameState.tableau[destPileIndex];
+          const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+          if (canMoveSolitaireToTableau(cardToMove, topCard)) {
+            destPile.push(...cardsToMove);
+            moveSuccessful = true;
+          }
+        }
+
+        if (moveSuccessful) {
           if (sourceType === 'tableau') {
-              sourcePile = newGameState.tableau[sourcePileIndex];
-              cardsToMove = sourcePile.slice(sourceCardIndex);
+            const currentSourcePile = newGameState.tableau[sourcePileIndex];
+            currentSourcePile.splice(sourceCardIndex);
+            // Flip the new top card if it's face-down
+            if (currentSourcePile.length > 0 && !currentSourcePile[currentSourcePile.length - 1].faceUp) {
+              currentSourcePile[currentSourcePile.length - 1].faceUp = true;
+            }
           } else if (sourceType === 'waste') {
-              sourcePile = newGameState.waste;
-              cardsToMove = [sourcePile[sourceCardIndex]];
+            newGameState.waste.pop();
           } else if (sourceType === 'foundation') {
-              sourcePile = newGameState.foundation[sourcePileIndex];
-              cardsToMove = [sourcePile[sourceCardIndex]];
+            newGameState.foundation[sourcePileIndex].pop();
           }
 
-          if (cardsToMove.length === 0 || !sourcePile) {
-              return prevState; // No cards to move or invalid source
-          }
+          newGameState.moves++;
+          updateState(newGameState);
+          return null;
+        }
 
-          const cardToMove = cardsToMove[0];
-          let moveSuccessful = false;
-
-          // 2. Validate and execute move
-          if (destType === 'foundation') {
-              if (cardsToMove.length === 1) { // Only single cards to foundation
-                  const destPile = newGameState.foundation[destPileIndex];
-                  if (canMoveSolitaireToFoundation(cardToMove, destPile[destPile.length - 1])) {
-                      destPile.push(cardToMove);
-                      moveSuccessful = true;
-                  }
-              }
-          } else if (destType === 'tableau') {
-              const destPile = newGameState.tableau[destPileIndex];
-              if (canMoveSolitaireToTableau(cardToMove, destPile[destPile.length - 1])) {
-                  destPile.push(...cardsToMove);
-                  moveSuccessful = true;
-              }
-          }
-
-          // 3. If move was successful, update source pile and game state
-          if (moveSuccessful) {
-              if (sourceType === 'tableau') {
-                  const currentSourcePile = newGameState.tableau[sourcePileIndex];
-                  currentSourcePile.splice(sourceCardIndex);
-                  // Flip new top card if necessary
-                  if (currentSourcePile.length > 0 && !currentSourcePile[currentSourcePile.length - 1].faceUp) {
-                      currentSourcePile[currentSourcePile.length - 1].faceUp = true;
-                  }
-              } else if (sourceType === 'waste') {
-                  newGameState.waste.splice(sourceCardIndex, 1);
-              } else if (sourceType === 'foundation') {
-                  newGameState.foundation[sourcePileIndex].splice(sourceCardIndex, 1);
-              }
-              
-              newGameState.moves++;
-              updateState(newGameState);
-              return null; // Stop the current render, updateState will trigger a new one
-          }
-          
-          return prevState; // Return original state if move failed
+        return prevState;
       });
       return;
-
     } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as FreecellGameState;
       let cardToMove: CardType;
@@ -405,7 +410,7 @@ export default function GameBoard() {
 
       const card = sourcePile[cardIndex];
 
-      if (!card || (!card.faceUp && sourceType !== 'foundation')) {
+      if (!card || !card.faceUp) {
           if(sourceType === 'tableau' && cardIndex === gs.tableau[pileIndex].length - 1){
               const newGameState = JSON.parse(JSON.stringify(gs));
               newGameState.tableau[pileIndex][cardIndex].faceUp = true;
@@ -844,3 +849,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
