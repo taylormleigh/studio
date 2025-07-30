@@ -70,61 +70,69 @@ export default function GameBoard() {
     setIsClient(true);
   }, []);
 
-  const updateState = useCallback((newState: GameState, saveHistory = true) => {
+  const updateState = useCallback((newState: GameState | ((prevState: GameState) => GameState), saveHistory = true) => {
     if (saveHistory && gameState) {
-      setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
+        setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
     }
 
-    let gameWon = false;
-    let finalScore = 0;
+    const updateAndCheckWin = (stateToUpdate: GameState) => {
+        let gameWon = false;
+        let finalScore = 0;
 
-    if (settings.gameType === 'Solitaire' && newState.gameType === 'Solitaire') {
-      gameWon = isSolitaireGameWon(newState);
-      if(gameWon) finalScore = calculateScore(newState.moves, time);
-    } else if (settings.gameType === 'Freecell' && newState.gameType === 'Freecell') {
-      gameWon = isFreecellGameWon(newState);
-      if(gameWon) finalScore = calculateScore(newState.moves, time);
-    } else if (settings.gameType === 'Spider' && newState.gameType === 'Spider') {
-      // Check for completed sets after every move
-      const newSpiderState = newState as SpiderGameState;
-      let setsCompletedThisMove = 0;
-      newSpiderState.tableau.forEach((pile, index) => {
-        const result = checkForSpiderCompletedSet(pile);
-        if(result.setsCompleted > 0 && result.completedSet) {
-            newSpiderState.foundation.push(result.completedSet);
-            newSpiderState.tableau[index] = result.updatedPile;
-            setsCompletedThisMove++;
-             if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
-                newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
-             }
+        if (stateToUpdate.gameType === 'Solitaire') {
+            gameWon = isSolitaireGameWon(stateToUpdate as SolitaireGameState);
+            if(gameWon) finalScore = calculateScore(stateToUpdate.moves, time);
+        } else if (stateToUpdate.gameType === 'Freecell') {
+            gameWon = isFreecellGameWon(stateToUpdate as FreecellGameState);
+            if(gameWon) finalScore = calculateScore(stateToUpdate.moves, time);
+        } else if (stateToUpdate.gameType === 'Spider') {
+            const newSpiderState = stateToUpdate as SpiderGameState;
+            let setsCompletedThisMove = 0;
+            newSpiderState.tableau.forEach((pile, index) => {
+                const result = checkForSpiderCompletedSet(pile);
+                if(result.setsCompleted > 0 && result.completedSet) {
+                    newSpiderState.foundation.push(result.completedSet);
+                    newSpiderState.tableau[index] = result.updatedPile;
+                    setsCompletedThisMove++;
+                    if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
+                        newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
+                    }
+                }
+            });
+            if(setsCompletedThisMove > 0) {
+                newSpiderState.completedSets += setsCompletedThisMove;
+            }
+            
+            gameWon = isSpiderGameWon(newSpiderState);
+            if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
         }
-      });
-      if(setsCompletedThisMove > 0) {
-        newSpiderState.completedSets += setsCompletedThisMove;
-      }
-      
-      gameWon = isSpiderGameWon(newSpiderState);
-      if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
-      newState = newSpiderState;
+        
+        if(gameWon) {
+            if(finalScore > 0) stateToUpdate.score = finalScore;
+            setIsRunning(false);
+            setIsWon(true);
+            updateStats({
+                gameType: stateToUpdate.gameType as any,
+                stats: {
+                    wins: 1,
+                    bestScore: stateToUpdate.score,
+                    bestTime: time,
+                }
+            });
+        }
+        return stateToUpdate;
     }
-    
-    if(gameWon) {
-        if(finalScore > 0) newState.score = finalScore;
-        setIsRunning(false);
-        setIsWon(true);
-        updateStats({
-          gameType: settings.gameType,
-          stats: {
-            wins: 1,
-            bestScore: newState.score,
-            bestTime: time,
-          }
+
+    if (typeof newState === 'function') {
+        setGameState(prev => {
+            if (!prev) return prev;
+            const nextState = newState(prev);
+            return updateAndCheckWin(nextState);
         });
+    } else {
+        setGameState(updateAndCheckWin(newState));
     }
-
-    setGameState(newState);
-
-  }, [gameState, settings.gameType, time, updateStats]);
+  }, [gameState, time, updateStats]);
 
   const handleNewGame = useCallback(() => {
     let newState: GameState;
@@ -177,212 +185,208 @@ export default function GameBoard() {
     destType: 'tableau' | 'foundation' | 'freecell',
     destPileIndex: number,
   ) => {
-    if (settings.gameType === 'Solitaire') {
-      setGameState(prev => {
-        if (!prev || prev.gameType !== 'Solitaire') return prev;
-  
-        const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
-        let cardsToMove: CardType[];
-        
-        if (sourceType === 'waste') {
-            if (newGameState.waste.length === 0) return prev;
-            cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
-        } else if (sourceType === 'foundation') {
-            if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
-            cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
-        } else { // tableau
-            if (newGameState.tableau[sourcePileIndex].length === 0 || sourceCardIndex >= newGameState.tableau[sourcePileIndex].length) return prev;
-            cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+     updateState(prev => {
+        if (!prev) return prev;
+
+        // Solitaire
+        if (prev.gameType === 'Solitaire' && (destType === 'tableau' || destType === 'foundation')) {
+            const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
+            let cardsToMove: CardType[];
+            
+            if (sourceType === 'waste') {
+                if (newGameState.waste.length === 0) return prev;
+                cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
+            } else if (sourceType === 'foundation') {
+                if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
+                cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
+            } else { // tableau
+                if (newGameState.tableau[sourcePileIndex].length === 0 || sourceCardIndex >= newGameState.tableau[sourcePileIndex].length) return prev;
+                cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+            }
+
+            if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
+
+            let moveSuccessful = false;
+            const cardToMove = cardsToMove[0];
+
+            if (destType === 'tableau') {
+                const destPile = newGameState.tableau[destPileIndex];
+                const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+                if (canMoveSolitaireToTableau(cardToMove, topDestCard)) {
+                    destPile.push(...cardsToMove);
+                    moveSuccessful = true;
+                }
+            } else if (destType === 'foundation') {
+                if (cardsToMove.length === 1) {
+                    const destPile = newGameState.foundation[destPileIndex];
+                    const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+                    if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
+                        destPile.push(cardToMove);
+                        moveSuccessful = true;
+                    }
+                }
+            }
+
+            if (moveSuccessful) {
+                if (sourceType === 'waste') {
+                    newGameState.waste.pop();
+                } else if (sourceType === 'foundation') {
+                    newGameState.foundation[sourcePileIndex].pop();
+                } else { // tableau
+                    newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
+                    const sourcePile = newGameState.tableau[sourcePileIndex];
+                    if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
+                        sourcePile[sourcePile.length - 1].faceUp = true;
+                    }
+                }
+                newGameState.moves++;
+                setHighlightedPile({ type: destType, pileIndex: destPileIndex });
+                setSelectedCard(null);
+                return newGameState;
+            }
+            return prev;
         }
 
-        if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
+        // Freecell
+        if (prev.gameType === 'Freecell') {
+          const newGameState = JSON.parse(JSON.stringify(prev)) as FreecellGameState;
+          let cardToMove: CardType;
+          let cardsToMove: CardType[];
 
-        let moveSuccessful = false;
-        const cardToMove = cardsToMove[0];
+          const movableCount = getMovableCardCount(newGameState);
+          const movingCount = sourceType === 'tableau' ? newGameState.tableau[sourcePileIndex].length - sourceCardIndex : 1;
+          if(movingCount > movableCount) {
+            toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${movingCount} cards, only ${movableCount} are movable.` });
+            return prev;
+          }
 
-        if (destType === 'tableau') {
+          if (sourceType === 'tableau') {
+            cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+            cardToMove = cardsToMove[0];
+          } else if (sourceType === 'freecell') {
+            const card = newGameState.freecells[sourcePileIndex];
+            if(!card) return prev;
+            cardToMove = card;
+            cardsToMove = [card];
+          } else {
+            return prev;
+          }
+          if(!cardToMove) return prev;
+
+          let moveSuccessful = false;
+          if (destType === 'tableau') {
             const destPile = newGameState.tableau[destPileIndex];
-            const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
-            if (canMoveSolitaireToTableau(cardToMove, topDestCard)) {
-                destPile.push(...cardsToMove);
-                moveSuccessful = true;
+            const destTopCard = destPile[destPile.length - 1];
+            if (canMoveFreecellToTableau(cardToMove, destTopCard)) {
+              destPile.push(...cardsToMove);
+              moveSuccessful = true;
             }
-        } else if (destType === 'foundation') {
-            if (cardsToMove.length === 1) {
+          } else if (destType === 'foundation') {
+            if(cardsToMove.length === 1) {
                 const destPile = newGameState.foundation[destPileIndex];
-                const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
-                if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
+                if(canMoveFreecellToFoundation(cardToMove, destPile)) {
                     destPile.push(cardToMove);
                     moveSuccessful = true;
                 }
             }
-        }
-
-        if (moveSuccessful) {
-            if (sourceType === 'waste') {
-                newGameState.waste.pop();
-            } else if (sourceType === 'foundation') {
-                newGameState.foundation[sourcePileIndex].pop();
-            } else { // tableau
-                newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-                const sourcePile = newGameState.tableau[sourcePileIndex];
-                if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
-                    sourcePile[sourcePile.length - 1].faceUp = true;
-                }
+          } else if (destType === 'freecell') {
+            if(cardsToMove.length === 1 && newGameState.freecells[destPileIndex] === null) {
+              newGameState.freecells[destPileIndex] = cardToMove;
+              moveSuccessful = true;
             }
+          }
+
+          if(moveSuccessful) {
+             if (sourceType === 'tableau') {
+                newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
+              } else { // freecell
+                newGameState.freecells[sourcePileIndex] = null;
+              }
             newGameState.moves++;
-            updateState(newGameState, true);
-            setHighlightedPile({ type: destType as 'tableau' | 'foundation', pileIndex: destPileIndex });
+            setHighlightedPile({ type: destType, pileIndex: destPileIndex });
+            setSelectedCard(null);
             return newGameState;
+          }
+          return prev;
         }
 
+        // Spider
+        if (prev.gameType === 'Spider' && sourceType === 'tableau' && destType === 'tableau') {
+          const newGameState = JSON.parse(JSON.stringify(prev)) as SpiderGameState;
+          const sourcePile = newGameState.tableau[sourcePileIndex];
+          const cardsToMove = sourcePile.slice(sourceCardIndex);
+
+          if (cardsToMove.length === 0) return prev;
+
+          const destPile = newGameState.tableau[destPileIndex];
+          const destTopCard = destPile[destPile.length - 1];
+          
+          if (canMoveSpiderToTableau(cardsToMove, destTopCard)) {
+            sourcePile.splice(sourceCardIndex);
+            destPile.push(...cardsToMove);
+
+            if (sourcePile.length > 0 && !sourcePile[sourcePile.length-1].faceUp) {
+              sourcePile[sourcePile.length - 1].faceUp = true;
+            }
+
+            newGameState.moves++;
+            newGameState.score--;
+            setHighlightedPile({ type: destType, pileIndex: destPileIndex });
+            setSelectedCard(null);
+            return newGameState;
+          }
+        }
+        
         return prev;
-      });
-    } else if (settings.gameType === 'Freecell' && gameState?.gameType === 'Freecell') {
-      const newGameState = JSON.parse(JSON.stringify(gameState)) as FreecellGameState;
-      let cardToMove: CardType;
-      let cardsToMove: CardType[];
-
-      let sourcePile: CardType[] | (CardType | null)[]
-      if (sourceType === 'tableau') sourcePile = newGameState.tableau[sourcePileIndex];
-      else if (sourceType === 'freecell') sourcePile = newGameState.freecells;
-      else sourcePile = newGameState.foundation[sourcePileIndex];
-      
-      const movableCount = getMovableCardCount(newGameState);
-      const movingCount = sourceType === 'tableau' ? newGameState.tableau[sourcePileIndex].length - sourceCardIndex : 1;
-      if(movingCount > movableCount) {
-        toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${movingCount} cards, only ${movableCount} are movable.` });
-        return;
-      }
-
-      if (sourceType === 'tableau') {
-        cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
-        cardToMove = cardsToMove[0];
-      } else if (sourceType === 'freecell') {
-        const card = newGameState.freecells[sourcePileIndex];
-        if(!card) return;
-        cardToMove = card;
-        cardsToMove = [card];
-      } else {
-        return;
-      }
-      if(!cardToMove) return;
-
-      if (destType === 'tableau') {
-        const destPile = newGameState.tableau[destPileIndex];
-        const destTopCard = destPile[destPile.length - 1];
-        if (canMoveFreecellToTableau(cardToMove, destTopCard)) {
-          if (sourceType === 'tableau') {
-            newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-          } else { // freecell
-            newGameState.freecells[sourcePileIndex] = null;
-          }
-          destPile.push(...cardsToMove);
-        } else return;
-      } else if (destType === 'foundation') {
-        if(cardsToMove.length > 1) return;
-        const destPile = newGameState.foundation[destPileIndex];
-        if(canMoveFreecellToFoundation(cardToMove, destPile)) {
-           if (sourceType === 'tableau') {
-            newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-          } else { // freecell
-            newGameState.freecells[sourcePileIndex] = null;
-          }
-          destPile.push(cardToMove);
-        } else return;
-      } else if (destType === 'freecell') {
-        if(cardsToMove.length > 1) return;
-        if(newGameState.freecells[destPileIndex] === null) {
-          if (sourceType === 'tableau') {
-            newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-          } else { // from another freecell
-            newGameState.freecells[sourcePileIndex] = null;
-          }
-          newGameState.freecells[destPileIndex] = cardToMove;
-        } else return;
-      } else return;
-
-      newGameState.moves++;
-      updateState(newGameState);
-      setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-      setSelectedCard(null);
-    } else if (settings.gameType === 'Spider' && gameState?.gameType === 'Spider') {
-      const newGameState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
-      
-      if (sourceType !== 'tableau' || destType !== 'tableau') return;
-
-      const sourcePile = newGameState.tableau[sourcePileIndex];
-      const cardsToMove = sourcePile.slice(sourceCardIndex);
-
-      if (cardsToMove.length === 0) return;
-
-      const destPile = newGameState.tableau[destPileIndex];
-      const destTopCard = destPile[destPile.length - 1];
-      
-      if (canMoveSpiderToTableau(cardsToMove, destTopCard)) {
-        sourcePile.splice(sourceCardIndex);
-        destPile.push(...cardsToMove);
-
-        if (sourcePile.length > 0 && !sourcePile[sourcePile.length-1].faceUp) {
-          sourcePile[sourcePile.length - 1].faceUp = true;
-        }
-
-        newGameState.moves++;
-        newGameState.score--;
-        updateState(newGameState);
-        setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-        setSelectedCard(null);
-      }
-    }
-  }, [settings.gameType, updateState, toast, gameState]);
+     }, true);
+  }, [updateState, toast]);
   
   const handleDraw = useCallback(() => {
-    if (!gameState) return;
     setSelectedCard(null);
-    if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
-      const newGameState: SolitaireGameState = JSON.parse(JSON.stringify(gameState as SolitaireGameState));
-      if (newGameState.stock.length > 0) {
-        const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
-        const drawnCards = [];
-        for (let i = 0; i < numToDraw; i++) {
-          const card = newGameState.stock.pop()!;
-          card.faceUp = true;
-          drawnCards.push(card);
-        }
-        newGameState.waste.push(...drawnCards.reverse());
-      } else if (newGameState.waste.length > 0) {
-        newGameState.stock = newGameState.waste.reverse().map(c => ({...c, faceUp: false}));
-        newGameState.waste = [];
-      }
-      newGameState.moves += 1;
-      updateState(newGameState);
-    } else if (settings.gameType === 'Spider' && gameState.gameType === 'Spider') {
-      const newGameState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
-      // In Spider, you deal one card to each tableau pile
-      if (newGameState.stock.length > 0) {
-         // Check if any tableau pile is empty
-        const hasEmptyPile = newGameState.tableau.some(pile => pile.length === 0);
-        if (hasEmptyPile) {
-            toast({
-                variant: "destructive",
-                title: "Invalid Move",
-                description: "You cannot deal new cards while there is an empty tableau pile.",
-            });
-            return;
-        }
-        const dealCount = newGameState.tableau.length;
-        if(newGameState.stock.length >= dealCount) {
-          for(let i = 0; i < dealCount; i++) {
-            const card = newGameState.stock.pop()!;
-            card.faceUp = true;
-            newGameState.tableau[i].push(card);
+    updateState(prev => {
+        if(!prev) return prev;
+        const newGameState = JSON.parse(JSON.stringify(prev));
+
+        if (newGameState.gameType === 'Solitaire') {
+          if (newGameState.stock.length > 0) {
+            const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
+            const drawnCards = [];
+            for (let i = 0; i < numToDraw; i++) {
+              const card = newGameState.stock.pop()!;
+              card.faceUp = true;
+              drawnCards.push(card);
+            }
+            newGameState.waste.push(...drawnCards.reverse());
+          } else if (newGameState.waste.length > 0) {
+            newGameState.stock = newGameState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
+            newGameState.waste = [];
           }
-          newGameState.moves++;
-          updateState(newGameState);
+          newGameState.moves += 1;
+        } else if (newGameState.gameType === 'Spider') {
+          if (newGameState.stock.length > 0) {
+            const hasEmptyPile = newGameState.tableau.some((pile: CardType[]) => pile.length === 0);
+            if (hasEmptyPile) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid Move",
+                    description: "You cannot deal new cards while there is an empty tableau pile.",
+                });
+                return prev;
+            }
+            const dealCount = newGameState.tableau.length;
+            if(newGameState.stock.length >= dealCount) {
+              for(let i = 0; i < dealCount; i++) {
+                const card = newGameState.stock.pop()!;
+                card.faceUp = true;
+                newGameState.tableau[i].push(card);
+              }
+              newGameState.moves++;
+            }
+          }
         }
-      }
-    }
-  }, [gameState, updateState, settings.gameType, toast]);
+        return newGameState;
+    });
+  }, [updateState, toast]);
     
   const handleDragStart = (e: DragEvent, info: DraggingCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
@@ -402,29 +406,17 @@ export default function GameBoard() {
 
     const info: DraggingCardInfo = JSON.parse(infoJSON);
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
-    setSelectedCard(null);
   };
 
-  const handleTableauClick = (pileIndex: number, cardIndex?: number) => {
-    if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-      setSelectedCard(null);
-    } else if (cardIndex !== undefined) {
-      handleCardClick('tableau', pileIndex, cardIndex);
-    }
-  };
-  
   const handleFoundationClick = (pileIndex: number) => {
     if (selectedCard) {
       moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'foundation', pileIndex);
-      setSelectedCard(null);
     }
   }
 
   const handleFreecellClick = (pileIndex: number) => {
     if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'freecell', pileIndex);
-      setSelectedCard(null);
+        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'freecell', pileIndex);
     } else if (gameState?.gameType === 'Freecell') {
         const card = (gameState as FreecellGameState).freecells[pileIndex];
         if (card) {
@@ -432,55 +424,89 @@ export default function GameBoard() {
         }
     }
   }
+  
+  const handleTableauClick = (pileIndex: number, cardIndex?: number) => {
+    if (selectedCard) {
+      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
+    } else if (cardIndex !== undefined) {
+      handleCardClick('tableau', pileIndex, cardIndex);
+    }
+  };
 
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
-    let card: CardType | null = null;
+    let card: CardType | null | undefined = null;
+    let sourcePileLength = 0;
+    
     if (gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
-      else if (sourceType === 'waste') card = gs.waste[cardIndex];
-      else if (sourceType === 'foundation') card = gs.foundation[pileIndex]?.[cardIndex];
+      if(sourceType === 'tableau') {
+        sourcePileLength = gs.tableau[pileIndex].length;
+        card = gs.tableau[pileIndex]?.[cardIndex];
+      } else if (sourceType === 'waste') {
+        sourcePileLength = gs.waste.length;
+        card = gs.waste[cardIndex];
+      } else if (sourceType === 'foundation') {
+        sourcePileLength = gs.foundation[pileIndex].length;
+        card = gs.foundation[pileIndex]?.[cardIndex];
+      }
     } else if (gameState.gameType === 'Freecell') {
-      const gs = gameState as FreecellGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
-      else if (sourceType === 'freecell') card = gs.freecells[pileIndex];
+       const gs = gameState as FreecellGameState;
+       if(sourceType === 'tableau') {
+          sourcePileLength = gs.tableau[pileIndex].length;
+          card = gs.tableau[pileIndex]?.[cardIndex];
+       } else if (sourceType === 'freecell') {
+          sourcePileLength = 1;
+          card = gs.freecells[pileIndex];
+       }
     } else if (gameState.gameType === 'Spider') {
-      const gs = gameState as SpiderGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
+        const gs = gameState as SpiderGameState;
+        if(sourceType === 'tableau') {
+            sourcePileLength = gs.tableau[pileIndex].length;
+            card = gs.tableau[pileIndex]?.[cardIndex];
+        }
     }
 
-    if (!card || !card.faceUp) {
-      if (sourceType === 'tableau' && card && !card.faceUp && cardIndex === (gameState as any).tableau[pileIndex].length -1) {
-        if (gameState.gameType === 'Solitaire') {
-            const newGameState = JSON.parse(JSON.stringify(gameState));
+    // Card is face down, so flip it if it's the top card of a tableau pile in Solitaire
+    if (card && !card.faceUp) {
+      if (gameState.gameType === 'Solitaire' && sourceType === 'tableau' && cardIndex === sourcePileLength - 1) {
+         updateState(prev => {
+            const newGameState = JSON.parse(JSON.stringify(prev as SolitaireGameState));
             newGameState.tableau[pileIndex][cardIndex].faceUp = true;
             newGameState.moves++;
-            updateState(newGameState);
-        }
+            return newGameState;
+         });
       }
       return;
     }
-
-    if (settings.autoMove && gameState.gameType === 'Solitaire') {
-        const gs = gameState as SolitaireGameState;
-        // Prioritize moving to foundation
-        for (let i = 0; i < gs.foundation.length; i++) {
-            const destTopCard = gs.foundation[i].length > 0 ? gs.foundation[i][gs.foundation[i].length - 1] : undefined;
-            if (canMoveSolitaireToFoundation(card, destTopCard)) {
-                moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                return; // Move complete, exit function
-            }
+    
+    // Auto-move logic for Solitaire
+    if (settings.autoMove && card && gameState.gameType === 'Solitaire') {
+      const gs = gameState as SolitaireGameState;
+      // Prioritize moving to foundation
+      for (let i = 0; i < gs.foundation.length; i++) {
+        const destTopCard = gs.foundation[i].length > 0 ? gs.foundation[i][gs.foundation[i].length - 1] : undefined;
+        if (canMoveSolitaireToFoundation(card, destTopCard)) {
+          moveCards(sourceType as 'tableau' | 'waste' | 'foundation', pileIndex, cardIndex, 'foundation', i);
+          return;
         }
-        // If no foundation move is possible, it will do nothing, as per standard auto-move behavior.
+      }
+       // If no foundation move, try moving to another tableau pile
+      for (let i = 0; i < gs.tableau.length; i++) {
+          if (i === pileIndex && sourceType === 'tableau') continue;
+          const destTopCard = gs.tableau[i][gs.tableau[i].length - 1];
+          if (canMoveSolitaireToTableau(card, destTopCard)) {
+               moveCards(sourceType as 'tableau' | 'waste' | 'foundation', pileIndex, cardIndex, 'tableau', i);
+               return;
+          }
+      }
     }
 
-    // Default behavior for manual drag mode or if auto-move is not possible
+    // Default manual selection logic
     if (selectedCard && selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
         setSelectedCard(null); // Deselect if clicking the same card
     } else if (selectedCard) {
-        // If another card is selected, try to move
         if (sourceType === 'tableau') {
           handleTableauClick(pileIndex, cardIndex);
         } else if (sourceType === 'foundation') {
@@ -488,9 +514,7 @@ export default function GameBoard() {
         } else if (sourceType === 'freecell') {
           handleFreecellClick(pileIndex);
         }
-        setSelectedCard(null); // Always deselect after a move attempt
     } else {
-        // If no card is selected, select this one
         setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }
   };
@@ -602,10 +626,10 @@ export default function GameBoard() {
                             isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
-                            onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                             onClick={(e) => {
                               e.stopPropagation(); 
-                              handleTableauClick(pileIndex, cardIndex);
+                              handleCardClick('tableau', pileIndex, cardIndex);
                             }}
                           />
                         </div>
@@ -642,7 +666,6 @@ export default function GameBoard() {
                 isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
                 draggable={!!card}
                 onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-                onClick={() => handleFreecellClick(i)}
               />
             </div>
           ))}
@@ -661,7 +684,6 @@ export default function GameBoard() {
                 isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
                 draggable={pile.length > 0}
                 onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                 onClick={() => pile.length > 0 ? handleCardClick('foundation', i, pile.length-1) : handleFoundationClick(i)}
               />
             </div>
           ))}
@@ -673,7 +695,7 @@ export default function GameBoard() {
               className="relative"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+              onClick={() => handleTableauClick(pileIndex)}
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
@@ -698,7 +720,10 @@ export default function GameBoard() {
                             draggable={true}
                             isStacked={!isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={() => handleTableauClick(pileIndex, cardIndex)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCardClick('tableau', pileIndex, cardIndex);
+                            }}
                           />
                         </div>
                       </div>
@@ -741,7 +766,7 @@ export default function GameBoard() {
               className="relative"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+              onClick={() => handleTableauClick(pileIndex)}
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
@@ -769,8 +794,11 @@ export default function GameBoard() {
                             isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
-                            onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={() => handleTableauClick(pileIndex, cardIndex)}
+                            onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCardClick('tableau', pileIndex, cardIndex);
+                            }}
                           />
                         </div>
                       </div>

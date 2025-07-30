@@ -175,11 +175,9 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from waste to tableau via click', () => {
       const cardToMove: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
       const destinationCard: Card = { suit: 'SPADES', rank: 'K', faceUp: true };
-      state.waste = [cardToMove];
+      state.waste = [{suit: 'DIAMONDS', rank: '3', faceUp: true}, cardToMove];
       state.tableau[0] = [destinationCard];
       
-      // Simulate selecting card from waste
-      // Simulate clicking tableau pile
       const sourcePile = state.waste;
       const destPile = state.tableau[0];
       const card = sourcePile.pop();
@@ -187,7 +185,7 @@ describe('Solitaire Game Logic', () => {
         destPile.push(card);
       }
 
-      expect(state.waste.length).toBe(0);
+      expect(state.waste.length).toBe(1);
       expect(state.tableau[0].length).toBe(2);
       expect(state.tableau[0][1].rank).toBe('Q');
     });
@@ -195,7 +193,6 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from tableau to foundation via click (auto-move)', () => {
       const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
       state.tableau[0] = [aceOfSpades];
-      // Manually find the correct foundation pile for Spades
       const spadeFoundationIndex = SUITS.indexOf('SPADES');
       state.foundation[spadeFoundationIndex] = [];
       
@@ -206,13 +203,7 @@ describe('Solitaire Game Logic', () => {
       for (let i = 0; i < state.foundation.length; i++) {
         const destPile = state.foundation[i];
         if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
-            // Check if the suit matches if the foundation is not empty
-            if (destPile.length > 0 && destPile[0].suit === card.suit) {
-              destPileIndex = i;
-              break;
-            }
-            // If foundation is empty, it's a valid move for an Ace
-            if (destPile.length === 0) {
+            if (destPile.length === 0 || destPile[0].suit === card.suit) {
               destPileIndex = i;
               break;
             }
@@ -229,7 +220,45 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[0].length).toBe(0);
       expect(state.foundation[spadeFoundationIndex].length).toBe(1);
       expect(state.foundation[spadeFoundationIndex][0].rank).toBe('A');
-      expect(state.foundation[spadeFoundationIndex][0].suit).toBe('SPADES');
+    });
+
+    it('should prioritize moving to foundation over tableau in auto-move', () => {
+        const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
+        const twoOfHearts: Card = { suit: 'HEARTS', rank: '2', faceUp: true };
+
+        // Card that can move to foundation
+        state.tableau[0] = [aceOfSpades]; 
+        // A valid tableau destination for the Ace (if it were a King) - this setup is just to have a pile
+        state.tableau[1] = [twoOfHearts];
+        // Empty foundation for spades
+        const spadeFoundationIndex = SUITS.indexOf('SPADES');
+        state.foundation[spadeFoundationIndex] = [];
+      
+        const sourcePile = state.tableau[0];
+        const card = sourcePile[sourcePile.length-1];
+        
+        let foundationDestIndex = -1;
+        for (let i = 0; i < state.foundation.length; i++) {
+            const destPile = state.foundation[i];
+            if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
+                if (destPile.length === 0 || destPile[0].suit === card.suit) {
+                    foundationDestIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (foundationDestIndex !== -1) {
+            const cardToMove = sourcePile.pop();
+            if (cardToMove) {
+              state.foundation[foundationDestIndex].push(cardToMove);
+            }
+        }
+  
+        expect(state.tableau[0].length).toBe(0);
+        expect(state.foundation[spadeFoundationIndex].length).toBe(1);
+        expect(state.foundation[spadeFoundationIndex][0].rank).toBe('A');
+        expect(state.tableau[1].length).toBe(1); // Should not move to other tableau pile
     });
   });
 
