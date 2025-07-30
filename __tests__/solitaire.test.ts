@@ -254,6 +254,10 @@ describe('Solitaire Game Logic', () => {
             if (cardToMove) {
               state.foundation[foundationDestIndex].push(cardToMove);
             }
+        } else {
+            // This part of the logic is just for the test simulation
+            // The real game logic would handle moving to tableau if no foundation move is available.
+            // But for this test, we are asserting it *does* move to foundation.
         }
   
         expect(state.tableau[0].length).toBe(0);
@@ -292,3 +296,6 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+
+    

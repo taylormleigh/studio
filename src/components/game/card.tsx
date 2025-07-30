@@ -11,7 +11,7 @@ type CardProps = {
   isHighlighted?: boolean;
   isStacked?: boolean; // New prop to indicate if card is not on top
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   draggable?: boolean;
@@ -86,6 +86,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       className={cn(
         cardSize,
         'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all duration-300 ease-in-out',
+        isSelected && 'ring-2 ring-blue-500',
         ringClass,
         suitColorClass,
         className,
@@ -110,3 +111,5 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     </div>
   );
 }
+
+    
