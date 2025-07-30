@@ -4,12 +4,10 @@ import { StatsProvider } from '@/hooks/use-stats';
 
 export default function Home() {
   return (
-    <main className="container mx-auto p-4">
-      <SettingsProvider>
-        <StatsProvider>
-          <GameBoard />
-        </StatsProvider>
-      </SettingsProvider>
-    </main>
+    <SettingsProvider>
+      <StatsProvider>
+        <GameBoard />
+      </StatsProvider>
+    </SettingsProvider>
   );
 }

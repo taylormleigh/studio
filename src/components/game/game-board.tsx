@@ -346,17 +346,17 @@ export default function GameBoard() {
     }
   }, [settings.autoMove, gameState, moveCards, updateState, settings.gameType]);
 
-  if (!isClient || !gameState) {
-    return (
+  const renderLoader = () => (
+    <>
       <div className="flex flex-col min-h-screen">
-        <GameHeader 
+      <GameHeader 
           onNewGame={() => {}} 
           onUndo={() => {}} 
           onSettings={() => setIsSettingsOpen(true)}
           onStats={() => setIsStatsOpen(true)}
           canUndo={false}
         />
-        <main className="flex-grow space-y-2">
+        <main className="flex-grow space-y-2 container mx-auto p-4">
           <div className="flex justify-between gap-0.5">
             <div className="flex gap-2">
               <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
@@ -374,7 +374,11 @@ export default function GameBoard() {
            </div>
         </main>
       </div>
-    )
+    </>
+  );
+
+  if (!isClient || !gameState) {
+    return renderLoader();
   }
 
   const renderSolitaire = () => {
@@ -534,7 +538,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow space-y-2">
+      <main className="flex-grow space-y-2 container mx-auto p-4">
         {settings.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && renderFreecell()}
       </main>
