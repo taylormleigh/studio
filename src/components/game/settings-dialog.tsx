@@ -139,7 +139,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 checked={settings.autoMove}
                 onCheckedChange={(checked) => setSettings({ autoMove: checked })}
               />
-              <Label htmlFor="auto-move">Auto-move to Foundation on click</Label>
+              <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
           </div>
 

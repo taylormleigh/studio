@@ -294,52 +294,77 @@ export default function GameBoard() {
       }
       
       if (settings.autoMove) {
-          // Try moving to foundation first
-          for (let i = 0; i < gs.foundation.length; i++) {
-            if (canMoveSolitaireToFoundation(card, gs.foundation[i][gs.foundation[i].length-1], gs.foundation[i])) {
-              if(sourcePile.length - 1 === cardIndex) {
-                moveCards(sourceType as any, pileIndex, cardIndex, 'foundation', i);
-                return;
+          // Priority 1: Try moving to foundation
+          if(sourcePile.length - 1 === cardIndex) {
+            for (let i = 0; i < gs.foundation.length; i++) {
+              if (canMoveSolitaireToFoundation(card, gs.foundation[i][gs.foundation[i].length-1], gs.foundation[i])) {
+                  moveCards(sourceType as any, pileIndex, cardIndex, 'foundation', i);
+                  return;
               }
             }
           }
           
+          // Priority 2: Try moving to longest valid tableau pile
           if (sourceType !== 'foundation') {
-              for (let i = 0; i < gs.tableau.length; i++) {
-                  const destPile = gs.tableau[i];
-                  const destTopCard = destPile[destPile.length - 1];
-                  if (canMoveSolitaireToTableau(card, destTopCard)) {
-                      moveCards(sourceType as any, pileIndex, cardIndex, 'tableau', i);
-                      return;
-                  }
-              }
+            const validMoves: { pileIndex: number; pileLength: number }[] = [];
+            gs.tableau.forEach((destPile, i) => {
+                const destTopCard = destPile[destPile.length - 1];
+                if (canMoveSolitaireToTableau(card, destTopCard)) {
+                    validMoves.push({ pileIndex: i, pileLength: destPile.length });
+                }
+            });
+
+            if (validMoves.length > 0) {
+                validMoves.sort((a, b) => b.pileLength - a.pileLength || a.pileIndex - b.pileIndex);
+                const bestMove = validMoves[0];
+                moveCards(sourceType as any, pileIndex, cardIndex, 'tableau', bestMove.pileIndex);
+                return;
+            }
           }
       }
     } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
       const gs = gameState as FreecellGameState;
       
-      let sourcePile: (CardType | null)[] | CardType[];
-      if(sourceType === 'tableau') sourcePile = gs.tableau[pileIndex];
-      else if(sourceType === 'freecell') sourcePile = gs.freecells;
-      else return;
-
-      const card = sourceType === 'tableau' ? sourcePile[cardIndex] : sourcePile[pileIndex];
+      const card = sourceType === 'tableau'
+        ? gs.tableau[pileIndex][cardIndex]
+        : sourceType === 'freecell'
+        ? gs.freecells[pileIndex]
+        : null;
 
       if(!card) return;
 
       if(settings.autoMove) {
-        // Try foundation
+        // Priority 1: Try moving to foundation
         for (let i = 0; i < gs.foundation.length; i++) {
-          if (canMoveFreecellToFoundation(card as CardType, gs.foundation[i])) {
+          if (canMoveFreecellToFoundation(card, gs.foundation[i])) {
             moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
             return;
           }
         }
-        // Try freecell
-        for (let i = 0; i < gs.freecells.length; i++) {
-          if (gs.freecells[i] === null) {
-            moveCards(sourceType, pileIndex, cardIndex, 'freecell', i);
+        
+        // Priority 2: Try moving to longest valid tableau pile
+        const validTableauMoves: { pileIndex: number; pileLength: number }[] = [];
+        gs.tableau.forEach((destPile, i) => {
+            const destTopCard = destPile[destPile.length - 1];
+            if (canMoveFreecellToTableau(card, destTopCard)) {
+                validTableauMoves.push({ pileIndex: i, pileLength: destPile.length });
+            }
+        });
+        
+        if (validTableauMoves.length > 0) {
+            validTableauMoves.sort((a, b) => b.pileLength - a.pileLength || a.pileIndex - b.pileIndex);
+            const bestMove = validTableauMoves[0];
+            moveCards(sourceType, pileIndex, cardIndex, 'tableau', bestMove.pileIndex);
             return;
+        }
+
+        // Priority 3: Try moving to an empty freecell
+        if (sourceType === 'tableau') {
+          for (let i = 0; i < gs.freecells.length; i++) {
+            if (gs.freecells[i] === null) {
+              moveCards(sourceType, pileIndex, cardIndex, 'freecell', i);
+              return;
+            }
           }
         }
       }
@@ -474,7 +499,7 @@ export default function GameBoard() {
               <Card 
                 card={card || undefined} 
                 draggable={!!card}
-                onDragStart={(e) => handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+                onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
                 onClick={() => card && handleCardClick('freecell', i, 0)}
               />
             </div>
