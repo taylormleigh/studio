@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, DragEvent } from 'react';
-import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Pile as SolitairePile, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon } from '@/lib/solitaire';
+import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
 import { Card } from './card';
@@ -436,61 +436,63 @@ export default function GameBoard() {
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
+    // If clicking the same card that is already selected, deselect it.
+    if (selectedCard && selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
+        setSelectedCard(null);
+        return;
+    }
+
+    // If another card is already selected, this click is a move attempt.
     if (selectedCard) {
-        if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-            setSelectedCard(null); // Deselect if clicking the same card
-        } else {
-            // This is a move attempt. The specific pile handlers will manage the move.
-            if(sourceType === 'tableau') {
-                handleTableauClick(pileIndex, cardIndex);
-            } else if (sourceType === 'foundation') {
-                handleFoundationClick(pileIndex);
-            }
+        if (sourceType === 'tableau') {
+            handleTableauClick(pileIndex, cardIndex);
+        } else if (sourceType === 'foundation') {
+            handleFoundationClick(pileIndex);
         }
+        // After attempting a move, always deselect.
+        setSelectedCard(null);
         return;
     }
   
-    // Auto-move to foundation logic
-    if (settings.autoMove && !selectedCard) {
+    // Auto-move to foundation logic for Solitaire (if enabled)
+    if (settings.autoMove && !selectedCard && gameState.gameType === 'Solitaire') {
+        const gs = gameState as SolitaireGameState;
         let cardToMove: CardType | null = null;
         let sourcePile: CardType[] | null = null;
 
-        if (gameState.gameType === 'Solitaire') {
-            const gs = gameState as SolitaireGameState;
-            if (sourceType === 'tableau') sourcePile = gs.tableau[pileIndex];
-            else if (sourceType === 'waste') sourcePile = gs.waste;
-            // No auto-move from foundation
-            
-            if (sourcePile && cardIndex === sourcePile.length - 1) {
-                cardToMove = sourcePile[cardIndex];
-            }
+        if (sourceType === 'tableau') sourcePile = gs.tableau[pileIndex];
+        else if (sourceType === 'waste') sourcePile = gs.waste;
+        // No auto-move from foundation
+        
+        if (sourcePile && cardIndex === sourcePile.length - 1) {
+            cardToMove = sourcePile[cardIndex];
+        }
 
-            if (cardToMove) {
-                 for (let i = 0; i < gs.foundation.length; i++) {
-                    const destTopCard = gs.foundation[i][gs.foundation[i].length - 1];
-                    if (canMoveSolitaireToFoundation(cardToMove, destTopCard)) {
-                        moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                        return; // Move complete, exit function
-                    }
+        if (cardToMove) {
+              for (let i = 0; i < gs.foundation.length; i++) {
+                const destTopCard = gs.foundation[i].length > 0 ? gs.foundation[i][gs.foundation[i].length - 1] : undefined;
+                if (canMoveSolitaireToFoundation(cardToMove, destTopCard)) {
+                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                    return; // Move complete, exit function
                 }
             }
         }
     }
     
-    // If not auto-moved, or auto-move is off, select the card
+    // If no card is selected, and it wasn't an auto-move, select the card.
     let card: CardType | null = null;
     if (gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
       else if (sourceType === 'waste') card = gs.waste[cardIndex];
-      else if (sourceType === 'foundation') card = gs.foundation[pileIndex][cardIndex];
+      else if (sourceType === 'foundation') card = gs.foundation[pileIndex]?.[cardIndex];
     } else if (gameState.gameType === 'Freecell') {
       const gs = gameState as FreecellGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
       else if (sourceType === 'freecell') card = gs.freecells[pileIndex];
     } else if (gameState.gameType === 'Spider') {
       const gs = gameState as SpiderGameState;
-      if(sourceType === 'tableau') card = gs.tableau[pileIndex][cardIndex];
+      if(sourceType === 'tableau') card = gs.tableau[pileIndex]?.[cardIndex];
     }
 
     if (card?.faceUp) {
@@ -567,12 +569,12 @@ export default function GameBoard() {
               onClick={() => handleFoundationClick(i)}
             >
               <Card 
-                card={pile[pile.length - 1]} 
+                card={pile.length > 0 ? pile[pile.length - 1] : undefined}
                 isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
                 isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
                 draggable={pile.length > 0}
                 onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                 onClick={() => pile.length > 0 ? handleCardClick('foundation', i, pile.length-1) : handleFoundationClick(i)}
+                onClick={() => pile.length > 0 ? handleCardClick('foundation', i, pile.length-1) : handleFoundationClick(i)}
               />
             </div>
           ))}
@@ -837,5 +839,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
