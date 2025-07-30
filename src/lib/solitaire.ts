@@ -115,3 +115,5 @@ export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined,
 export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
 }
+
+    
