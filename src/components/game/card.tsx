@@ -2,6 +2,7 @@
 
 import type { Card as CardType } from '@/lib/solitaire';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 type CardProps = {
   card?: CardType;
@@ -9,6 +10,9 @@ type CardProps = {
   isHinted?: boolean;
   className?: string;
   onClick?: () => void;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
+  draggable?: boolean;
 };
 
 // Using Unicode characters for a classic, high-contrast look
@@ -27,7 +31,7 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
 }
 
 
-export function Card({ card, isSelected, isHinted, className, onClick }: CardProps) {
+export function Card({ card, isSelected, isHinted, className, onClick, draggable, onDragStart, onDragEnd }: CardProps) {
   const ringClass = isSelected 
     ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500' 
     : isHinted 
@@ -37,7 +41,6 @@ export function Card({ card, isSelected, isHinted, className, onClick }: CardPro
   if (!card) {
     return (
       <div
-        onClick={onClick}
         className={cn(
           'w-24 h-36 rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
           ringClass,
@@ -50,7 +53,6 @@ export function Card({ card, isSelected, isHinted, className, onClick }: CardPro
   if (!card.faceUp) {
     return (
       <div
-        onClick={onClick}
         className={cn(
           'w-24 h-36 rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
@@ -69,11 +71,15 @@ export function Card({ card, isSelected, isHinted, className, onClick }: CardPro
   return (
     <div
       onClick={onClick}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       className={cn(
         'w-24 h-36 rounded-md bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
         ringClass,
         suitColorClass,
-        className
+        className,
+        draggable && "cursor-grab"
       )}
     >
       <div className="h-6">

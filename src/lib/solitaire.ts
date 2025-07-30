@@ -76,6 +76,7 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
   if (!destinationCard) {
     return cardToMove.rank === 'K';
   }
+  if (!destinationCard.faceUp) return false;
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   return !colorsMatch && ranksCorrect;
