@@ -103,9 +103,9 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
 
 export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined, foundationPile: Pile): boolean {
     if (!topCard) {
-        // Find if this is the first card for this suit
-        const isFirstOfSuit = foundationPile.length === 0;
-        return cardToMove.rank === 'A' && isFirstOfSuit;
+        // This logic is simplified as we assume the foundation piles are suit-specific
+        // and handle pile selection in the UI/game logic layer.
+        return cardToMove.rank === 'A';
     }
     const suitsMatch = cardToMove.suit === topCard.suit;
     const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
