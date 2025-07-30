@@ -55,7 +55,7 @@ export default function GameBoard() {
     let newState: GameState;
     if (settings.gameType === 'Solitaire') {
       newState = createSolitaireInitialState(settings.solitaireDrawCount);
-    } else {
+    } else { // Freecell
       newState = createFreecellInitialState();
     }
     setGameState(newState);
@@ -231,7 +231,7 @@ export default function GameBoard() {
   }, [gameState, updateState, settings.gameType]);
   
   const handleDraw = useCallback(() => {
-    if (!gameState || settings.gameType !== 'Solitaire') return;
+    if (!gameState || settings.gameType !== 'Solitaire' || gameState.gameType !== 'Solitaire') return;
 
     const newGameState: SolitaireGameState = JSON.parse(JSON.stringify(gameState as SolitaireGameState));
     if (newGameState.stock.length > 0) {
@@ -273,7 +273,7 @@ export default function GameBoard() {
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
 
-    if (settings.gameType === 'Solitaire') {
+    if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
       const sourcePile = sourceType === 'waste' 
         ? gs.waste
@@ -315,7 +315,7 @@ export default function GameBoard() {
               }
           }
       }
-    } else if (settings.gameType === 'Freecell') {
+    } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
       const gs = gameState as FreecellGameState;
       
       let sourcePile: (CardType | null)[] | CardType[];
@@ -549,8 +549,8 @@ export default function GameBoard() {
         canUndo={history.length > 0}
       />
       <main className="flex-grow space-y-4 p-2 md:p-4">
-        {settings.gameType === 'Solitaire' && renderSolitaire()}
-        {settings.gameType === 'Freecell' && renderFreecell()}
+        {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
+        {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
           <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon ? gameState.score : 'N/A'}`}</span>
