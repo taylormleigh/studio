@@ -454,7 +454,7 @@ export default function GameBoard() {
       if (sourceType === 'tableau') {
         sourcePile = gs.tableau[pileIndex];
         card = sourcePile?.[cardIndex];
-        if (card) {
+        if (card && card.faceUp) {
           cardsToMove = sourcePile.slice(cardIndex);
         }
       } else if (sourceType === 'waste') {
@@ -479,7 +479,7 @@ export default function GameBoard() {
         if(sourceType === 'tableau') {
             sourcePile = gs.tableau[pileIndex];
             card = sourcePile?.[cardIndex];
-            if(card) cardsToMove = sourcePile.slice(cardIndex);
+            if(card && card.faceUp) cardsToMove = sourcePile.slice(cardIndex);
         }
     }
 
@@ -529,13 +529,22 @@ export default function GameBoard() {
       if (moved) return;
       
       // Then, try to move the entire valid stack to another tableau pile
-      if (gameState.gameType === 'Solitaire') {
-          const gs = gameState as SolitaireGameState;
+       if ((gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell' || gameState.gameType === 'Spider') && sourceType === 'tableau') {
+          const gs = gameState as SolitaireGameState | FreecellGameState | SpiderGameState;
           for (let i = 0; i < gs.tableau.length; i++) {
-              if (sourceType === 'tableau' && i === pileIndex) continue;
+              if (i === pileIndex) continue;
               const destTopCard = gs.tableau[i][gs.tableau[i].length - 1];
-              if (canMoveSolitaireToTableau(cardToMove, destTopCard)) {
-                  moveCards(sourceType as 'tableau' | 'waste' | 'foundation', pileIndex, cardIndex, 'tableau', i);
+              let canMove = false;
+              if(gs.gameType === 'Solitaire' && canMoveSolitaireToTableau(cardToMove, destTopCard)) {
+                canMove = true;
+              } else if (gs.gameType === 'Freecell' && canMoveFreecellToTableau(cardToMove, destTopCard)) {
+                canMove = true;
+              } else if (gs.gameType === 'Spider' && canMoveSpiderToTableau(cardsToMove, destTopCard)) {
+                 canMove = true;
+              }
+
+              if (canMove) {
+                  moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
                   moved = true;
                   break;
               }
@@ -659,7 +668,7 @@ export default function GameBoard() {
               className="relative"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+              onClick={() => handleTableauClick(pileIndex)}
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
