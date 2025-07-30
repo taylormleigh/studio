@@ -53,6 +53,62 @@ export default function GameBoard() {
     setIsClient(true);
   }, []);
 
+  const updateState = useCallback((newState: GameState, saveHistory = true) => {
+    if (saveHistory && gameState) {
+      setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
+    }
+
+    let gameWon = false;
+    let finalScore = 0;
+
+    if (settings.gameType === 'Solitaire' && newState.gameType === 'Solitaire') {
+      gameWon = isSolitaireGameWon(newState);
+      if(gameWon) finalScore = calculateScore(newState.moves, time);
+    } else if (settings.gameType === 'Freecell' && newState.gameType === 'Freecell') {
+      gameWon = isFreecellGameWon(newState);
+      if(gameWon) finalScore = calculateScore(newState.moves, time);
+    } else if (settings.gameType === 'Spider' && newState.gameType === 'Spider') {
+      // Check for completed sets after every move
+      const newSpiderState = newState as SpiderGameState;
+      let setsCompletedThisMove = 0;
+      newSpiderState.tableau.forEach((pile, index) => {
+        const result = checkForSpiderCompletedSet(pile);
+        if(result.setsCompleted > 0 && result.completedSet) {
+            newSpiderState.tableau[index] = result.updatedPile;
+            newSpiderState.foundation.push(result.completedSet);
+            setsCompletedThisMove++;
+             if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
+                newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
+             }
+        }
+      });
+      if(setsCompletedThisMove > 0) {
+        newSpiderState.completedSets += setsCompletedThisMove;
+      }
+      
+      gameWon = isSpiderGameWon(newSpiderState);
+      if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
+      newState = newSpiderState;
+    }
+    
+    if(gameWon) {
+        if(finalScore > 0) newState.score = finalScore;
+        setIsRunning(false);
+        setIsWon(true);
+        updateStats({
+          gameType: settings.gameType,
+          stats: {
+            wins: 1,
+            bestScore: newState.score,
+            bestTime: time,
+          }
+        });
+    }
+
+    setGameState(newState);
+
+  }, [gameState, settings.gameType, time, updateStats]);
+
   const handleNewGame = useCallback(() => {
     let newState: GameState;
     if (settings.gameType === 'Solitaire') {
@@ -87,62 +143,6 @@ export default function GameBoard() {
     return () => clearInterval(interval);
   }, [isRunning, isWon, gameState, isClient]);
   
-  const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    if (saveHistory && gameState) {
-      setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
-    }
-
-    let gameWon = false;
-    let finalScore = 0;
-
-    if (settings.gameType === 'Solitaire' && newState.gameType === 'Solitaire') {
-      gameWon = isSolitaireGameWon(newState);
-      if(gameWon) finalScore = calculateScore(newState.moves, time);
-    } else if (settings.gameType === 'Freecell' && newState.gameType === 'Freecell') {
-      gameWon = isFreecellGameWon(newState);
-      if(gameWon) finalScore = calculateScore(newState.moves, time);
-    } else if (settings.gameType === 'Spider' && newState.gameType === 'Spider') {
-      // Check for completed sets after every move
-      const newSpiderState = newState as SpiderGameState;
-      let setsCompletedThisMove = 0;
-      newSpiderState.tableau.forEach((pile, index) => {
-        const result = checkForSpiderCompletedSet(pile);
-        if(result.setsCompleted > 0 && result.completedSet) {
-            newSpiderState.tableau[index] = result.updatedPile;
-            newSpiderState.foundation.push(result.completedSet);
-            setsCompletedThisMove++;
-             if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
-                newGameState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
-             }
-        }
-      });
-      if(setsCompletedThisMove > 0) {
-        newSpiderState.completedSets += setsCompletedThisMove;
-      }
-      
-      gameWon = isSpiderGameWon(newSpiderState);
-      if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
-      newState = newSpiderState;
-    }
-    
-    if(gameWon) {
-        if(finalScore > 0) newState.score = finalScore;
-        setIsRunning(false);
-        setIsWon(true);
-        updateStats({
-          gameType: settings.gameType,
-          stats: {
-            wins: 1,
-            bestScore: newState.score,
-            bestTime: time,
-          }
-        });
-    }
-
-    setGameState(newState);
-
-  }, [gameState, settings.gameType, time, updateStats]);
-
   const handleUndo = () => {
     if (history.length > 0) {
       const [lastState, ...rest] = history;
@@ -164,20 +164,29 @@ export default function GameBoard() {
         const newGameState = JSON.parse(JSON.stringify(gameState)) as SolitaireGameState;
         let moveSuccessful = false;
         
-        // Define source pile and cards to move
         let sourcePileRef: SolitairePile | undefined;
-        if (sourceType === 'tableau') sourcePileRef = newGameState.tableau[sourcePileIndex];
-        else if (sourceType === 'waste') sourcePileRef = newGameState.waste;
-        else if (sourceType === 'foundation') sourcePileRef = newGameState.foundation[sourcePileIndex];
+        let sourcePileKey: 'tableau' | 'waste' | 'foundation' = 'tableau';
+
+        if (sourceType === 'tableau') {
+            sourcePileRef = newGameState.tableau[sourcePileIndex];
+            sourcePileKey = 'tableau';
+        } else if (sourceType === 'waste') {
+            sourcePileRef = newGameState.waste;
+            sourcePileKey = 'waste';
+        } else if (sourceType === 'foundation') {
+            sourcePileRef = newGameState.foundation[sourcePileIndex];
+            sourcePileKey = 'foundation';
+        }
         
         if (!sourcePileRef || sourceCardIndex >= sourcePileRef.length) return;
+
         const cardsToMove = sourcePileRef.slice(sourceCardIndex);
         if (cardsToMove.length === 0) return;
         const cardToMove = cardsToMove[0];
 
         // Handle moves to FOUNDATION
         if (destType === 'foundation') {
-            if (cardsToMove.length > 1) return; // Only single cards to foundation
+            if (cardsToMove.length > 1) return; 
             const destPile = newGameState.foundation[destPileIndex];
             const destTopCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
             if (canMoveSolitaireToFoundation(cardToMove, destTopCard, destPile)) {
@@ -826,8 +835,6 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
 
     
 
