@@ -69,7 +69,8 @@ export default function GameBoard() {
     if (isClient) {
       handleNewGame();
     }
-  }, [settings.gameType, handleNewGame, isClient]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.gameType, isClient]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -356,21 +357,21 @@ export default function GameBoard() {
           onStats={() => setIsStatsOpen(true)}
           canUndo={false}
         />
-        <main className="flex-grow space-y-2 container mx-auto p-4">
-          <div className="flex justify-between gap-0.5">
-            <div className="flex gap-2">
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+        <main className="flex-grow space-y-4 p-2 md:p-4">
+          <div className="flex justify-between gap-1 sm:gap-2 md:gap-3">
+            <div className="flex gap-1 sm:gap-2 md:gap-3">
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
             </div>
-            <div className="flex gap-2">
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
-              <Skeleton className="w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36 rounded-lg" />
+            <div className="flex gap-1 sm:gap-2 md:gap-3">
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
+              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
             </div>
           </div>
-           <div className="grid grid-cols-7 gap-0.5 min-h-[28rem]">
-              {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-lg"/>)}
+           <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
+              {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-md"/>)}
            </div>
         </main>
       </div>
@@ -385,12 +386,12 @@ export default function GameBoard() {
     const gs = gameState as SolitaireGameState;
     return (
       <>
-        <div className={cn("flex justify-between gap-0.5", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-2">
-            <div onClick={handleDraw} className="cursor-pointer">
+        <div className={cn("flex justify-between gap-1 sm:gap-2 md:gap-3", settings.leftHandMode && "flex-row-reverse")}>
+          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2">
+            <div onClick={handleDraw} className="cursor-pointer basis-1/2 flex justify-center">
               <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
             </div>
-            <div>
+            <div className="basis-1/2 flex justify-center">
               {gs.waste.length > 0 ?
                 <Card 
                   card={gs.waste[gs.waste.length - 1]} 
@@ -401,12 +402,13 @@ export default function GameBoard() {
               }
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2 justify-end">
             {gs.foundation.map((pile, i) => (
               <div 
                 key={i} 
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, 'foundation', i)}
+                 className="basis-1/4 flex justify-center"
               >
                 <Card 
                   card={pile[pile.length - 1]} 
@@ -418,7 +420,7 @@ export default function GameBoard() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-0.5 min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -426,29 +428,32 @@ export default function GameBoard() {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             >
-              {pile.length === 0 ? (
-                 <div onDrop={(e) => handleDrop(e, 'tableau', pileIndex)} className="h-full w-full">
-                    <Card />
-                 </div>
-              ) : (
-                pile.map((card, cardIndex) => {
-                  const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 2.25 : 0.75), 0);
-                  return (
-                    <div 
-                      key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                      className="absolute" 
-                      style={{ top: `${topPosition}rem` }}
-                    >
-                      <Card
-                        card={card}
-                        draggable={card.faceUp}
-                        onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                        onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                      />
-                    </div>
-                  )
-                })
-              )}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full flex flex-col items-center">
+                {pile.length === 0 ? (
+                  <div className="w-full">
+                      <Card />
+                  </div>
+                ) : (
+                  pile.map((card, cardIndex) => {
+                    const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 2.25 : 0.75), 0);
+                    return (
+                      <div 
+                        key={`${card.suit}-${card.rank}-${cardIndex}`} 
+                        className="absolute w-full" 
+                        style={{ top: `${topPosition}rem` }}
+                      >
+                        <Card
+                          card={card}
+                          draggable={card.faceUp}
+                          onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                          onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
+                          className="mx-auto"
+                        />
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -460,13 +465,14 @@ export default function GameBoard() {
     const gs = gameState as FreecellGameState;
     return (
       <>
-         <div className={cn("flex justify-between gap-0.5", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-2">
+         <div className={cn("flex justify-between gap-1 sm:gap-2 md:gap-3", settings.leftHandMode && "flex-row-reverse")}>
+          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2">
             {gs.freecells.map((card, i) => (
               <div 
                 key={i}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, 'freecell', i)}
+                className="basis-1/4 flex justify-center"
               >
                 <Card 
                   card={card || undefined} 
@@ -477,12 +483,13 @@ export default function GameBoard() {
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2 justify-end">
             {gs.foundation.map((pile, i) => (
               <div 
                 key={i} 
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, 'foundation', i)}
+                className="basis-1/4 flex justify-center"
               >
                 <Card 
                   card={pile[pile.length - 1]} 
@@ -494,7 +501,7 @@ export default function GameBoard() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-8 gap-0.5 min-h-[28rem]">
+        <div className="grid grid-cols-8 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -502,26 +509,29 @@ export default function GameBoard() {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             >
-              {pile.length === 0 ? (
-                 <div onDrop={(e) => handleDrop(e, 'tableau', pileIndex)} className="h-full w-full">
-                    <Card />
-                 </div>
-              ) : (
-                pile.map((card, cardIndex) => (
-                  <div 
-                    key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                    className="absolute" 
-                    style={{ top: `${cardIndex * 2.25}rem` }}
-                  >
-                    <Card
-                      card={card}
-                      draggable={true}
-                      onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                      onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                    />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full flex flex-col items-center">
+                {pile.length === 0 ? (
+                  <div className="w-full">
+                      <Card />
                   </div>
-                ))
-              )}
+                ) : (
+                  pile.map((card, cardIndex) => (
+                    <div 
+                      key={`${card.suit}-${card.rank}-${cardIndex}`} 
+                      className="absolute w-full"
+                      style={{ top: `${cardIndex * 2.25}rem` }}
+                    >
+                      <Card
+                        card={card}
+                        draggable={true}
+                        onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
+                        className="mx-auto"
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -538,7 +548,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow space-y-2 container mx-auto p-4">
+      <main className="flex-grow space-y-4 p-2 md:p-4">
         {settings.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && renderFreecell()}
       </main>

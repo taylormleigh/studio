@@ -35,14 +35,15 @@ export function Card({ card, isSelected, className, onClick, draggable, onDragSt
     ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500'
     : '';
     
-  const cardSize = "w-[60px] h-[84px] sm:w-20 sm:h-28 md:w-24 md:h-36";
+  // Responsive card size. Maintains a 7:10 aspect ratio.
+  const cardSize = "w-[calc(100%-4px)] aspect-[7/10] max-w-[96px]";
 
   if (!card) {
     return (
       <div
         className={cn(
           cardSize,
-          'rounded-lg bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
+          'rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
           ringClass,
           className
         )}
@@ -56,13 +57,13 @@ export function Card({ card, isSelected, className, onClick, draggable, onDragSt
         onClick={onClick}
         className={cn(
           cardSize,
-          'rounded-lg bg-blue-700 border-2 border-black cursor-pointer transition-all',
+          'rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
           ringClass,
           className
         )}
       >
-        <div className="w-full h-full rounded-md border-2 border-blue-900 bg-blue-800" />
+        <div className="w-full h-full rounded-sm border-2 border-blue-900 bg-blue-800" />
       </div>
     );
   }
@@ -78,21 +79,21 @@ export function Card({ card, isSelected, className, onClick, draggable, onDragSt
       onDragEnd={onDragEnd}
       className={cn(
         cardSize,
-        'rounded-lg bg-card border-2 border-black cursor-pointer relative p-1 flex flex-col justify-between transition-all',
+        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all',
         ringClass,
         suitColorClass,
         className,
         draggable && "cursor-grab"
       )}
     >
-      <div className="flex justify-between items-start h-8">
-        <div className="text-xl sm:text-2xl md:text-4xl font-bold leading-none">{card.rank}</div>
+      <div className="flex justify-start items-start h-[25%]">
+        <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
       </div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-         <SuitIcon suit={card.suit} className="text-4xl sm:text-5xl md:text-7xl" />
+         <SuitIcon suit={card.suit} className="text-4xl sm:text-5xl md:text-6xl" />
       </div>
-      <div className="flex justify-between items-end h-8 rotate-180">
-        <div className="text-xl sm:text-2xl md:text-4xl font-bold leading-none">{card.rank}</div>
+      <div className="flex justify-start items-end h-[25%] rotate-180">
+        <div className="text-xl sm:text-2xl md:text-3xl font-bold leading-none">{card.rank}</div>
       </div>
     </div>
   );
