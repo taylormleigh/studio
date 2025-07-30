@@ -24,6 +24,12 @@ type DraggingCardInfo = {
   cardIndex: number;
 };
 
+type HighlightedPile = {
+  type: 'tableau' | 'foundation' | 'freecell';
+  pileIndex: number;
+} | null;
+
+
 const UNDO_LIMIT = 15;
 
 const calculateScore = (moves: number, time: number) => {
@@ -48,6 +54,14 @@ export default function GameBoard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [highlightedPile, setHighlightedPile] = useState<HighlightedPile>(null);
+
+  useEffect(() => {
+    if (highlightedPile) {
+      const timer = setTimeout(() => setHighlightedPile(null), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedPile]);
 
   useEffect(() => {
     setIsClient(true);
@@ -162,66 +176,64 @@ export default function GameBoard() {
     
     if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       setGameState(prev => {
-        if (!prev || prev.gameType !== 'Solitaire') return prev;
+          if (!prev || prev.gameType !== 'Solitaire') return prev;
   
-        const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
+          const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
+          let cardsToMove: CardType[];
   
-        let sourcePile: CardType[];
-        let cardsToMove: CardType[];
-  
-        if (sourceType === 'waste') {
-          if (newGameState.waste.length === 0) return prev;
-          cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
-        } else if (sourceType === 'foundation') {
-          if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
-          cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
-        } else { // tableau
-          sourcePile = newGameState.tableau[sourcePileIndex];
-          if (sourcePile.length === 0) return prev;
-          cardsToMove = sourcePile.slice(sourceCardIndex);
-        }
-  
-        if (cardsToMove.length === 0) return prev;
-  
-        const cardToMove = cardsToMove[0];
-        let moveSuccessful = false;
-  
-        if (destType === 'tableau') {
-          const destPile = newGameState.tableau[destPileIndex];
-          const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
-          if (canMoveSolitaireToTableau(cardToMove, topDestCard)) {
-            destPile.push(...cardsToMove);
-            moveSuccessful = true;
-          }
-        } else if (destType === 'foundation') {
-          if (cardsToMove.length === 1) {
-            const destPile = newGameState.foundation[destPileIndex];
-            const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
-            if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
-              destPile.push(cardToMove);
-              moveSuccessful = true;
-            }
-          }
-        }
-  
-        if (moveSuccessful) {
           if (sourceType === 'waste') {
-            newGameState.waste.pop();
+              if (newGameState.waste.length === 0) return prev;
+              cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
           } else if (sourceType === 'foundation') {
-            newGameState.foundation[sourcePileIndex].pop();
+              if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
+              cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
           } else { // tableau
-            newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-            const sourcePile = newGameState.tableau[sourcePileIndex];
-            if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
-              sourcePile[sourcePile.length - 1].faceUp = true;
-            }
+              if (newGameState.tableau[sourcePileIndex].length === 0) return prev;
+              cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
           }
-          newGameState.moves++;
-          updateState(newGameState, true);
-          return null; // Force updateState to handle the new state
-        }
-        
-        return prev;
+  
+          if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
+  
+          let moveSuccessful = false;
+          const cardToMove = cardsToMove[0];
+  
+          if (destType === 'tableau') {
+              const destPile = newGameState.tableau[destPileIndex];
+              const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+              if (canMoveSolitaireToTableau(cardToMove, topDestCard)) {
+                  destPile.push(...cardsToMove);
+                  moveSuccessful = true;
+              }
+          } else if (destType === 'foundation') {
+              if (cardsToMove.length === 1) {
+                  const destPile = newGameState.foundation[destPileIndex];
+                  const topDestCard = destPile.length > 0 ? destPile[destPile.length - 1] : undefined;
+                  if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
+                      destPile.push(cardToMove);
+                      moveSuccessful = true;
+                  }
+              }
+          }
+  
+          if (moveSuccessful) {
+              if (sourceType === 'waste') {
+                  newGameState.waste.pop();
+              } else if (sourceType === 'foundation') {
+                  newGameState.foundation[sourcePileIndex].pop();
+              } else { // tableau
+                  newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
+                  const sourcePile = newGameState.tableau[sourcePileIndex];
+                  if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
+                      sourcePile[sourcePile.length - 1].faceUp = true;
+                  }
+              }
+              newGameState.moves++;
+              updateState(newGameState, true);
+              setHighlightedPile({ type: destType, pileIndex: destPileIndex });
+              return null; // Let updateState handle the re-render
+          }
+  
+          return prev;
       });
     } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as FreecellGameState;
@@ -289,6 +301,7 @@ export default function GameBoard() {
 
       newGameState.moves++;
       updateState(newGameState);
+      setHighlightedPile({ type: destType, pileIndex: destPileIndex });
     } else if (settings.gameType === 'Spider' && gameState.gameType === 'Spider') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
       
@@ -313,6 +326,7 @@ export default function GameBoard() {
         newGameState.moves++;
         newGameState.score--;
         updateState(newGameState);
+        setHighlightedPile({ type: destType, pileIndex: destPileIndex });
       }
     }
   }, [gameState, updateState, settings.gameType, toast]);
@@ -588,6 +602,7 @@ export default function GameBoard() {
             >
               <Card 
                 card={pile[pile.length - 1]} 
+                isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
                 draggable={pile.length > 0}
                 onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
                  onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
@@ -605,7 +620,7 @@ export default function GameBoard() {
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <Card />
+                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
@@ -625,6 +640,7 @@ export default function GameBoard() {
                         >
                           <Card
                             card={card}
+                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
@@ -659,6 +675,7 @@ export default function GameBoard() {
             >
               <Card 
                 card={card || undefined} 
+                isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
                 draggable={!!card}
                 onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
                 onClick={() => card && handleCardClick('freecell', i, 0)}
@@ -675,6 +692,7 @@ export default function GameBoard() {
             >
               <Card 
                 card={pile[pile.length - 1]} 
+                isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
                 draggable={pile.length > 0}
                 onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
                  onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
@@ -692,7 +710,7 @@ export default function GameBoard() {
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <Card />
+                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
@@ -708,6 +726,7 @@ export default function GameBoard() {
                          >
                           <Card
                             card={card}
+                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={true}
                             isStacked={!isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
@@ -757,7 +776,7 @@ export default function GameBoard() {
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <Card />
+                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
                 ) : (
                   pile.map((card, cardIndex) => {
                     const isTopCard = cardIndex === pile.length - 1;
@@ -777,6 +796,7 @@ export default function GameBoard() {
                         >
                           <Card
                             card={card}
+                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
                             onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
