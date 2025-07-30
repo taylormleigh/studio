@@ -37,7 +37,7 @@ export function Card({ card, isSelected, className, onClick, draggable, onDragSt
     : '';
     
   // Responsive card size. Maintains a 7:10 aspect ratio.
-  const cardSize = "w-[calc(100%-4px)] aspect-[7/10] max-w-[96px]";
+  const cardSize = "w-full aspect-[7/10] max-w-[96px]";
 
   if (!card) {
     return (

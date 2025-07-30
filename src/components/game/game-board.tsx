@@ -383,44 +383,41 @@ export default function GameBoard() {
   }
 
   const renderSolitaire = () => {
+    if (gameState.gameType !== 'Solitaire') return null;
     const gs = gameState as SolitaireGameState;
     return (
       <>
-        <div className={cn("flex justify-between gap-1 sm:gap-2 md:gap-3", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2">
-            <div onClick={handleDraw} className="cursor-pointer basis-1/2 flex justify-center">
-              <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-            </div>
-            <div className="basis-1/2 flex justify-center">
-              {gs.waste.length > 0 ?
-                <Card 
-                  card={gs.waste[gs.waste.length - 1]} 
-                  draggable={true}
-                  onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
-                  onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
-                /> : <Card />
-              }
-            </div>
+        <div className={cn("grid grid-cols-7 gap-x-1 sm:gap-x-2 md:gap-x-3")}>
+          <div onClick={handleDraw} className="cursor-pointer">
+            <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
-          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2 justify-end">
-            {gs.foundation.map((pile, i) => (
-              <div 
-                key={i} 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'foundation', i)}
-                 className="basis-1/4 flex justify-center"
-              >
-                <Card 
-                  card={pile[pile.length - 1]} 
-                  draggable={pile.length > 0}
-                  onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                   onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
-                />
-              </div>
-            ))}
+          <div>
+            {gs.waste.length > 0 ?
+              <Card 
+                card={gs.waste[gs.waste.length - 1]} 
+                draggable={true}
+                onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
+                onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
+              /> : <Card />
+            }
           </div>
+          <div />
+          {gs.foundation.map((pile, i) => (
+            <div 
+              key={i} 
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'foundation', i)}
+            >
+              <Card 
+                card={pile[pile.length - 1]} 
+                draggable={pile.length > 0}
+                onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                 onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
+              />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-x-1 sm:gap-x-2 md:gap-x-3 min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -462,46 +459,44 @@ export default function GameBoard() {
   };
 
   const renderFreecell = () => {
+    if (gameState.gameType !== 'Freecell') return null;
     const gs = gameState as FreecellGameState;
     return (
       <>
-         <div className={cn("flex justify-between gap-1 sm:gap-2 md:gap-3", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2">
-            {gs.freecells.map((card, i) => (
-              <div 
-                key={i}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'freecell', i)}
-                className="basis-1/4 flex justify-center"
-              >
-                <Card 
-                  card={card || undefined} 
-                  draggable={!!card}
-                  onDragStart={(e) => handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-                  onClick={() => card && handleCardClick('freecell', i, 0)}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-1 sm:gap-2 md:gap-3 basis-1/2 justify-end">
-            {gs.foundation.map((pile, i) => (
-              <div 
-                key={i} 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'foundation', i)}
-                className="basis-1/4 flex justify-center"
-              >
-                <Card 
-                  card={pile[pile.length - 1]} 
-                  draggable={pile.length > 0}
-                  onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                   onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
-                />
-              </div>
-            ))}
-          </div>
+         <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 md:gap-x-3">
+          {/* Freecells */}
+          {gs.freecells.map((card, i) => (
+            <div 
+              key={`freecell-${i}`}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'freecell', i)}
+            >
+              <Card 
+                card={card || undefined} 
+                draggable={!!card}
+                onDragStart={(e) => handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+                onClick={() => card && handleCardClick('freecell', i, 0)}
+              />
+            </div>
+          ))}
+
+          {/* Foundations */}
+          {gs.foundation.map((pile, i) => (
+            <div 
+              key={`foundation-${i}`} 
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'foundation', i)}
+            >
+              <Card 
+                card={pile[pile.length - 1]} 
+                draggable={pile.length > 0}
+                onDragStart={(e) => handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                 onClick={() => pile.length > 0 && handleCardClick('foundation', i, pile.length-1)}
+              />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-8 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
+        <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 md:gap-x-3 min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -549,8 +544,8 @@ export default function GameBoard() {
         canUndo={history.length > 0}
       />
       <main className="flex-grow space-y-4 p-2 md:p-4">
-        {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
-        {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
+        {settings.gameType === 'Solitaire' && renderSolitaire()}
+        {settings.gameType === 'Freecell' && renderFreecell()}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
           <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon ? gameState.score : 'N/A'}`}</span>
