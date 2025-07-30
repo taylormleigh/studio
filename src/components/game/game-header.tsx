@@ -22,39 +22,39 @@ export default function GameHeader({ score, moves, time, onNewGame, onUndo, onHi
   };
 
   return (
-    <header className="mb-4 space-y-2">
+    <header className="mb-2 space-y-2">
       <div className="flex justify-between items-start">
-        <h1 className="text-3xl font-bold font-headline text-primary">Deck of Cards</h1>
-        <div className="flex items-center gap-4 text-right">
+        <h1 className="text-xl sm:text-3xl font-bold font-headline text-primary">Deck of Cards</h1>
+        <div className="flex items-center gap-2 sm:gap-4 text-right">
           <div>
             <div className="text-xs font-semibold text-muted-foreground">SCORE</div>
-            <div className="text-lg font-bold">{score}</div>
+            <div className="text-base sm:text-lg font-bold">{score}</div>
           </div>
           <div>
             <div className="text-xs font-semibold text-muted-foreground">TIME</div>
-            <div className="text-lg font-bold">{formatTime(time)}</div>
+            <div className="text-base sm:text-lg font-bold">{formatTime(time)}</div>
           </div>
         </div>
       </div>
       <div className="flex justify-between items-center bg-card border rounded-md p-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0 sm:gap-1">
           <Button variant="ghost" size="sm" onClick={onNewGame}>
-            <PlusSquare className="mr-2" />
-            New Game
+            <PlusSquare className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">New Game</span>
           </Button>
           <Button variant="ghost" size="sm" onClick={onUndo} disabled={!canUndo}>
-            <RotateCcw className="mr-2" />
-            Undo
+            <RotateCcw className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Undo</span>
           </Button>
           <Button variant="ghost" size="sm" onClick={onHint}>
-            <Lightbulb className="mr-2" />
-            Hint
+            <Lightbulb className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Hint</span>
           </Button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="text-center px-2">
             <div className="text-xs font-semibold text-muted-foreground">MOVES</div>
-            <div className="text-lg font-bold">{moves}</div>
+            <div className="text-base sm:text-lg font-bold">{moves}</div>
           </div>
           <Button variant="ghost" size="icon" onClick={onSettings}>
             <Settings />

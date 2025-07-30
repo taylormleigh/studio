@@ -242,7 +242,7 @@ export default function GameBoard() {
         canUndo={history.length > 0}
       />
       <main className="flex-grow space-y-2">
-        <div className={cn("flex justify-between", settings.leftHandMode && "flex-row-reverse")}>
+        <div className={cn("flex justify-between gap-1", settings.leftHandMode && "flex-row-reverse")}>
           <div className="flex gap-1">
             <div onClick={handleDraw} className="cursor-pointer">
               <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} />
@@ -286,20 +286,23 @@ export default function GameBoard() {
               {pile.length === 0 ? (
                  <Card />
               ) : (
-                pile.map((card, cardIndex) => (
-                  <div 
-                    key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                    className="absolute" 
-                    style={{ top: `${cardIndex * 2.25}rem` }}
-                  >
-                    <Card
-                      card={card}
-                      draggable={card.faceUp}
-                      onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                      onClick={() => card.faceUp && cardIndex === pile.length - 1 && handleCardClick('tableau', pileIndex, cardIndex)}
-                    />
-                  </div>
-                ))
+                pile.map((card, cardIndex) => {
+                  const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 2.25 : 0.75), 0);
+                  return (
+                    <div 
+                      key={`${card.suit}-${card.rank}-${cardIndex}`} 
+                      className="absolute" 
+                      style={{ top: `${topPosition}rem` }}
+                    >
+                      <Card
+                        card={card}
+                        draggable={card.faceUp}
+                        onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onClick={() => card.faceUp && cardIndex === pile.length - 1 && handleCardClick('tableau', pileIndex, cardIndex)}
+                      />
+                    </div>
+                  )
+                })
               )}
             </div>
           ))}
