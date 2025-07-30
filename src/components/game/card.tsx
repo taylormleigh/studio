@@ -37,8 +37,6 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
 export function Card({ card, isSelected, isHighlighted, isStacked, className, onClick, draggable, onDragStart, onDragEnd, style }: CardProps) {
   const ringClass = isHighlighted
     ? 'ring-2 ring-offset-background ring-offset-2 ring-green-500'
-    : isSelected
-    ? 'ring-2 ring-offset-background ring-offset-2 ring-blue-500'
     : '';
     
   // Responsive card size. Maintains a 7:10 aspect ratio.
