@@ -82,8 +82,7 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
   return !colorsMatch && ranksCorrect;
 }
 
-export function canMoveToFoundation(cardToMove: Card, foundationPile: Pile): boolean {
-  const topCard = foundationPile[foundationPile.length - 1];
+export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined): boolean {
   if (!topCard) {
     return cardToMove.rank === 'A';
   }
@@ -94,29 +93,4 @@ export function canMoveToFoundation(cardToMove: Card, foundationPile: Pile): boo
 
 export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
-}
-
-export function serializeGameStateForAI(state: GameState): string {
-    const foundations = SUITS.map((suit, i) => {
-        const pile = state.foundation.find(p => p[0]?.suit === suit);
-        const topCard = pile && pile.length > 0 ? pile[pile.length - 1] : null;
-        return `${suit}: ${topCard ? topCard.rank : '(empty)'}`;
-    }).join('\n- ');
-
-    const tableaus = state.tableau.map((pile, i) => {
-        const cards = pile.map(c => `${c.rank}${c.suit.charAt(0)}${c.faceUp ? '' : '(down)'}`).join(', ');
-        return `Pile ${i + 1}: [${cards}]`;
-    }).join('\n- ');
-
-    const waste = `[${state.waste.map(c => c.rank + c.suit.charAt(0)).join(', ')}]`;
-
-    return `
-Foundation:
-- ${foundations}
-Tableau:
-- ${tableaus}
-Waste: ${waste}
-Stock: ${state.stock.length} cards remaining
-Draw setting: ${state.drawCount}
-`.trim();
 }

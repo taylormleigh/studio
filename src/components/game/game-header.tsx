@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Lightbulb, PlusSquare, Settings } from 'lucide-react';
+import { RotateCcw, Lightbulb, PlusSquare, Settings, LoaderCircle } from 'lucide-react';
 
 type GameHeaderProps = {
   score: number;
@@ -12,9 +12,10 @@ type GameHeaderProps = {
   onHint: () => void;
   onSettings: () => void;
   canUndo: boolean;
+  isHintPending: boolean;
 };
 
-export default function GameHeader({ score, moves, time, onNewGame, onUndo, onHint, onSettings, canUndo }: GameHeaderProps) {
+export default function GameHeader({ score, moves, time, onNewGame, onUndo, onHint, onSettings, canUndo, isHintPending }: GameHeaderProps) {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -46,8 +47,8 @@ export default function GameHeader({ score, moves, time, onNewGame, onUndo, onHi
             <RotateCcw className="mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Undo</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onHint}>
-            <Lightbulb className="mr-1 sm:mr-2" />
+          <Button variant="ghost" size="sm" onClick={onHint} disabled={isHintPending}>
+            {isHintPending ? <LoaderCircle className="animate-spin mr-1 sm:mr-2" /> : <Lightbulb className="mr-1 sm:mr-2" />}
             <span className="hidden sm:inline">Hint</span>
           </Button>
         </div>

@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback, useTransition, DragEvent } from 'react';
-import { GameState, createInitialState, Pile, Card as CardType, canMoveToTableau, canMoveToFoundation, isGameWon, serializeGameStateForAI } from '@/lib/solitaire';
+import { GameState, createInitialState, Pile, Card as CardType, canMoveToTableau, canMoveToFoundation, isGameWon } from '@/lib/solitaire';
 import { Card } from './card';
 import GameHeader from './game-header';
 import { useToast } from '@/hooks/use-toast';
-import { getHintAction } from '@/app/actions';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useSettings } from '@/hooks/use-settings';
 import { SettingsDialog } from './settings-dialog';
 import { cn } from '@/lib/utils';
+import { getMoveHint } from '@/ai/flows/get-move-hint';
 
 type DraggingCardInfo = {
   type: 'tableau' | 'waste' | 'foundation';
@@ -57,7 +57,7 @@ export default function GameBoard() {
     setTime(0);
     setIsRunning(true);
     setIsWon(false);
-  }, [settings.klondikeDrawCount, settings.gameType]);
+  }, [settings.klondikeDrawCount]);
 
   useEffect(() => {
     handleNewGame();
@@ -69,38 +69,6 @@ export default function GameBoard() {
       setGameState(lastState);
       setHistory(rest);
     }
-  };
-
-  const handleHint = async () => {
-      startTransition(async () => {
-        try {
-            const serializedState = serializeGameStateForAI(gameState);
-            const result = await getHintAction({ 
-                gameState: serializedState,
-                gameType: 'Klondike', // Hardcoded for now, expandable for other game types
-                drawType: settings.klondikeDrawCount === 1 ? 'DrawOne' : 'DrawThree'
-             });
-            if (result.hint) {
-                toast({
-                    title: "💡 AI Hint",
-                    description: result.hint,
-                });
-            } else {
-                 toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Could not get a hint from the AI.",
-                });
-            }
-        } catch (error) {
-            console.error(error);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "An error occurred while getting a hint.",
-            });
-        }
-      });
   };
 
   const moveCards = useCallback((
@@ -132,15 +100,31 @@ export default function GameBoard() {
         } else return;
     } else { // destType === 'foundation'
         const destPile = newGameState.foundation[destPileIndex];
-        if (sourceCardIndex === sourcePile.length - 1 && canMoveToFoundation(cardToMove, destPile)) {
+        const topCard = destPile[destPile.length - 1];
+        if (sourceCardIndex === sourcePile.length - 1 && canMoveToFoundation(cardToMove, topCard)) {
             const cardsToMove = sourcePile.splice(sourceCardIndex);
             destPile.push(...cardsToMove);
             scoreChange = 10;
+        } else if (sourceCardIndex === sourcePile.length - 1 && cardToMove.rank === 'A' && !topCard) {
+            // Find an empty foundation pile for the Ace
+            let moved = false;
+            for(let i=0; i<newGameState.foundation.length; i++) {
+                if (newGameState.foundation[i].length === 0) {
+                    const cardsToMove = sourcePile.splice(sourceCardIndex);
+                    newGameState.foundation[i].push(...cardsToMove);
+                    scoreChange = 10;
+                    moved = true;
+                    break;
+                }
+            }
+            if(!moved) return;
+
         } else return;
     }
     
-    if (sourceType === 'tableau' && sourcePile.length > 0) {
+    if (sourceType === 'tableau' && sourcePile.length > 0 && !sourcePile[sourcePile.length-1].faceUp) {
       sourcePile[sourcePile.length - 1].faceUp = true;
+      scoreChange += 5;
     }
     
     newGameState.moves += 1;
@@ -149,6 +133,88 @@ export default function GameBoard() {
 
   }, [gameState, updateState]);
   
+  const handleDraw = useCallback(() => {
+    const newGameState: GameState = JSON.parse(JSON.stringify(gameState));
+    if (newGameState.stock.length > 0) {
+      const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
+      const drawnCards = [];
+      for (let i = 0; i < numToDraw; i++) {
+        const card = newGameState.stock.pop()!;
+        card.faceUp = true;
+        drawnCards.push(card);
+      }
+      newGameState.waste.push(...drawnCards.reverse());
+    } else if (newGameState.waste.length > 0) {
+      newGameState.stock = newGameState.waste.reverse().map(c => ({...c, faceUp: false}));
+      newGameState.waste = [];
+      newGameState.score = Math.max(0, newGameState.score - 100);
+    }
+    updateState(newGameState);
+  }, [gameState, updateState]);
+    
+  const findHint = useCallback(async () => {
+    try {
+      const hint = await getMoveHint(gameState);
+
+      if (hint.from) {
+        if (hint.from.type === 'draw') {
+          return () => handleDraw();
+        }
+
+        if (hint.from.type === 'reveal') {
+           return () => {
+              const newGameState = JSON.parse(JSON.stringify(gameState));
+              const pile = newGameState.tableau[hint.from.pileIndex!];
+              if(pile && pile.length > 0 && !pile[pile.length - 1].faceUp) {
+                  pile[pile.length - 1].faceUp = true;
+                  newGameState.moves++;
+                  newGameState.score += 5;
+                  updateState(newGameState);
+              }
+           }
+        }
+        
+        if (hint.to) {
+          return () => moveCards(
+            hint.from.type as 'tableau' | 'waste' | 'foundation',
+            hint.from.pileIndex!,
+            hint.from.cardIndex!,
+            hint.to.type as 'tableau' | 'foundation',
+            hint.to.pileIndex!
+          );
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Hint Error',
+        description: 'Could not get hint from AI.',
+      });
+    }
+
+    return null;
+  }, [gameState, moveCards, handleDraw, updateState, toast]);
+
+  const handleHint = async () => {
+    startTransition(async () => {
+      const hintMove = await findHint();
+      if (hintMove) {
+        hintMove();
+        toast({
+          title: "💡 Hint Used",
+          description: "A move was made for you.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "No Moves Found",
+          description: "There are no available moves.",
+        });
+      }
+    });
+  };
+
   const handleDragStart = (e: DragEvent, info: DraggingCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
@@ -168,51 +234,48 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
   
-  const handleDraw = () => {
-    const newGameState: GameState = JSON.parse(JSON.stringify(gameState));
-    if (newGameState.stock.length > 0) {
-      const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
-      const drawnCards = [];
-      for (let i = 0; i < numToDraw; i++) {
-        const card = newGameState.stock.pop()!;
-        card.faceUp = true;
-        drawnCards.push(card);
-      }
-      newGameState.waste.push(...drawnCards.reverse());
-    } else if (newGameState.waste.length > 0) {
-      newGameState.stock = newGameState.waste.reverse().map(c => ({...c, faceUp: false}));
-      newGameState.waste = [];
-      newGameState.score = Math.max(0, newGameState.score - 100);
-    }
-    updateState(newGameState);
-  };
 
   const handleCardClick = useCallback((sourceType: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => {
-    if (!settings.autoMove && sourceType !== 'foundation') return;
+    const card = sourceType === 'waste' 
+      ? gameState.waste[cardIndex]
+      : sourceType === 'foundation'
+      ? gameState.foundation[pileIndex][cardIndex]
+      : gameState.tableau[pileIndex][cardIndex];
 
-    let card: CardType | undefined;
-    let sourcePile: Pile;
-
-    if (sourceType === 'waste') {
-      sourcePile = gameState.waste;
-      card = sourcePile[sourcePile.length - 1];
-    } else if (sourceType === 'foundation') {
-      sourcePile = gameState.foundation[pileIndex];
-      card = sourcePile[sourcePile.length - 1];
+    if (!card || !card.faceUp) {
+        // if card is face down, flip it if it's the last one in a tableau pile
+        if(sourceType === 'tableau' && cardIndex === gameState.tableau[pileIndex].length - 1){
+            const newGameState = JSON.parse(JSON.stringify(gameState));
+            newGameState.tableau[pileIndex][cardIndex].faceUp = true;
+            newGameState.moves++;
+            newGameState.score += 5;
+            updateState(newGameState);
+        }
+        return;
     }
-    else { // tableau
-      sourcePile = gameState.tableau[pileIndex];
-      card = sourcePile[sourcePile.length - 1];
+    
+    if (sourceType === 'tableau' && cardIndex !== gameState.tableau[pileIndex].length - 1) {
+        // If not the top card, do nothing on click, unless it's to start a drag stack
+        return;
     }
 
-    if (!card || !card.faceUp) return;
+    if (!settings.autoMove) return;
 
     // Try moving to foundation first
     for (let i = 0; i < gameState.foundation.length; i++) {
-      if (canMoveToFoundation(card, gameState.foundation[i])) {
+      if (canMoveToFoundation(card, gameState.foundation[i][gameState.foundation[i].length - 1])) {
         moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
         return;
       }
+    }
+     // Try moving to an empty foundation pile if it's an Ace
+    if (card.rank === 'A') {
+        for (let i = 0; i < gameState.foundation.length; i++) {
+            if (gameState.foundation[i].length === 0) {
+                moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                return;
+            }
+        }
     }
     
     // if not from foundation, try moving to tableau
@@ -226,7 +289,7 @@ export default function GameBoard() {
             }
         }
     }
-  }, [settings.autoMove, gameState, moveCards]);
+  }, [settings.autoMove, gameState, moveCards, updateState]);
 
 
   return (
@@ -240,10 +303,11 @@ export default function GameBoard() {
         onHint={handleHint}
         onSettings={() => setIsSettingsOpen(true)}
         canUndo={history.length > 0}
+        isHintPending={isPending}
       />
       <main className="flex-grow space-y-2">
-        <div className={cn("flex justify-between gap-1", settings.leftHandMode && "flex-row-reverse")}>
-          <div className="flex gap-1">
+        <div className={cn("flex justify-between gap-0.5", settings.leftHandMode && "flex-row-reverse")}>
+          <div className="flex gap-2">
             <div onClick={handleDraw} className="cursor-pointer">
               <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} />
             </div>
@@ -258,7 +322,7 @@ export default function GameBoard() {
               }
             </div>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {gameState.foundation.map((pile, i) => (
               <div 
                 key={i} 
@@ -275,7 +339,7 @@ export default function GameBoard() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-1 min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-0.5 min-h-[28rem]">
           {gameState.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -284,7 +348,9 @@ export default function GameBoard() {
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             >
               {pile.length === 0 ? (
-                 <Card />
+                 <div onDrop={(e) => handleDrop(e, 'tableau', pileIndex)} className="h-full w-full">
+                    <Card />
+                 </div>
               ) : (
                 pile.map((card, cardIndex) => {
                   const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 2.25 : 0.75), 0);
@@ -298,7 +364,7 @@ export default function GameBoard() {
                         card={card}
                         draggable={card.faceUp}
                         onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                        onClick={() => card.faceUp && cardIndex === pile.length - 1 && handleCardClick('tableau', pileIndex, cardIndex)}
+                        onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
                       />
                     </div>
                   )
