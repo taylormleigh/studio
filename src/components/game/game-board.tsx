@@ -530,7 +530,7 @@ export default function GameBoard() {
     if (selectedCard?.type === sourceType && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex === cardIndex) {
         setSelectedCard(null); // Deselect if clicking the same card
     } else if (selectedCard) {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType, pileIndex);
+        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as 'tableau' | 'foundation' | 'freecell', pileIndex);
     } else if (card) {
         setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }

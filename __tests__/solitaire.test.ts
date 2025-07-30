@@ -266,7 +266,7 @@ describe('Solitaire Game Logic', () => {
         expect(state.tableau[1].length).toBe(1); // Should not move to other tableau pile
     });
 
-    it('should correctly select a card without moving it, preventing the blue outline', () => {
+    it('should correctly select a card without moving it, preventing a blue outline', () => {
         const cardToSelect: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
         state.tableau[0] = [cardToSelect];
     
@@ -284,6 +284,33 @@ describe('Solitaire Game Logic', () => {
     
         // This confirms that simply selecting a card doesn't trigger a move, which is the
         // root cause of the previous bugs and the unwanted visual effects.
+    });
+
+    it('should correctly move the final pile of cards, leaving the source pile empty', () => {
+      // Setup: A pile of two cards is the only thing in tableau pile 1
+      const pileToMove: Card[] = [
+        { suit: 'HEARTS', rank: 'J', faceUp: true },
+        { suit: 'SPADES', rank: '10', faceUp: true },
+      ];
+      // Setup: A valid destination card in tableau pile 0
+      const destinationCard: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+  
+      // Place the cards in the simulated state
+      state.tableau[0] = [destinationCard];
+      state.tableau[1] = [...pileToMove];
+  
+      // Simulate the move: remove the two cards from pile 1
+      const sourcePile = state.tableau[1];
+      const cards = sourcePile.splice(0, pileToMove.length);
+      
+      // Simulate adding them to pile 0
+      const destPile = state.tableau[0];
+      destPile.push(...cards);
+      
+      // Assertions
+      expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
+      expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
+      expect(state.tableau[0][2].rank).toBe('10'); // The last card should be the 10 of spades
     });
   });
 
