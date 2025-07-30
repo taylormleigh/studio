@@ -127,7 +127,7 @@ export default function GameBoard() {
   ) => {
     if (!gameState) return;
     
-    if (settings.gameType === 'Solitaire') {
+    if (settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as SolitaireGameState;
       let sourcePile: SolitairePile;
 
@@ -160,7 +160,7 @@ export default function GameBoard() {
       
       newGameState.moves += 1;
       updateState(newGameState);
-    } else if (settings.gameType === 'Freecell') {
+    } else if (settings.gameType === 'Freecell' && gameState.gameType === 'Freecell') {
       const newGameState = JSON.parse(JSON.stringify(gameState)) as FreecellGameState;
       let cardToMove: CardType;
       let cardsToMove: CardType[];
@@ -308,6 +308,7 @@ export default function GameBoard() {
           if (sourceType !== 'foundation') {
             const validMoves: { pileIndex: number; pileLength: number }[] = [];
             gs.tableau.forEach((destPile, i) => {
+                if (i === pileIndex && sourceType === 'tableau') return;
                 const destTopCard = destPile[destPile.length - 1];
                 if (canMoveSolitaireToTableau(card, destTopCard)) {
                     validMoves.push({ pileIndex: i, pileLength: destPile.length });
@@ -335,16 +336,19 @@ export default function GameBoard() {
 
       if(settings.autoMove) {
         // Priority 1: Try moving to foundation
-        for (let i = 0; i < gs.foundation.length; i++) {
-          if (canMoveFreecellToFoundation(card, gs.foundation[i])) {
-            moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-            return;
-          }
+        if(cardIndex === gs.tableau[pileIndex]?.length - 1 || sourceType === 'freecell') {
+            for (let i = 0; i < gs.foundation.length; i++) {
+                if (canMoveFreecellToFoundation(card, gs.foundation[i])) {
+                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                    return;
+                }
+            }
         }
         
         // Priority 2: Try moving to longest valid tableau pile
         const validTableauMoves: { pileIndex: number; pileLength: number }[] = [];
         gs.tableau.forEach((destPile, i) => {
+            if (i === pileIndex && sourceType === 'tableau') return;
             const destTopCard = destPile[destPile.length - 1];
             if (canMoveFreecellToTableau(card, destTopCard)) {
                 validTableauMoves.push({ pileIndex: i, pileLength: destPile.length });
@@ -382,20 +386,17 @@ export default function GameBoard() {
           onStats={() => setIsStatsOpen(true)}
           canUndo={false}
         />
-        <main className="flex-grow space-y-4 p-2 md:p-4">
-          <div className="flex justify-between gap-1 sm:gap-2 md:gap-3">
-            <div className="flex gap-1 sm:gap-2 md:gap-3">
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-            </div>
-            <div className="flex gap-1 sm:gap-2 md:gap-3">
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-              <Skeleton className="w-[12%] aspect-[7/10] max-w-[96px] rounded-md" />
-            </div>
+        <main className="flex-grow p-2 md:p-4">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
+              <Skeleton className="w-full aspect-[7/10] rounded-md" />
           </div>
-           <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 min-h-[28rem]">
+           <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 min-h-[28rem]">
               {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-md"/>)}
            </div>
         </main>
@@ -412,7 +413,7 @@ export default function GameBoard() {
     const gs = gameState as SolitaireGameState;
     return (
       <>
-        <div className={cn("grid grid-cols-7 gap-x-1 sm:gap-x-2 md:gap-x-3")}>
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
           <div onClick={handleDraw} className="cursor-pointer">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
@@ -426,7 +427,7 @@ export default function GameBoard() {
               /> : <Card />
             }
           </div>
-          <div />
+          <div className="col-span-1" />
           {gs.foundation.map((pile, i) => (
             <div 
               key={i} 
@@ -442,7 +443,7 @@ export default function GameBoard() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-x-1 sm:gap-x-2 md:gap-x-3 min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -450,14 +451,12 @@ export default function GameBoard() {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full flex flex-col items-center">
+              <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <div className="w-full">
-                      <Card />
-                  </div>
+                  <Card />
                 ) : (
                   pile.map((card, cardIndex) => {
-                    const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 2.25 : 0.75), 0);
+                    const topPosition = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 1.6 : 0.5), 0);
                     return (
                       <div 
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
@@ -469,7 +468,6 @@ export default function GameBoard() {
                           draggable={card.faceUp}
                           onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                          className="mx-auto"
                         />
                       </div>
                     )
@@ -488,7 +486,7 @@ export default function GameBoard() {
     const gs = gameState as FreecellGameState;
     return (
       <>
-         <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 md:gap-x-3">
+         <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
           {/* Freecells */}
           {gs.freecells.map((card, i) => (
             <div 
@@ -521,7 +519,7 @@ export default function GameBoard() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 md:gap-x-3 min-h-[28rem]">
+        <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -529,24 +527,21 @@ export default function GameBoard() {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full flex flex-col items-center">
+              <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
-                  <div className="w-full">
-                      <Card />
-                  </div>
+                  <Card />
                 ) : (
                   pile.map((card, cardIndex) => (
                     <div 
                       key={`${card.suit}-${card.rank}-${cardIndex}`} 
                       className="absolute w-full"
-                      style={{ top: `${cardIndex * 2.25}rem` }}
+                      style={{ top: `${cardIndex * 1.6}rem` }}
                     >
                       <Card
                         card={card}
                         draggable={true}
                         onDragStart={(e) => handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                         onClick={() => handleCardClick('tableau', pileIndex, cardIndex)}
-                        className="mx-auto"
                       />
                     </div>
                   ))
@@ -568,9 +563,9 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow space-y-4 p-2 md:p-4">
-        {settings.gameType === 'Solitaire' && renderSolitaire()}
-        {settings.gameType === 'Freecell' && renderFreecell()}
+      <main className="flex-grow p-2 md:p-4">
+        {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
+        {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
       </main>
        <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
           <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon ? gameState.score : 'N/A'}`}</span>
