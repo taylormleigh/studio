@@ -89,8 +89,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         ringClass,
         suitColorClass,
         className,
-        draggable && "cursor-grab",
-        isSelected && "ring-2 ring-blue-500" // Re-add selection ring for debugging, will remove later
+        draggable && "cursor-grab"
       )}
     >
       <div className="flex justify-start items-center h-auto">
