@@ -342,6 +342,43 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
       expect(state.tableau[0][2].rank).toBe('10'); // The last card should be the 10 of spades
     });
+
+    it('should prioritize the user\'s intended pile move over other valid sub-pile moves', () => {
+      // Setup: A main pile the user wants to move
+      const pileToMove: Card[] = [
+        { suit: 'HEARTS', rank: '8', faceUp: true },
+        { suit: 'CLUBS', rank: '7', faceUp: true },
+        { suit: 'DIAMONDS', rank: '6', faceUp: true },
+        { suit: 'SPADES', rank: '5', faceUp: true },
+      ];
+      // Setup: The destination for the main pile
+      const destinationCard: Card = { suit: 'SPADES', rank: '9', faceUp: true };
+      
+      // Setup: Other piles that could validly take sub-sections of the main pile
+      const otherDest1: Card = { suit: 'HEARTS', rank: '8', faceUp: true }; // Could take [7,6,5]
+      const otherDest2: Card = { suit: 'DIAMONDS', rank: '7', faceUp: true }; // Could take [6,5]
+      const otherDest3: Card = { suit: 'CLUBS', rank: '6', faceUp: true }; // Could take [5]
+
+      state.tableau[0] = pileToMove;
+      state.tableau[1] = [destinationCard];
+      state.tableau[2] = [otherDest1];
+      state.tableau[3] = [otherDest2];
+      state.tableau[4] = [otherDest3];
+
+      // Simulate a "click to move" on the '5 of Spades' (the top card of the pile to move)
+      const sourcePile = state.tableau[0];
+      const cards = sourcePile.splice(0); // The whole pile
+      const destPile = state.tableau[1];
+      destPile.push(...cards);
+
+      // We expect the entire pile to move to the '9 of Spades'
+      expect(state.tableau[0].length).toBe(0); // Source pile should be empty
+      expect(state.tableau[1].length).toBe(5); // Destination should have the 4 new cards + the original 9
+      expect(state.tableau[1][state.tableau[1].length - 1].rank).toBe('5'); // Top card should be 5
+      expect(state.tableau[2].length).toBe(1); // Other piles should be unchanged
+      expect(state.tableau[3].length).toBe(1);
+      expect(state.tableau[4].length).toBe(1);
+    });
   });
 
   describe('isGameWon', () => {
