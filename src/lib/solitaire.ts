@@ -92,26 +92,28 @@ export function getCardColor(card: Card): 'red' | 'black' {
 }
 
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
+  // Rule for moving to an empty tableau pile
   if (!destinationCard) {
-    // Only a King can move to an empty tableau pile
     return cardToMove.rank === 'K';
   }
+
+  // Rule for moving to a non-empty pile
   if (!destinationCard.faceUp) {
     return false;
   }
-
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
+  
   return !colorsMatch && ranksCorrect;
 }
 
 
 export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined, foundationPile: Pile): boolean {
     if (!topCard) {
-        // This logic is simplified as we assume the foundation piles are suit-specific
-        // and handle pile selection in the UI/game logic layer.
+        // Can only move an Ace to an empty foundation pile
         return cardToMove.rank === 'A';
     }
+    // Subsequent cards must be of the same suit and next rank up
     const suitsMatch = cardToMove.suit === topCard.suit;
     const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
     return suitsMatch && ranksCorrect;
