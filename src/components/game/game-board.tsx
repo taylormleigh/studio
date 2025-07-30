@@ -493,12 +493,22 @@ export default function GameBoard() {
             ? (c: CardType, p: CardType[] | undefined) => canMoveSolitaireToFoundation(c, p?.[p.length - 1])
             : canMoveFreecellToFoundation;
 
-          if (canMoveFn(card, gs.foundation[i])) {
-             if (gameState.gameType === 'Solitaire') {
-                const destPile = gs.foundation[i];
-                if (destPile.length > 0 && destPile[0].suit !== card.suit) continue;
-                if (destPile.length === 0 && gs.foundation.some(p => p.length > 0 && p[0].suit === card.suit)) continue;
-              }
+          let isFoundationMoveValid = false;
+          if (gameState.gameType === 'Solitaire') {
+            const destPile = gs.foundation[i];
+            const topCard = destPile.length > 0 ? destPile[destPile.length-1] : undefined;
+            if (canMoveSolitaireToFoundation(card, topCard)) {
+                if (topCard?.suit === card.suit || !topCard) {
+                    isFoundationMoveValid = true;
+                }
+            }
+          } else {
+             if (canMoveFn(card, gs.foundation[i])) {
+                isFoundationMoveValid = true;
+             }
+          }
+          
+          if(isFoundationMoveValid) {
             moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
             moved = true;
             break;
@@ -617,7 +627,7 @@ export default function GameBoard() {
               className="relative"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => handleTableauClick(pileIndex)}
+              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
             >
               <div className="absolute top-0 left-0 w-full h-full">
                 {pile.length === 0 ? (
@@ -630,6 +640,10 @@ export default function GameBoard() {
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full" 
                         style={{ top: 0 }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCardClick('tableau', pileIndex, cardIndex);
+                        }}
                       >
                         <div className={cn(
                           "relative w-full",
@@ -646,10 +660,6 @@ export default function GameBoard() {
                             draggable={card.faceUp}
                             isStacked={card.faceUp && !isTopCard}
                             onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={(e) => {
-                              e.stopPropagation(); 
-                              handleCardClick('tableau', pileIndex, cardIndex);
-                            }}
                           />
                         </div>
                       </div>
