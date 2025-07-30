@@ -8,6 +8,7 @@ export type SpiderSuitCount = 1 | 2 | 4;
 export interface GameState {
   gameType: 'Spider';
   tableau: Card[][];
+  foundation: Card[][];
   stock: Card[];
   completedSets: number;
   suitCount: SpiderSuitCount;
@@ -48,6 +49,7 @@ export function createInitialState(suitCount: SpiderSuitCount): GameState {
   return {
     gameType: 'Spider',
     tableau,
+    foundation: [],
     stock: deck, // Remaining 50 cards
     completedSets: 0,
     suitCount,
@@ -57,7 +59,8 @@ export function createInitialState(suitCount: SpiderSuitCount): GameState {
 }
 
 function isRun(cards: Card[]): boolean {
-    if (cards.length <= 1) return true;
+    if (cards.length < 1) return false;
+    if (cards.length === 1) return true;
     const firstSuit = cards[0].suit;
     for (let i = 0; i < cards.length - 1; i++) {
         // Must be same suit
@@ -84,9 +87,9 @@ export function canMoveToTableau(cardsToMove: Card[], destinationCard: Card | un
   return ranksCorrect;
 }
 
-export function checkForCompletedSet(tableauPile: Card[]): { updatedPile: Card[], setsCompleted: number } {
+export function checkForCompletedSet(tableauPile: Card[]): { updatedPile: Card[], setsCompleted: number, completedSet: Card[] | null } {
     if (tableauPile.length < 13) {
-      return { updatedPile: tableauPile, setsCompleted: 0 };
+      return { updatedPile: tableauPile, setsCompleted: 0, completedSet: null };
     }
   
     const topThirteen = tableauPile.slice(tableauPile.length - 13);
@@ -97,10 +100,11 @@ export function checkForCompletedSet(tableauPile: Card[]): { updatedPile: Card[]
       return {
         updatedPile: tableauPile.slice(0, tableauPile.length - 13),
         setsCompleted: 1,
+        completedSet: topThirteen,
       };
     }
   
-    return { updatedPile: tableauPile, setsCompleted: 0 };
+    return { updatedPile: tableauPile, setsCompleted: 0, completedSet: null };
 }
   
 
@@ -108,3 +112,6 @@ export function isGameWon(state: GameState): boolean {
   // Game is won when 8 sets are completed
   return state.completedSets === 8;
 }
+
+
+    

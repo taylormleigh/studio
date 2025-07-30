@@ -103,28 +103,31 @@ export default function GameBoard() {
       if(gameWon) finalScore = calculateScore(newState.moves, time);
     } else if (settings.gameType === 'Spider' && newState.gameType === 'Spider') {
       // Check for completed sets after every move
+      const newSpiderState = newState as SpiderGameState;
       let setsCompletedThisMove = 0;
-      newState.tableau.forEach((pile, index) => {
+      newSpiderState.tableau.forEach((pile, index) => {
         const result = checkForSpiderCompletedSet(pile);
-        if(result.setsCompleted > 0) {
-            newState.tableau[index] = result.updatedPile;
-            setsCompletedThisMove += result.setsCompleted;
-            newState.score += 100; // Bonus for completing a set
+        if(result.setsCompleted > 0 && result.completedSet) {
+            newSpiderState.tableau[index] = result.updatedPile;
+            newSpiderState.foundation.push(result.completedSet);
+            setsCompletedThisMove++;
+            newSpiderState.score += 100; // Bonus for completing a set
+             if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
+                newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
+             }
         }
       });
       if(setsCompletedThisMove > 0) {
-        newState.completedSets += setsCompletedThisMove;
+        newSpiderState.completedSets += setsCompletedThisMove;
         toast({
             title: "Set Completed!",
-            description: `You've completed ${setsCompletedThisMove} set${setsCompletedThisMove > 1 ? 's' : ''}!`,
+            description: `You've completed a set!`,
         });
-        if (newState.tableau[newState.tableau.length -1]?.length > 0 && !newState.tableau[newState.tableau.length -1][newState.tableau.length -1].faceUp) {
-          newState.tableau[newState.tableau.length -1][newState.tableau.length -1].faceUp = true;
-        }
       }
       
-      gameWon = isSpiderGameWon(newState);
-      if(gameWon) finalScore = newState.score; // Spider score is calculated differently
+      gameWon = isSpiderGameWon(newSpiderState);
+      if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
+      newState = newSpiderState;
     }
     
     if(gameWon) {
@@ -705,18 +708,22 @@ export default function GameBoard() {
     const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
     return (
       <>
-        <div className={`grid ${gridCols} mb-4`}>
+        <div className={`grid ${gridCols} mb-4 gap-x-0`}>
           {/* Stock pile */}
           <div onClick={handleDraw} className="cursor-pointer">
             <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
           </div>
-          <div className="col-span-8 flex justify-center items-center text-muted-foreground text-xs sm:text-sm">
-              <span>{`Completed Sets: ${gs.completedSets} / 8`}</span>
+          <div className="col-span-1" />
+           {/* Foundation Piles */}
+           <div className="col-span-8 grid grid-cols-8 gap-x-0">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={`foundation-${i}`}>
+                <Card card={gs.foundation[i] ? gs.foundation[i][gs.foundation[i].length -1] : undefined} />
+              </div>
+            ))}
           </div>
-          {/* Placeholder for completed sets, maybe show grayed out cards */}
-          <div/>
         </div>
-        <div className={`grid ${gridCols} min-h-[28rem]`}>
+        <div className={`grid ${gridCols} gap-x-0 min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -806,5 +813,7 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
 
     
