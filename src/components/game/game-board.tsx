@@ -55,11 +55,8 @@ export default function GameBoard() {
     let newState: GameState;
     if (settings.gameType === 'Solitaire') {
       newState = createSolitaireInitialState(settings.solitaireDrawCount);
-    } else if (settings.gameType === 'Freecell') {
-      newState = createFreecellInitialState();
     } else {
-      // Fallback or for other game types
-      newState = createSolitaireInitialState(settings.solitaireDrawCount);
+      newState = createFreecellInitialState();
     }
     setGameState(newState);
     setHistory([]);
@@ -298,7 +295,7 @@ export default function GameBoard() {
       if (settings.autoMove) {
           // Try moving to foundation first
           for (let i = 0; i < gs.foundation.length; i++) {
-            if (canMoveSolitaireToFoundation(card, gs.foundation[i], gs.foundation[i])) {
+            if (canMoveSolitaireToFoundation(card, gs.foundation[i][gs.foundation[i].length-1], gs.foundation[i])) {
               if(sourcePile.length - 1 === cardIndex) {
                 moveCards(sourceType as any, pileIndex, cardIndex, 'foundation', i);
                 return;
