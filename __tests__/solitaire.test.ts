@@ -75,21 +75,121 @@ describe('Solitaire Game Logic', () => {
     });
   });
 
+  describe('Card Movement Simulation', () => {
+    let state: GameState;
+  
+    beforeEach(() => {
+      state = createInitialState();
+    });
+  
+    it('should correctly move a single card from one tableau pile to another', () => {
+      // Set up a valid move
+      const cardToMove: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
+      const destinationCard: Card = { suit: 'SPADES', rank: 'K', faceUp: true };
+  
+      state.tableau[0] = [destinationCard];
+      state.tableau[1] = [{ suit: 'CLUBS', rank: '5', faceUp: false }, cardToMove];
+  
+      const sourcePile = state.tableau[1];
+      const destPile = state.tableau[0];
+  
+      // Simulate move
+      const card = sourcePile.pop();
+      if (card) {
+        destPile.push(card);
+        if (sourcePile.length > 0) {
+          sourcePile[sourcePile.length - 1].faceUp = true;
+        }
+      }
+      
+      expect(state.tableau[0].length).toBe(2);
+      expect(state.tableau[0][1].rank).toBe('Q');
+      expect(state.tableau[1].length).toBe(1);
+      expect(state.tableau[1][0].faceUp).toBe(true); // Check if card underneath is flipped
+    });
+
+    it('should correctly move a pile of cards from one tableau pile to another', () => {
+        const pileToMove: Card[] = [
+            { suit: 'HEARTS', rank: 'J', faceUp: true },
+            { suit: 'SPADES', rank: '10', faceUp: true }
+        ];
+        const destinationCard: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+    
+        state.tableau[0] = [destinationCard];
+        state.tableau[1] = [{ suit: 'DIAMONDS', rank: 'A', faceUp: false }, ...pileToMove];
+    
+        const sourcePile = state.tableau[1];
+        const destPile = state.tableau[0];
+        const cards = sourcePile.splice(1, 2);
+        destPile.push(...cards);
+        if(sourcePile.length > 0) {
+            sourcePile[sourcePile.length - 1].faceUp = true;
+        }
+
+        expect(state.tableau[0].length).toBe(3);
+        expect(state.tableau[0][2].rank).toBe('10');
+        expect(state.tableau[1].length).toBe(1);
+        expect(state.tableau[1][0].faceUp).toBe(true);
+    });
+
+    it('should correctly move the last card from a tableau pile, leaving it empty', () => {
+      const cardToMove: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
+      const destinationCard: Card = { suit: 'SPADES', rank: 'K', faceUp: true };
+  
+      state.tableau[0] = [destinationCard];
+      state.tableau[1] = [cardToMove]; // Pile with only one card
+  
+      const sourcePile = state.tableau[1];
+      const destPile = state.tableau[0];
+  
+      const card = sourcePile.pop();
+      if (card) {
+        destPile.push(card);
+      }
+  
+      expect(state.tableau[0].length).toBe(2);
+      expect(state.tableau[1].length).toBe(0); // Source pile should be empty
+    });
+
+    it('should correctly move the last pile of cards from a tableau pile, leaving it empty', () => {
+        const pileToMove: Card[] = [
+            { suit: 'HEARTS', rank: 'J', faceUp: true },
+            { suit: 'SPADES', rank: '10', faceUp: true }
+        ];
+        const destinationCard: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+    
+        state.tableau[0] = [destinationCard];
+        state.tableau[1] = pileToMove;
+    
+        const sourcePile = state.tableau[1];
+        const destPile = state.tableau[0];
+        const cards = sourcePile.splice(0, 2);
+        destPile.push(...cards);
+
+        expect(state.tableau[0].length).toBe(3);
+        expect(state.tableau[0][2].rank).toBe('10');
+        expect(state.tableau[1].length).toBe(0);
+    });
+  });
+
   describe('isGameWon', () => {
     it('should return true when all foundation piles are full', () => {
-      const state = createInitialState();
-      // To win, all cards must be in the foundation
-      state.tableau = Array.from({ length: 7 }, () => []);
-      state.stock = [];
-      state.waste = [];
-
-      state.foundation = SUITS.map(suit => 
-        ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'].map(rank => ({
-          suit: suit,
-          rank: rank as any,
-          faceUp: true
-        }))
-      );
+        const state: GameState = {
+            gameType: 'Solitaire',
+            tableau: [[], [], [], [], [], [], []],
+            stock: [],
+            waste: [],
+            foundation: SUITS.map(suit => 
+              ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'].map(rank => ({
+                suit: suit,
+                rank: rank as any,
+                faceUp: true
+              }))
+            ),
+            drawCount: 1,
+            moves: 99,
+            score: 100
+          };
       
       expect(isGameWon(state)).toBe(true);
     });
