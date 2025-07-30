@@ -1,4 +1,4 @@
-import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState } from '../src/lib/solitaire';
+import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS } from '../src/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
 
@@ -78,20 +78,20 @@ describe('Solitaire Game Logic', () => {
   describe('isGameWon', () => {
     it('should return true when all foundation piles are full', () => {
       const state = createInitialState();
-      state.foundation = Array.from({ length: 4 }, (_, i) => 
+      // To win, all cards must be in the foundation
+      state.tableau = Array.from({ length: 7 }, () => []);
+      state.stock = [];
+      state.waste = [];
+
+      state.foundation = SUITS.map(suit => 
         ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'].map(rank => ({
-          suit: state.foundation[i]?.[0]?.suit || ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'][i],
+          suit: suit,
           rank: rank as any,
           faceUp: true
         }))
       );
-      // A bit of a hack to satisfy TS, in reality the suits would be distinct.
-      state.foundation[0].forEach(c => c.suit = 'SPADES');
-      state.foundation[1].forEach(c => c.suit = 'HEARTS');
-      state.foundation[2].forEach(c => c.suit = 'CLUBS');
-      state.foundation[3].forEach(c => c.suit = 'DIAMONDS');
       
-      expect(isGameWon(state as GameState)).toBe(true);
+      expect(isGameWon(state)).toBe(true);
     });
 
     it('should return false when foundation piles are not full', () => {
