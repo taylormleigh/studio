@@ -108,7 +108,7 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
 }
 
 
-export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined, foundationPile: Pile): boolean {
+export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined): boolean {
     if (!topCard) {
         // Can only move an Ace to an empty foundation pile
         return cardToMove.rank === 'A';
