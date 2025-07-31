@@ -101,7 +101,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Changing game type or rules will start a new game. Other settings apply instantly.
+            To select a new game or rules you will need to start a new game. Other settings apply instantly.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
