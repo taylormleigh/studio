@@ -19,26 +19,30 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
   return (
     <header className={cn(
-      "flex justify-between items-center bg-card border-b p-1",
+      "flex justify-between items-center bg-card border-b p-1 md:py-2",
       !settings.leftHandMode && "flex-row-reverse"
     )}>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo">
-          <RotateCcw className="w-9 h-9" />
+        <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className="flex-col h-auto w-auto p-1 md:px-2 md:py-1">
+          <RotateCcw className="w-7 h-7" />
+          <span className="hidden md:block text-xs font-medium">Undo</span>
         </Button>
       </div>
       <h1 className="text-xl sm:text-2xl font-bold font-headline text-primary">
         {settings.gameType}
       </h1>
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onStats} aria-label="Statistics">
-          <BarChartBig className="w-9 h-9" />
+      <div className="flex items-center gap-1 md:gap-2">
+         <Button variant="ghost" size="icon" onClick={onStats} aria-label="Statistics" className="flex-col h-auto w-auto p-1 md:px-2 md:py-1">
+          <BarChartBig className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">Stats</span>
         </Button>
-        <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings">
-          <Settings className="w-9 h-9" />
+        <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className="flex-col h-auto w-auto p-1 md:px-2 md:py-1">
+          <Settings className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">Settings</span>
         </Button>
-        <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game">
-          <PlusSquare className="w-9 h-9" />
+        <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className="flex-col h-auto w-auto p-1 md:px-2 md:py-1">
+          <PlusSquare className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">New Game</span>
         </Button>
       </div>
     </header>
