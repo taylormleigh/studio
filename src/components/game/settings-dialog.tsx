@@ -99,7 +99,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Game Settings</DialogTitle>
+          <DialogTitle className="game-title font-headline text-secondary">
+            a deck of cards
+          </DialogTitle>
+          <h1>Game Settings</h1>
           <DialogDescription>
             To select a new game or rules you will need to start a new game. Other settings apply instantly.
           </DialogDescription>
