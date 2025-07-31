@@ -30,7 +30,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   const cardSize = "w-full aspect-[7/10] max-w-[96px]";
   const baseClasses = cn(
     cardSize,
-    'rounded-md transition-all border-2',
+    'rounded-md transition-all card-border',
     ringClass,
     className
   );
