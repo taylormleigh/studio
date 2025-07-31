@@ -21,7 +21,7 @@ type CardProps = {
 };
 
 // Using Unicode characters for a classic, high-contrast look
-const SuitIcon = ({ suit, className, color }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string, color?: string }) => {
+const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
   const { settings } = useSettings();
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
   const colorClass = isRed ? 'text-[#AE1447]' : 'text-black';
@@ -46,7 +46,6 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     ? 'ring-2 ring-offset-background ring-offset-2 ring-green-500'
     : '';
     
-  // Responsive card size. Maintains a 7:10 aspect ratio.
   const cardSize = "w-full aspect-[7/10] max-w-[96px]";
   const baseClasses = cn(
     cardSize,
@@ -152,11 +151,11 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         <div className='relative h-full p-1 bg-white/80' style={{ fontFamily: "'Tinos', serif"}}>
             {/* Corner Ranks */}
             <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
-                <div className="font-bold text-lg text-black">{rank}</div>
+                <div className="font-bold text-lg">{rank}</div>
                 <SuitIcon suit={suit} className="text-base" />
             </div>
             <div className="absolute bottom-1 right-1 flex flex-col items-center leading-none rotate-180">
-                <div className="font-bold text-lg text-black">{rank}</div>
+                <div className="font-bold text-lg">{rank}</div>
                 <SuitIcon suit={suit} className="text-base" />
             </div>
             
@@ -190,6 +189,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       className={cn(
         baseClasses,
         'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
+        isSelected && (cardStyle === 'modern' ? 'ring-2 ring-blue-500' : 'ring-2 ring-offset-2 ring-yellow-400'),
         draggable && "cursor-grab"
       )}
     >
@@ -197,5 +197,3 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     </div>
   );
 }
-
-    
