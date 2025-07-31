@@ -1,0 +1,38 @@
+
+"use client";
+
+import { Pointer, Hourglass, Smile } from 'lucide-react';
+
+const iconStrokeWidth = 1.25;
+const iconSize = 20;
+
+interface GameFooterProps {
+  moves: number;
+  time: number;
+  score?: number;
+}
+
+export default function GameFooter({ moves, time, score }: GameFooterProps) {
+  const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);
+
+  return (
+    <footer data-testid="game-footer" className="flex justify-center items-center text-xs text-muted-foreground p-2">
+      <div className="flex flex-row gap-10 w-100">
+        <div className="flex flex-row gap-1 items-center" data-testid="moves-counter">
+          <Pointer strokeWidth={iconStrokeWidth} size={iconSize} />
+          <span>{moves}</span>
+        </div>
+        
+        <div className="flex flex-row gap-1 items-center" data-testid="time-counter">
+          <Hourglass strokeWidth={iconStrokeWidth} size={iconSize} />
+          <span>{formatTime(time)}</span>
+        </div>
+
+        <div className="flex flex-row gap-1 items-center" data-testid="score-counter">
+          <Smile strokeWidth={iconStrokeWidth} size={iconSize} />
+          <span>{score !== undefined ? score : 'N/A'}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}

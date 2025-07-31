@@ -1,9 +1,10 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
 import { useSettings } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
-import { Sparkles, MousePointer, Snail } from 'lucide-react';
+import { Snail, Sparkles, MousePointer } from 'lucide-react';
 
 type GameHeaderProps = {
   onNewGame: () => void;
@@ -12,6 +13,9 @@ type GameHeaderProps = {
   onStats: () => void;
   canUndo: boolean;
 };
+
+const iconSize = 20;
+const iconStrokeWidth = 1.25;
 
 export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, canUndo }: GameHeaderProps) {
   const { settings } = useSettings();
@@ -22,11 +26,11 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const MainButtons = () => (
     <>
       <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
-        <Sparkles className="w-7 h-7" />
+        <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden md:block text-xs font-medium">settings</span>
       </Button>
       <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
-        <Snail className="w-7 h-7" />
+        <Sparkles size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden md:block text-xs font-medium">new</span>
       </Button>
     </>
@@ -34,7 +38,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
   const UndoButton = () => (
     <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
-      <MousePointer className="w-7 h-7" />
+      <MousePointer size={iconSize} strokeWidth={iconStrokeWidth} />
       <span className="hidden md:block text-xs font-medium">undo</span>
     </Button>
   );
@@ -45,16 +49,16 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   return (
     <header className={cn("grid grid-cols-3 items-center bg-[hsl(var(--header-background))] border-b p-1 md:py-2")}>
       <div className={cn(buttonContainerClasses, "justify-start")}>
-        {settings.leftHandMode ? <UndoButton /> : <MainButtons />}
+        <LeftGroup />
       </div>
 
       <div className="text-center">
-        <h1 onClick={onStats} className="game-title font-headline text-primary cursor-pointer">
+        <h1 onClick={onStats} className="game-title font-headline text-primary cursor-pointer" data-testid="game-title">
           {settings.gameType}
         </h1>
       </div>
 
-      <div className="flex items-center gap-1 justify-end">
+      <div className={cn(buttonContainerClasses, "justify-end")}>
         <RightGroup />
       </div>
     </header>

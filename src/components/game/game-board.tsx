@@ -1,47 +1,45 @@
 
 "use client";
 
-import { Smile, Pointer, Hourglass  } from 'lucide-react';
-
 import { useState, useEffect, useCallback, DragEvent } from 'react';
-import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, SUITS, isRun as isSolitaireRun } from '@/lib/solitaire';
+import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
-import { Card } from './card';
+
 import GameHeader from './game-header';
-import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useSettings } from '@/hooks/use-settings';
-import { useStats } from '@/hooks/use-stats';
+import SolitaireBoard from './solitaire-board';
+import FreecellBoard from './freecell-board';
+import SpiderBoard from './spider-board';
+import GameFooter from './game-footer';
+import VictoryDialog from './victory-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
 import { StatsDialog } from './stats-dialog';
+
+import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/hooks/use-settings';
+import { useStats } from '@/hooks/use-stats';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type GameState = SolitaireGameState | FreecellGameState | SpiderGameState;
 
-type SelectedCardInfo = {
+export type SelectedCardInfo = {
   type: 'tableau' | 'waste' | 'foundation' | 'freecell';
   pileIndex: number;
   cardIndex: number;
 };
 
-type DraggingCardInfo = SelectedCardInfo;
-
-type HighlightedPile = {
+export type HighlightedPile = {
   type: 'tableau' | 'foundation' | 'freecell';
   pileIndex: number;
 } | null;
 
-const iconStrokeWidth = 1.65;
-const iconSize = 16;
 
 const UNDO_LIMIT = 15;
 
 const calculateScore = (moves: number, time: number) => {
   if (time === 0) return 0;
-  // Score starts at 10000, decreases with time and moves.
-  const timePenalty = Math.floor(time / 10) * 2; // 2 points every 10 seconds
+  const timePenalty = Math.floor(time / 10) * 2;
   const movePenalty = moves * 5;
   const score = 10000 - timePenalty - movePenalty;
   return Math.max(0, score);
@@ -52,30 +50,22 @@ export default function GameBoard() {
   const { settings } = useSettings();
   const { toast } = useToast();
   const { stats, updateStats } = useStats();
+  
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
   const [isWon, setIsWon] = useState(false);
-  const [isRunning, setIsRunning] = useState(isWon);
+  const [isRunning, setIsRunning] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
   
-  const bestScore = gameState ? (stats[gameState.gameType]?.bestScore ?? 0) : 0;
-
-  useEffect(() => {
-    if (highlightedPile) {
-      const timer = setTimeout(() => setHighlightedPile(null), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [highlightedPile]);
-
   useEffect(() => {
     setIsClient(true);
   }, []);
-
+  
   useEffect(() => {
     if (isClient) {
       handleNewGame();
@@ -83,69 +73,84 @@ export default function GameBoard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  const updateState = useCallback((newState: GameState | ((prevState: GameState) => GameState), saveHistory = true) => {
-    if (saveHistory && gameState) {
-        setHistory(prev => [gameState, ...prev].slice(0, UNDO_LIMIT));
+  useEffect(() => {
+    if (highlightedPile) {
+      const timer = setTimeout(() => setHighlightedPile(null), 500);
+      return () => clearTimeout(timer);
     }
+  }, [highlightedPile]);
+  
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRunning && !isWon && gameState && isClient) {
+      interval = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, isWon, gameState, isClient]);
 
-    const updateAndCheckWin = (stateToUpdate: GameState) => {
-        let gameWon = false;
-        let finalScore = 0;
+  const checkWinCondition = useCallback((state: GameState) => {
+    let gameWon = false;
+    let finalScore = state.score;
+    let finalTime = time;
 
-        if (stateToUpdate.gameType === 'Solitaire') {
-            gameWon = isSolitaireGameWon(stateToUpdate as SolitaireGameState);
-            if(gameWon) finalScore = calculateScore(stateToUpdate.moves, time);
-        } else if (stateToUpdate.gameType === 'Freecell') {
-            gameWon = isFreecellGameWon(stateToUpdate as FreecellGameState);
-            if(gameWon) finalScore = calculateScore(stateToUpdate.moves, time);
-        } else if (stateToUpdate.gameType === 'Spider') {
-            const newSpiderState = stateToUpdate as SpiderGameState;
+    if (state.gameType === 'Solitaire') {
+      gameWon = isSolitaireGameWon(state as SolitaireGameState);
+      if (gameWon) finalScore = calculateScore(state.moves, finalTime);
+    } else if (state.gameType === 'Freecell') {
+      gameWon = isFreecellGameWon(state as FreecellGameState);
+      if (gameWon) finalScore = calculateScore(state.moves, finalTime);
+    } else if (state.gameType === 'Spider') {
+        gameWon = isSpiderGameWon(state as SpiderGameState);
+        if (gameWon) finalScore = state.score;
+    }
+    
+    if (gameWon) {
+        setIsRunning(false);
+        setIsWon(true);
+        updateStats({
+            gameType: state.gameType,
+            stats: { wins: 1, bestScore: finalScore, bestTime: finalTime }
+        });
+        return { ...state, score: finalScore };
+    }
+    return state;
+  }, [time, updateStats]);
+
+  const updateState = useCallback((newState: GameState | ((prevState: GameState) => GameState), saveHistory = true) => {
+    setGameState(prev => {
+        if (!prev) return null;
+        
+        if (saveHistory) {
+            setHistory(h => [prev, ...h].slice(0, UNDO_LIMIT));
+        }
+
+        const nextStateRaw = typeof newState === 'function' ? newState(prev) : newState;
+
+        // Spider-specific logic for completing sets
+        if (nextStateRaw.gameType === 'Spider') {
             let setsCompletedThisMove = 0;
-            newSpiderState.tableau.forEach((pile, index) => {
+            (nextStateRaw as SpiderGameState).tableau.forEach((pile, index) => {
                 const result = checkForSpiderCompletedSet(pile);
                 if(result.setsCompleted > 0 && result.completedSet) {
-                    newSpiderState.foundation.push(result.completedSet);
-                    newSpiderState.tableau[index] = result.updatedPile;
+                    (nextStateRaw as SpiderGameState).foundation.push(result.completedSet);
+                    (nextStateRaw as SpiderGameState).tableau[index] = result.updatedPile;
                     setsCompletedThisMove++;
-                    if (newSpiderState.tableau[index].length > 0 && !newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp) {
-                        newSpiderState.tableau[index][newSpiderState.tableau[index].length - 1].faceUp = true;
+                    if ((nextStateRaw as SpiderGameState).tableau[index].length > 0 && !(nextStateRaw as SpiderGameState).tableau[index][(nextStateRaw as SpiderGameState).tableau[index].length - 1].faceUp) {
+                        (nextStateRaw as SpiderGameState).tableau[index][(nextStateRaw as SpiderGameState).tableau[index].length - 1].faceUp = true;
                     }
                 }
             });
-            if(setsCompletedThisMove > 0) {
-                newSpiderState.completedSets += setsCompletedThisMove;
+            if (setsCompletedThisMove > 0) {
+                (nextStateRaw as SpiderGameState).completedSets += setsCompletedThisMove;
             }
-            
-            gameWon = isSpiderGameWon(newSpiderState);
-            if(gameWon) finalScore = newSpiderState.score; // Spider score is calculated differently
         }
         
-        if(gameWon) {
-            if(finalScore > 0) stateToUpdate.score = finalScore;
-            setIsRunning(false);
-            setIsWon(true);
-            updateStats({
-                gameType: stateToUpdate.gameType as any,
-                stats: {
-                    wins: 1,
-                    bestScore: stateToUpdate.score,
-                    bestTime: time,
-                }
-            });
-        }
-        return stateToUpdate;
-    }
-
-    if (typeof newState === 'function') {
-        setGameState(prev => {
-            if (!prev) return prev;
-            const nextState = newState(prev);
-            return updateAndCheckWin(nextState);
-        });
-    } else {
-        setGameState(updateAndCheckWin(newState));
-    }
-  }, [gameState, time, updateStats]);
+        const finalState = checkWinCondition(nextStateRaw);
+        return finalState;
+    });
+  }, [checkWinCondition]);
 
   const handleNewGame = useCallback(() => {
     let newState: GameState;
@@ -164,18 +169,7 @@ export default function GameBoard() {
     setIsWon(false);
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
-  
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning && !isWon && gameState && isClient) {
-      interval = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, isWon, gameState, isClient]);
-  
   const handleUndo = () => {
     if (history.length > 0) {
       const [lastState, ...rest] = history;
@@ -400,15 +394,10 @@ export default function GameBoard() {
     });
   }, [updateState, toast]);
     
-  const handleDragStart = (e: DragEvent, info: DraggingCardInfo) => {
+  const handleDragStart = (e: DragEvent, info: SelectedCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
     setSelectedCard(null);
-  };
-  
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
   };
   
   const handleDrop = (e: DragEvent, destType: 'tableau' | 'foundation' | 'freecell', destPileIndex: number) => {
@@ -416,47 +405,20 @@ export default function GameBoard() {
     const infoJSON = e.dataTransfer.getData('application/json');
     if (!infoJSON) return;
 
-    const info: DraggingCardInfo = JSON.parse(infoJSON);
+    const info: SelectedCardInfo = JSON.parse(infoJSON);
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
-
-  const handleFoundationClick = (pileIndex: number) => {
-    if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'foundation', pileIndex);
-    }
-  }
-
-  const handleFreecellClick = (pileIndex: number) => {
-    if (selectedCard) {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'freecell', pileIndex);
-    } else if (gameState?.gameType === 'Freecell') {
-        const card = (gameState as FreecellGameState).freecells[pileIndex];
-        if (card) {
-            handleCardClick('freecell', pileIndex, 0);
-        }
-    }
-  }
   
-  const handleTableauClick = (pileIndex: number) => {
-    if (selectedCard) {
-      if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex) {
-        setSelectedCard(null); // Deselect if clicking same pile
-      } else {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-      }
-    }
-  };
-
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
   
     // Turn over a face-down card if it's the last in a tableau pile
-    if (gameState.gameType === 'Solitaire' && sourceType === 'tableau') {
-      const sourcePile = (gameState as SolitaireGameState).tableau[pileIndex];
+    if (gameState.gameType !== 'Freecell' && sourceType === 'tableau') {
+      const sourcePile = gameState.tableau[pileIndex];
       const clickedCard = sourcePile?.[cardIndex];
       if (clickedCard && !clickedCard.faceUp && cardIndex === sourcePile.length - 1) {
         updateState(prev => {
-          const newGameState = JSON.parse(JSON.stringify(prev as SolitaireGameState));
+          const newGameState = JSON.parse(JSON.stringify(prev!));
           newGameState.tableau[pileIndex][cardIndex].faceUp = true;
           newGameState.moves++;
           return newGameState;
@@ -466,508 +428,126 @@ export default function GameBoard() {
       }
     }
   
-    // If a card is already selected, this click is the destination
     if (selectedCard) {
-      if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex > cardIndex) {
-        // do nothing if a card is selected and the user clicks on a card above it in the same pile
-      } else {
-         moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as 'tableau' | 'foundation' | 'freecell', pileIndex);
-      }
+        if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex > cardIndex) {
+            // do nothing
+        } else {
+            moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as any, pileIndex);
+        }
       setSelectedCard(null);
       return;
     }
   
-    // --- Auto-move logic ---
+    // --- Auto-move logic for Solitaire ---
     if (settings.autoMove && gameState.gameType === 'Solitaire') {
       const gs = gameState as SolitaireGameState;
   
-      if (sourceType === 'waste') {
-          const cardToMove = gs.waste[gs.waste.length - 1];
-          if (!cardToMove) return;
-          // 1. Try foundation
-          for (let i = 0; i < gs.foundation.length; i++) {
-              if (canMoveSolitaireToFoundation(cardToMove, gs.foundation[i][gs.foundation[i].length - 1])) {
-                  moveCards('waste', 0, gs.waste.length - 1, 'foundation', i);
-                  return;
-              }
-          }
-          // 2. Try tableau
-          for (let i = 0; i < gs.tableau.length; i++) {
-              if (canMoveSolitaireToTableau(cardToMove, gs.tableau[i][gs.tableau[i].length - 1])) {
-                  moveCards('waste', 0, gs.waste.length - 1, 'tableau', i);
-                  return;
-              }
-          }
-      } else if (sourceType === 'tableau') {
-          const sourcePile = gs.tableau[pileIndex];
-          const clickedCard = sourcePile?.[cardIndex];
-          if (!clickedCard || !clickedCard.faceUp) return;
-  
-          // Logic for clicking the TOP card of a pile
-          if (cardIndex === sourcePile.length - 1) {
-              // 1. Try to move to foundation
-              for (let i = 0; i < gs.foundation.length; i++) {
-                  if (canMoveSolitaireToFoundation(clickedCard, gs.foundation[i][gs.foundation[i].length - 1])) {
-                      moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                      return;
-                  }
-              }
-              // 2. Try to move to another tableau pile
-              for (let i = 0; i < gs.tableau.length; i++) {
-                  if (i === pileIndex) continue;
-                  if (canMoveSolitaireToTableau(clickedCard, gs.tableau[i][gs.tableau[i].length - 1])) {
-                      moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
-                      return;
-                  }
-              }
-          } 
-          // Logic for clicking a card WITHIN a pile
-          else {
-              const cardsToMove = sourcePile.slice(cardIndex);
-              if (!isSolitaireRun(cardsToMove)) {
-                 setSelectedCard({ type: sourceType, pileIndex, cardIndex });
-                 return;
-              }
-  
-              // Try to move the entire stack to another tableau pile
-              for (let i = 0; i < gs.tableau.length; i++) {
-                  if (i === pileIndex) continue;
-                  const destTopCard = gs.tableau[i][gs.tableau[i].length - 1];
-                  if (canMoveSolitaireToTableau(cardsToMove[0], destTopCard)) {
-                      moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
-                      return;
-                  }
-              }
-          }
+      const findAndExecuteAutoMove = () => {
+        if (sourceType === 'waste') {
+            const cardToMove = gs.waste[gs.waste.length - 1];
+            if (!cardToMove) return false;
+            // 1. Try foundation
+            for (let i = 0; i < gs.foundation.length; i++) {
+                if (canMoveSolitaireToFoundation(cardToMove, gs.foundation[i][gs.foundation[i].length - 1])) {
+                    moveCards('waste', 0, gs.waste.length - 1, 'foundation', i);
+                    return true;
+                }
+            }
+            // 2. Try tableau
+            for (let i = 0; i < gs.tableau.length; i++) {
+                if (canMoveSolitaireToTableau(cardToMove, gs.tableau[i][gs.tableau[i].length - 1])) {
+                    moveCards('waste', 0, gs.waste.length - 1, 'tableau', i);
+                    return true;
+                }
+            }
+        } else if (sourceType === 'tableau') {
+            const sourcePile = gs.tableau[pileIndex];
+            const clickedCard = sourcePile?.[cardIndex];
+            if (!clickedCard || !clickedCard.faceUp) return false;
+    
+            if (cardIndex === sourcePile.length - 1) { // Top card of a pile
+                for (let i = 0; i < gs.foundation.length; i++) {
+                    if (canMoveSolitaireToFoundation(clickedCard, gs.foundation[i][gs.foundation[i].length - 1])) {
+                        moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                        return true;
+                    }
+                }
+                for (let i = 0; i < gs.tableau.length; i++) {
+                    if (i === pileIndex) continue;
+                    if (canMoveSolitaireToTableau(clickedCard, gs.tableau[i][gs.tableau[i].length - 1])) {
+                        moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
+                        return true;
+                    }
+                }
+            } else { // Card within a pile
+                const cardsToMove = sourcePile.slice(cardIndex);
+                if (!isSolitaireRun(cardsToMove)) {
+                   return false; // Not a valid run to auto-move
+                }
+                for (let i = 0; i < gs.tableau.length; i++) {
+                    if (i === pileIndex) continue;
+                    if (canMoveSolitaireToTableau(cardsToMove[0], gs.tableau[i][gs.tableau[i].length - 1])) {
+                        moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+      }
+      if (findAndExecuteAutoMove()) {
+        return;
       }
     }
   
-    // Default manual selection ("drag to move" or if no auto-move was found)
-    if (sourceType === 'waste' || (gameState.tableau[pileIndex]?.[cardIndex]?.faceUp)) {
-      setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+    // Default manual selection (if no auto-move occurred)
+    if (gameState.gameType === 'Solitaire' && sourceType === 'waste' && (gameState as SolitaireGameState).waste.length > 0) {
+        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+    } else if(sourceType === 'tableau' && gameState.tableau[pileIndex]?.[cardIndex]?.faceUp) {
+        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+    } else if (sourceType === 'freecell' && (gameState as FreecellGameState).freecells[pileIndex]) {
+        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }
   };  
-  
-  const Confetti = () => {
-    const confettiCount = 50;
-    const colors = ['#e53935', '#d81b60', '#8e24aa', '#5e35b1', '#3949ab', '#1e88e5', '#039be5', '#00acc1', '#00897b', '#43a047', '#7cb342', '#c0ca33', '#fdd835', '#ffb300', '#fb8c00', '#f4511e'];
-    return (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {Array.from({ length: confettiCount }).map((_, i) => (
-                <div
-                    key={i}
-                    className="confetti"
-                    style={{
-                        left: `${Math.random() * 100}vw`,
-                        backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                        animationDelay: `${Math.random() * 5}s`,
-                    }}
-                />
-            ))}
-        </div>
-    );
-};
 
   const renderLoader = () => (
-    <>
-      <div className="flex flex-col min-h-screen">
-      <GameHeader 
-          onNewGame={() => {}} 
-          onUndo={() => {}} 
-          onSettings={() => setIsSettingsOpen(true)}
-          onStats={() => setIsStatsOpen(true)}
-          canUndo={false}
-        />
-        <main className="flex-grow p-3 md:p-4">
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-              <Skeleton className="w-full aspect-[7/10] rounded-md" />
-          </div>
-           <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 min-h-[28rem]">
-              {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-md"/>)}
-           </div>
-        </main>
-      </div>
-    </>
+    <div className="flex flex-col min-h-screen">
+    <GameHeader 
+        onNewGame={() => {}} 
+        onUndo={() => {}} 
+        onSettings={() => setIsSettingsOpen(true)}
+        onStats={() => setIsStatsOpen(true)}
+        canUndo={false}
+      />
+      <main className="flex-grow p-3 md:p-4">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
+            {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] rounded-md"/>)}
+        </div>
+         <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 min-h-[28rem]">
+            {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full h-36 rounded-md"/>)}
+         </div>
+      </main>
+    </div>
   );
 
   if (!isClient || !gameState) {
     return renderLoader();
   }
-
-  const renderSolitaire = () => {
-    if (gameState.gameType !== 'Solitaire') return null;
-    const gs = gameState as SolitaireGameState;
-
-    const stockAndWaste = (
-      <>
-        {settings.leftHandMode ? (
-          <>
-            <div onClick={handleDraw} className="cursor-pointer">
-              <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-            </div>
-            <div>
-              {gs.waste.length > 0 ? (
-                <Card 
-                  card={gs.waste[gs.waste.length - 1]} 
-                  isSelected={selectedCard?.type === 'waste'}
-                  draggable={true}
-                  onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
-                  onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
-                />
-              ) : <Card onClick={handleDraw}/>}
-            </div>
-          </>
-        ) : (
-           <>
-            <div>
-              {gs.waste.length > 0 ? (
-                <Card 
-                  card={gs.waste[gs.waste.length - 1]} 
-                  isSelected={selectedCard?.type === 'waste'}
-                  draggable={true}
-                  onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
-                  onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
-                />
-              ) : <Card onClick={handleDraw}/>}
-            </div>
-            <div onClick={handleDraw} className="cursor-pointer">
-              <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-            </div>
-          </>
-        )}
-      </>
-    );
-
-    const FoundationPiles = () => (
-      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,8px)]">
-        {gs.foundation.map((pile, i) => (
-          <div 
-            key={i} 
-            className="w-full max-w-[96px]"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, 'foundation', i)}
-          >
-            <Card 
-              card={pile.length > 0 ? pile[pile.length - 1] : undefined}
-              isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-              draggable={pile.length > 0}
-              onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-              onClick={(e) => {
-                  e.stopPropagation();
-                    if (selectedCard) {
-                      handleFoundationClick(i);
-                    } else if (pile.length > 0) {
-                      handleCardClick('foundation', i, pile.length - 1);
-                  } else {
-                        handleFoundationClick(i);
-                  }
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    );
-
-    return (
-      <>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1vw,8px)] mb-4">
-          {settings.leftHandMode ? (
-            <>
-              {stockAndWaste}
-              <div className="col-span-1" />
-              <FoundationPiles />
-            </>
-          ) : (
-            <>
-              <FoundationPiles />
-              <div className="col-span-1" />
-              {stockAndWaste}
-            </>
-          )}
-        </div>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1vw,8px)] min-h-[28rem]">
-          {gs.tableau.map((pile, pileIndex) => (
-            <div 
-              key={pileIndex} 
-              className="relative"
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
-            >
-              <div className="absolute top-0 left-0 w-full h-full">
-                {pile.length === 0 ? (
-                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
-                ) : (
-                  pile.map((card, cardIndex) => {
-                    const isTopCard = cardIndex === pile.length - 1;
-                    const isSelected = selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex;
-                    const draggable = card.faceUp && isSolitaireRun(pile.slice(cardIndex));
-                    
-                    return (
-                      <div 
-                        key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                        className="absolute w-full" 
-                        style={{ top: 0 }}
-                      >
-                        <div className={cn(
-                          "relative w-full",
-                           card.faceUp ? "h-6 sm:h-7" : "h-3"
-                          )}
-                          style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 26) : 10), 0)}px)`
-                          }}
-                        >
-                          <Card
-                            card={card}
-                            isSelected={isSelected}
-                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                            draggable={draggable}
-                            isStacked={card.faceUp && !isTopCard}
-                            onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleCardClick('tableau', pileIndex, cardIndex);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  };
-
-  const renderFreecell = () => {
-    if (gameState.gameType !== 'Freecell') return null;
-    const gs = gameState as FreecellGameState;
-
-    const freecellPiles = (
-      <div className="col-span-4 grid grid-cols-4 gap-x-0">
-        {gs.freecells.map((card, i) => (
-          <div 
-            key={`freecell-${i}`}
-            className="w-full max-w-[96px]"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, 'freecell', i)}
-              onClick={() => handleFreecellClick(i)}
-          >
-            <Card 
-              card={card || undefined} 
-              isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
-              isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
-              draggable={!!card}
-              onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-            />
-          </div>
-        ))}
-      </div>
-    );
-
-    const foundationPiles = (
-       <div className="col-span-4 grid grid-cols-4 gap-x-0">
-        {gs.foundation.map((pile, i) => (
-          <div 
-            key={`foundation-${i}`} 
-            className="w-full max-w-[96px]"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, 'foundation', i)}
-          >
-            <Card 
-              card={pile[pile.length - 1]} 
-              isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-              isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
-              draggable={pile.length > 0}
-              onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (selectedCard) {
-                      handleFoundationClick(i);
-                  } else if (pile.length > 0) {
-                      handleCardClick('foundation', i, pile.length-1);
-                  } else {
-                      handleFoundationClick(i);
-                  }
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    );
-    
-    return (
-      <>
-         <div className="grid grid-cols-8 gap-x-0 mb-4">
-            {settings.leftHandMode ? (
-              <>
-                {freecellPiles}
-                {foundationPiles}
-              </>
-            ) : (
-              <>
-                {foundationPiles}
-                {freecellPiles}
-              </>
-            )}
-        </div>
-        <div className="grid grid-cols-8 gap-x-[2px] min-h-[28rem]">
-          {gs.tableau.map((pile, pileIndex) => (
-            <div 
-              key={pileIndex} 
-              className="relative"
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
-            >
-              <div className="absolute top-0 left-0 w-full h-full">
-                {pile.length === 0 ? (
-                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
-                ) : (
-                  pile.map((card, cardIndex) => {
-                    const isTopCard = cardIndex === pile.length - 1;
-                    const movableCards = getMovableCardCount(gs);
-                    const canDrag = pile.length - cardIndex <= movableCards;
-
-                    return(
-                      <div 
-                        key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                        className="absolute w-full"
-                      >
-                         <div className="relative w-full h-6 sm:h-7"
-                            style={{
-                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 24 : 26)}px)`
-                            }}
-                         >
-                          <Card
-                            card={card}
-                            isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
-                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                            draggable={canDrag}
-                            isStacked={!isTopCard}
-                            onDragStart={(e) => canDrag && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleCardClick('tableau', pileIndex, cardIndex);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  };
   
-  const renderSpider = () => {
-    if (gameState.gameType !== 'Spider') return null;
-    const gs = gameState as SpiderGameState;
-    const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
+  const mainContainerMaxWidth = gameState.gameType === 'Spider' 
+  ? 'md:max-w-[500px]' 
+  : (gameState.gameType === 'Freecell' ? 'md:max-w-[420px]' : 'md:max-w-[400px]');
 
-    const StockPile = () => (
-      <div onClick={handleDraw} className="cursor-pointer">
-        <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-      </div>
-    );
-
-    const FoundationPiles = () => (
-      <div className="col-span-8 grid grid-cols-8 gap-x-0">
-       {Array.from({ length: 8 }).map((_, i) => (
-         <div key={`foundation-${i}`}>
-           <Card card={gs.foundation[i] ? gs.foundation[i][gs.foundation[i].length -1] : undefined} />
-         </div>
-       ))}
-     </div>
-    );
-
-    return (
-      <>
-        <div className={`grid ${gridCols} mb-4 gap-x-0`}>
-          {settings.leftHandMode ? (
-            <>
-              <StockPile />
-              <div className="col-span-1" />
-              <FoundationPiles />
-            </>
-          ) : (
-            <>
-              <FoundationPiles />
-              <div className="col-span-1" />
-              <StockPile />
-            </>
-          )}
-        </div>
-        <div className={`grid ${gridCols} gap-x-0 min-h-[28rem]`}>
-          {gs.tableau.map((pile, pileIndex) => (
-            <div 
-              key={pileIndex} 
-              className="relative"
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-              onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
-            >
-              <div className="absolute top-0 left-0 w-full h-full">
-                {pile.length === 0 ? (
-                  <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
-                ) : (
-                  pile.map((card, cardIndex) => {
-                    const isTopCard = cardIndex === pile.length - 1;
-                    return (
-                      <div 
-                        key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                        className="absolute w-full" 
-                        style={{ top: 0 }}
-                      >
-                        <div className={cn(
-                          "relative w-full",
-                           card.faceUp ? "h-6 sm:h-7" : "h-3"
-                          )}
-                          style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 26) : 10), 0)}px)`
-                          }}
-                        >
-                          <Card
-                            card={card}
-                            isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
-                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                            draggable={card.faceUp}
-                            isStacked={card.faceUp && !isTopCard}
-                            onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleCardClick('tableau', pileIndex, cardIndex);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    );
+  const boardProps = {
+    gameState: gameState as any, // Cast to any to satisfy specific board props
+    selectedCard,
+    highlightedPile,
+    handleCardClick,
+    handleDragStart,
+    handleDrop,
+    handleDraw,
+    moveCards,
   };
-
-  const mainContainerMaxWidth = gameState?.gameType === 'Spider' 
-    ? 'md:max-w-[500px]' 
-    : 'md:max-w-[420px]';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -979,50 +559,32 @@ export default function GameBoard() {
         canUndo={history.length > 0}
       />
       <main className={cn("flex-grow p-2 md:p-4 w-full md:mx-auto", mainContainerMaxWidth)}>
-        {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
-        {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
-        {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
+        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
+        {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
+        {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
-       <div className="flex justify-center items-center text-xs text-muted-foreground p-2">
-          <div className="flex flex-row gap-10 w-100">
-            <div className="flex flex-row gap-1">
-              <Pointer strokeWidth={iconStrokeWidth} size={iconSize} />
-              <span>
-                {`${gameState.moves} `} 
-              </span>
-            </div>
-            
-            <div className="flex flex-row gap-1">
-              <Hourglass strokeWidth={iconStrokeWidth} size={iconSize} />
-              {`${new Date(time * 1000).toISOString().substr(14, 5)} `} 
-            </div>
 
-            <div className="flex flex-row gap-1">
-              <Smile strokeWidth={iconStrokeWidth} size={iconSize} />
-              {`${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}
-            </div>
-          </div>
-        </div>
-      <AlertDialog open={isWon}>
-        <AlertDialogContent>
-         {isWon && <Confetti />}
-          <AlertDialogHeader>
-            <AlertDialogTitle>Congratulations! You Won!</AlertDialogTitle>
-            <AlertDialogDescription className='space-y-2'>
-              <div>Your final score is {gameState.score} in {gameState.moves} moves. Time: {new Date(time * 1000).toISOString().substr(14, 5)}.</div>
-              {bestScore > 0 && <div>Your best score is {bestScore}.</div>}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={handleNewGame}>Play Again</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <GameFooter 
+        moves={gameState.moves}
+        time={time}
+        score={gameState.gameType === 'Spider' || isWon ? gameState.score : undefined}
+      />
+
+      <VictoryDialog
+        isOpen={isWon}
+        onNewGame={handleNewGame}
+        score={gameState.score}
+        moves={gameState.moves}
+        time={time}
+        bestScore={stats[gameState.gameType]?.bestScore}
+      />
+
       <SettingsDialog 
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         onNewGame={handleNewGame}
       />
+
       <StatsDialog
         open={isStatsOpen}
         onOpenChange={setIsStatsOpen}
@@ -1030,3 +592,4 @@ export default function GameBoard() {
     </div>
   );
 }
+
