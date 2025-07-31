@@ -18,6 +18,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { CheckCircle2 } from 'lucide-react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -25,16 +27,93 @@ interface SettingsDialogProps {
   onNewGame: () => void;
 }
 
+const CardPreview = ({
+  styleType,
+  isSelected,
+  onClick,
+}: {
+  styleType: CardStyle;
+  isSelected: boolean;
+  onClick: () => void;
+}) => {
+  const isClassic = styleType === 'classic';
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'relative cursor-pointer rounded-md border-2 p-2 transition-all',
+        isSelected ? 'border-primary' : 'border-transparent'
+      )}
+    >
+      <div
+        className={cn(
+          'aspect-[7/10] w-20 rounded-md border-2 border-black bg-card',
+          isClassic ? 'font-serif' : 'font-sans'
+        )}
+      >
+        {isClassic ? (
+          <div className="relative h-full p-1" style={{ fontFamily: "'Tinos', serif" }}>
+            <div className="flex flex-col items-center absolute top-1 left-1">
+              <div className="font-bold text-lg leading-none text-black">K</div>
+              <span className="text-lg leading-none text-[#AE1447]">♥</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative p-1 flex flex-col justify-between h-full text-[#AE1447]">
+            <div className="flex items-center">
+              <div className="text-lg font-bold leading-none">K</div>
+            </div>
+            <div className="self-center">
+              <span className="text-xl">♥</span>
+            </div>
+            <div className="flex items-center self-end rotate-180">
+              <div className="text-lg font-bold leading-none">K</div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="mt-2 text-center text-sm font-medium capitalize">
+        {styleType}
+      </div>
+      {isSelected && (
+        <CheckCircle2 className="absolute top-1 right-1 h-5 w-5 text-primary bg-white rounded-full" />
+      )}
+    </div>
+  );
+};
+
+
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
+  const handleSettingChange = (newSettings: Partial<GameSettings>) => {
+    setSettings(newSettings);
+  };
+  
   const handleNewGameClick = () => {
-    onOpenChange(false); // Close the dialog
-    onNewGame(); // Start a new game with current settings
+    onOpenChange(false);
+    onNewGame();
   }
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      const needsNewGame = localStorage.getItem('deck-of-cards-new-game-required') === 'true';
+      if (needsNewGame) {
+        onNewGame();
+        localStorage.removeItem('deck-of-cards-new-game-required');
+      }
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleGameRuleChange = (newSettings: Partial<GameSettings>) => {
+    setSettings(newSettings);
+    localStorage.setItem('deck-of-cards-new-game-required', 'true');
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
@@ -50,7 +129,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             <Select
               value={settings.gameType}
               onValueChange={(value) => {
-                setSettings({ gameType: value as GameType });
+                handleGameRuleChange({ gameType: value as GameType });
               }}
             >
               <SelectTrigger id="game-type" className="col-span-3">
@@ -73,7 +152,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 id="draw-count"
                 value={String(settings.solitaireDrawCount)}
                 onValueChange={(value) => {
-                  setSettings({ solitaireDrawCount: Number(value) as SolitaireDrawType });
+                  handleGameRuleChange({ solitaireDrawCount: Number(value) as SolitaireDrawType });
                 }}
                 className="col-span-3 flex items-center gap-4"
               >
@@ -96,7 +175,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                   id="spider-suits"
                   value={String(settings.spiderSuits)}
                    onValueChange={(value) => {
-                    setSettings({ spiderSuits: Number(value) as SpiderSuitCount });
+                    handleGameRuleChange({ spiderSuits: Number(value) as SpiderSuitCount });
                   }}
                   className="col-span-3 flex items-center gap-4"
                 >
@@ -116,23 +195,20 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
              </div>
           )}
           
-          <div className="grid grid-cols-4 items-center gap-4">
-             <Label htmlFor="card-style" className="text-right">Card Style</Label>
-             <RadioGroup
-                id="card-style"
-                value={settings.cardStyle}
-                onValueChange={(value) => setSettings({ cardStyle: value as CardStyle })}
-                className="col-span-3 flex items-center gap-4"
-             >
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="modern" id="style-modern" />
-                    <Label htmlFor="style-modern">Modern</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="classic" id="style-classic" />
-                    <Label htmlFor="style-classic">Classic</Label>
-                </div>
-             </RadioGroup>
+           <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Card Style</Label>
+              <div className="col-span-3 flex items-center gap-4">
+                <CardPreview
+                  styleType="modern"
+                  isSelected={settings.cardStyle === 'modern'}
+                  onClick={() => handleSettingChange({ cardStyle: 'modern' })}
+                />
+                <CardPreview
+                  styleType="classic"
+                  isSelected={settings.cardStyle === 'classic'}
+                  onClick={() => handleSettingChange({ cardStyle: 'classic' })}
+                />
+              </div>
           </div>
 
           <Separator />
@@ -145,7 +221,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Switch
                 id="left-hand-mode"
                 checked={settings.leftHandMode}
-                onCheckedChange={(checked) => setSettings({ leftHandMode: checked })}
+                onCheckedChange={(checked) => handleSettingChange({ leftHandMode: checked })}
               />
               <Label htmlFor="left-hand-mode">{settings.leftHandMode ? 'Left-Handed Mode' : 'Right-Handed Mode'}</Label>
             </div>
@@ -158,7 +234,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Switch
                 id="auto-move"
                 checked={settings.autoMove}
-                onCheckedChange={(checked) => setSettings({ autoMove: checked })}
+                onCheckedChange={(checked) => handleSettingChange({ autoMove: checked })}
               />
               <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
