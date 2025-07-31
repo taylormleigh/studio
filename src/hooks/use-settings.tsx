@@ -36,6 +36,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<GameSettings>(defaultSettings);
 
+  // Effect to load settings from localStorage on mount
   useEffect(() => {
     try {
       const storedSettings = localStorage.getItem('deck-of-cards-settings');
@@ -47,17 +48,27 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       console.error("Could not load settings from localStorage", error);
     }
   }, []);
+  
+  // Effect to apply/remove dark class and save to localStorage
+  useEffect(() => {
+    // Apply dark mode class
+    if (settings.cardStyle === 'domino') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    
+    // Save settings to localStorage
+    try {
+      localStorage.setItem('deck-of-cards-settings', JSON.stringify(settings));
+    } catch (error) {
+      console.error("Could not save settings to localStorage", error);
+    }
+  }, [settings]);
+
 
   const setSettings = useCallback((newSettings: Partial<GameSettings>) => {
-    setSettingsState(prev => {
-      const updatedSettings = { ...prev, ...newSettings };
-      try {
-        localStorage.setItem('deck-of-cards-settings', JSON.stringify(updatedSettings));
-      } catch (error) {
-        console.error("Could not save settings to localStorage", error);
-      }
-      return updatedSettings;
-    });
+    setSettingsState(prev => ({ ...prev, ...newSettings }));
   }, []);
 
   return (

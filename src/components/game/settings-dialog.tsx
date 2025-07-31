@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount, CardStyle } from '@/hooks/use-settings';
@@ -11,7 +10,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -19,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Crown } from 'lucide-react';
+import { CheckCircle2, Moon, Sun } from 'lucide-react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -42,56 +40,14 @@ const CardPreview = ({
     <div
       onClick={onClick}
       className={cn(
-        'relative cursor-pointer rounded-md border-2 p-2 transition-all',
-        isSelected ? 'border-primary' : 'border-transparent'
+        'relative cursor-pointer rounded-lg border-2 p-4 transition-all w-28 h-24 flex flex-col items-center justify-center gap-2',
+        isSelected ? 'border-primary' : 'border-border',
+        isDomino ? 'bg-gray-800 text-white' : 'bg-gray-100'
       )}
     >
-      <div
-        className={cn(
-          'aspect-[7/10] w-20 rounded-md border-2 border-black bg-card',
-          isDomino ? 'font-serif' : 'font-sans'
-        )}
-      >
-        {isDomino ? (
-           <div className="relative h-full p-1 bg-white/95 text-black">
-            <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
-                <div className="font-bold text-lg">Q</div>
-            </div>
-             <div className="absolute top-1 right-1 flex flex-col items-center leading-none">
-                <span className="text-lg text-[#AE1447]">♥</span>
-            </div>
-            <div className="absolute bottom-1 right-1 flex flex-col items-center leading-none rotate-180">
-                <div className="font-bold text-lg">Q</div>
-            </div>
-            <div className="absolute bottom-1 left-1 flex flex-col items-center leading-none rotate-180">
-                 <span className="text-lg text-[#AE1447]">♥</span>
-            </div>
-             <div className="absolute inset-0 flex flex-col items-center justify-center text-[#AE1447]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-black">
-                    <path d="M19.14 6.86a4 4 0 0 0-5.64 0l-1.5 1.5-1.5-1.5a4 4 0 1 0-5.64 5.64L12 19.34l7.14-7.14a4 4 0 0 0 0-5.64z" />
-                    <circle cx="12" cy="6" r="2"/>
-                    <circle cx="6" cy="9" r="1.5"/>
-                    <circle cx="18" cy="9" r="1.5"/>
-                </svg>
-                <span className="text-4xl">♥</span>
-             </div>
-          </div>
-        ) : (
-          <div className="relative p-1 flex flex-col justify-between h-full text-[#AE1447]">
-            <div className="flex items-center">
-              <div className="text-lg font-bold leading-none">Q</div>
-            </div>
-            <div className="self-center">
-              <span className="text-xl">♥</span>
-            </div>
-            <div className="flex items-center self-end rotate-180">
-              <div className="text-lg font-bold leading-none">Q</div>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="mt-2 text-center text-sm font-medium capitalize">
-        {styleType}
+        {isDomino ? <Moon /> : <Sun />}
+      <div className="text-center text-sm font-medium capitalize">
+        {isDomino ? 'Dark' : 'Light'}
       </div>
       {isSelected && (
         <CheckCircle2 className="absolute top-1 right-1 h-5 w-5 text-primary bg-white rounded-full" />
@@ -103,22 +59,32 @@ const CardPreview = ({
 
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
-
-  const handleSettingChange = (newSettings: Partial<GameSettings>) => {
-    setSettings(newSettings);
-  };
-  
-  const handleNewGameClick = () => {
-    onOpenChange(false);
-    onNewGame();
-  }
+  const [initialSettings, setInitialSettings] = React.useState(settings);
+  const [hasRuleChanged, setHasRuleChanged] = React.useState(false);
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
+    if (isOpen) {
+      setInitialSettings(settings); // snapshot settings on open
+      setHasRuleChanged(false);
+    } else {
+        // if settings that require a new game have changed, prompt user
+        if(hasRuleChanged) {
+            onNewGame();
+        }
+    }
   };
-
+  
   const handleGameRuleChange = (newSettings: Partial<GameSettings>) => {
     setSettings(newSettings);
+    // check if the new setting is different from the initial setting for game rules
+    if (newSettings.gameType && newSettings.gameType !== initialSettings.gameType) {
+        setHasRuleChanged(true);
+    } else if (newSettings.solitaireDrawCount && newSettings.solitaireDrawCount !== initialSettings.solitaireDrawCount) {
+        setHasRuleChanged(true);
+    } else if (newSettings.spiderSuits && newSettings.spiderSuits !== initialSettings.spiderSuits) {
+        setHasRuleChanged(true);
+    }
   };
 
   return (
@@ -127,7 +93,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Changing the game type or rules requires starting a new game. Other settings will apply to your current game.
+            Changing game type or rules will start a new game. Other settings apply instantly.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -205,17 +171,17 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           )}
           
            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Deck</Label>
+              <Label className="text-right pt-2">Theme</Label>
               <div className="col-span-3 flex items-center gap-4">
                 <CardPreview
                   styleType="modern"
                   isSelected={settings.cardStyle === 'modern'}
-                  onClick={() => handleSettingChange({ cardStyle: 'modern' })}
+                  onClick={() => setSettings({ cardStyle: 'modern' })}
                 />
                 <CardPreview
                   styleType="domino"
                   isSelected={settings.cardStyle === 'domino'}
-                  onClick={() => handleSettingChange({ cardStyle: 'domino' })}
+                  onClick={() => setSettings({ cardStyle: 'domino' })}
                 />
               </div>
           </div>
@@ -230,7 +196,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Switch
                 id="left-hand-mode"
                 checked={settings.leftHandMode}
-                onCheckedChange={(checked) => handleSettingChange({ leftHandMode: checked })}
+                onCheckedChange={(checked) => setSettings({ leftHandMode: checked })}
               />
               <Label htmlFor="left-hand-mode">{settings.leftHandMode ? 'Left-Handed Mode' : 'Right-Handed Mode'}</Label>
             </div>
@@ -243,7 +209,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Switch
                 id="auto-move"
                 checked={settings.autoMove}
-                onCheckedChange={(checked) => handleSettingChange({ autoMove: checked })}
+                onCheckedChange={(checked) => setSettings({ autoMove: checked })}
               />
               <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
@@ -251,10 +217,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
 
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-             <Button variant="outline">Close</Button>
-          </DialogClose>
-          <Button onClick={handleNewGameClick}>New Game</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={onNewGame}>New Game</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
