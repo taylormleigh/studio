@@ -961,9 +961,9 @@ export default function GameBoard() {
     );
   };
 
-  const mainContainerMaxWidth = gameState?.gameType === 'Solitaire' 
-    ? 'md:max-w-[400px]' 
-    : 'md:max-w-[500px]';
+  const mainContainerMaxWidth = gameState?.gameType === 'Spider' 
+    ? 'md:max-w-[500px]' 
+    : 'md:max-w-[400px]';
 
   return (
     <div className="flex flex-col min-h-screen">
