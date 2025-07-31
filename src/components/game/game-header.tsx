@@ -47,7 +47,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const RightGroup = () => settings.leftHandMode ? <MainButtons /> : <UndoButton />;
 
   return (
-    <header className={cn("grid grid-cols-3 items-center bg-background border-b p-1 md:py-2")}>
+    <header className={cn("grid grid-cols-3 items-center bg-[hsl(var(--header-background))] border-b p-1 md:py-2")}>
       <div className={cn(buttonContainerClasses, "justify-start")}>
         {settings.leftHandMode ? <UndoButton /> : <MainButtons />}
       </div>

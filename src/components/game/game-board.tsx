@@ -51,8 +51,8 @@ export default function GameBoard() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
   const [isWon, setIsWon] = useState(false);
+  const [isRunning, setIsRunning] = useState(isWon);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -641,7 +641,7 @@ export default function GameBoard() {
     );
 
     const FoundationPiles = () => (
-      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]">
+      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,8px)]">
         {gs.foundation.map((pile, i) => (
           <div 
             key={i} 
@@ -672,7 +672,7 @@ export default function GameBoard() {
 
     return (
       <>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1vw,8px)] mb-4">
           {settings.leftHandMode ? (
             <>
               {stockAndWaste}
@@ -687,7 +687,7 @@ export default function GameBoard() {
             </>
           )}
         </div>
-        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1vw,8px)] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -1009,9 +1009,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
-
-    
-
-    

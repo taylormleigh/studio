@@ -19,6 +19,7 @@ body {
 @layer base {
   :root {
     --background: 0 0% 95%; /* Lighter gray for a softer feel */
+    --header-background: 0 0% 92%; /* Slightly darker gray for header */
     --foreground: 0 0% 15%; /* Darker text for better contrast */
     --card: 0 0% 100%; /* White cards */
     --card-foreground: 0 0% 15%;
@@ -42,6 +43,7 @@ body {
   
   .dark {
     --background: 240 10% 3.9%;
+    --header-background: 240 10% 8%; /* Slightly lighter black for header */
     --foreground: 0 0% 98%;
     --card: 0 0% 100%; /* White cards */
     --card-foreground: 0 0% 15%; /* Black text on cards */
