@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, PlusSquare, Settings, BarChartBig } from 'lucide-react';
+import { RotateCcw, PlusSquare, Settings } from 'lucide-react';
 import { useSettings } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
 
@@ -21,10 +21,6 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
   const MainButtons = () => (
     <>
-      <Button variant="ghost" size="icon" onClick={onStats} aria-label="Statistics" className={buttonClasses}>
-        <BarChartBig className="w-7 h-7" />
-        <span className="hidden md:block text-xs font-medium">stats</span>
-      </Button>
       <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
         <Settings className="w-7 h-7" />
         <span className="hidden md:block text-xs font-medium">settings</span>
@@ -53,7 +49,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
       </div>
 
       <div className="text-center">
-        <h1 className="game-title font-headline text-primary">
+        <h1 onClick={onStats} className="game-title font-headline text-primary cursor-pointer">
           {settings.gameType}
         </h1>
       </div>
