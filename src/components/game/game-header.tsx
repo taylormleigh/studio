@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, PlusSquare, Settings } from 'lucide-react';
 import { useSettings } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
+import { Sparkles, MousePointer, Snail } from 'lucide-react';
 
 type GameHeaderProps = {
   onNewGame: () => void;
@@ -22,11 +22,11 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const MainButtons = () => (
     <>
       <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
-        <Settings className="w-7 h-7" />
+        <Sparkles className="w-7 h-7" />
         <span className="hidden md:block text-xs font-medium">settings</span>
       </Button>
       <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
-        <PlusSquare className="w-7 h-7" />
+        <Snail className="w-7 h-7" />
         <span className="hidden md:block text-xs font-medium">new</span>
       </Button>
     </>
@@ -34,7 +34,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
   const UndoButton = () => (
     <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
-      <RotateCcw className="w-7 h-7" />
+      <MousePointer className="w-7 h-7" />
       <span className="hidden md:block text-xs font-medium">undo</span>
     </Button>
   );

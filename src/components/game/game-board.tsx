@@ -1,6 +1,8 @@
 
 "use client";
 
+import { Smile, Pointer, Hourglass  } from 'lucide-react';
+
 import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, SUITS, isRun as isSolitaireRun } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
@@ -31,6 +33,8 @@ type HighlightedPile = {
   pileIndex: number;
 } | null;
 
+const iconStrokeWidth = 1.65;
+const iconSize = 16;
 
 const UNDO_LIMIT = 15;
 
@@ -979,8 +983,25 @@ export default function GameBoard() {
         {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
       </main>
-       <div className="flex justify-center items-center text-sm text-muted-foreground p-2">
-          <span>{`Moves: ${gameState.moves} | Time: ${new Date(time * 1000).toISOString().substr(14, 5)} | Score: ${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}</span>
+       <div className="flex justify-center items-center text-xs text-muted-foreground p-2">
+          <div className="flex flex-row gap-10 w-100">
+            <div className="flex flex-row gap-1">
+              <Pointer strokeWidth={iconStrokeWidth} size={iconSize} />
+              <span>
+                {`${gameState.moves} `} 
+              </span>
+            </div>
+            
+            <div className="flex flex-row gap-1">
+              <Hourglass strokeWidth={iconStrokeWidth} size={iconSize} />
+              {`${new Date(time * 1000).toISOString().substr(14, 5)} `} 
+            </div>
+
+            <div className="flex flex-row gap-1">
+              <Smile strokeWidth={iconStrokeWidth} size={iconSize} />
+              {`${isWon || gameState.gameType === 'Spider' ? gameState.score : 'N/A'}`}
+            </div>
+          </div>
         </div>
       <AlertDialog open={isWon}>
         <AlertDialogContent>
