@@ -27,7 +27,7 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
-  const handleSettingChange = <T extends keyof typeof settings>(
+  const handleSettingChangeAndNewGame = <T extends keyof typeof settings>(
     key: T,
     value: (typeof settings)[T]
   ) => {
@@ -51,7 +51,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             </Label>
             <Select
               value={settings.gameType}
-              onValueChange={(value) => handleSettingChange('gameType', value as GameType)}
+              onValueChange={(value) => handleSettingChangeAndNewGame('gameType', value as GameType)}
             >
               <SelectTrigger id="game-type" className="col-span-3">
                 <SelectValue placeholder="Select a game" />
@@ -72,7 +72,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <RadioGroup
                 id="draw-count"
                 value={String(settings.solitaireDrawCount)}
-                onValueChange={(value) => handleSettingChange('solitaireDrawCount', Number(value) as SolitaireDrawType)}
+                onValueChange={(value) => handleSettingChangeAndNewGame('solitaireDrawCount', Number(value) as SolitaireDrawType)}
                 className="col-span-3 flex items-center gap-4"
               >
                 <div className="flex items-center space-x-2">
@@ -93,7 +93,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 <RadioGroup
                   id="spider-suits"
                   value={String(settings.spiderSuits)}
-                  onValueChange={(value) => handleSettingChange('spiderSuits', Number(value) as SpiderSuitCount)}
+                  onValueChange={(value) => handleSettingChangeAndNewGame('spiderSuits', Number(value) as SpiderSuitCount)}
                   className="col-span-3 flex items-center gap-4"
                 >
                     <div className="flex items-center space-x-2">
