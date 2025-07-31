@@ -50,7 +50,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
 
   if (!card.faceUp) {
     const modernBack = "bg-[#5f8fb1] [background-image:radial-gradient(#80ADCC_1px,_transparent_1px)] [background-size:5px_5px]";
-    const dominoBack = "bg-[#474574] [background-image:radial-gradient(#A7A4D1_1px,_transparent_1px)] [background-size:7px_7px]";
+    const dominoBack = "bg-[#474574] [background-image:repeating-linear-gradient(45deg,#A7A4D1,#A7A4D1_1px,transparent_1px,transparent_5px)]";
 
     return (
       <div
