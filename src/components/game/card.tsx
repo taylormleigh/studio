@@ -128,7 +128,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
             {/* Center Content */}
             <div className="absolute inset-0 flex items-center justify-center p-4">
             {isFaceCard ? (
-                <div className="w-full h-full p-2">
+                <div className="relative w-full h-full p-2">
                      <Image src={`https://placehold.co/120x180.png`} alt={`${rank} of ${suit}`} layout="fill" objectFit="contain" data-ai-hint="playing card illustration"/>
                 </div>
             ) : (
