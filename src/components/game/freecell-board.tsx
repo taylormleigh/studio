@@ -104,13 +104,13 @@ export default function FreecellBoard({
        <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
           {settings.leftHandMode ? (
             <>
-              {freecellPiles}
-              {foundationPiles}
+              <FreecellPiles />
+              <FoundationPiles />
             </>
           ) : (
             <>
-              {foundationPiles}
-              {freecellPiles}
+              <FoundationPiles />
+              <FreecellPiles />
             </>
           )}
       </div>
