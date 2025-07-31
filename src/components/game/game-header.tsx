@@ -58,7 +58,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
         </h1>
       </div>
 
-      <div className="flex items-center gap-1 md:gap-2 justify-end">
+      <div className="flex items-center gap-1 justify-end">
         <RightGroup />
       </div>
     </header>
