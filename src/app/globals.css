@@ -11,6 +11,10 @@
     font-weight: 700;
 }
 
+.card-border {
+    border-width: 1.5px;
+}
+
 @media (min-width: 640px) {
     .game-title {
         font-size: 2rem;
