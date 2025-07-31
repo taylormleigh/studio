@@ -11,7 +11,6 @@ This is a web-based classic card game suite, built with Next.js, React, and Tail
 
 - **Multiple Game Modes:** Play classic Klondike Solitaire, Freecell, and Spider.
 - **Customizable Rules:**
-    - Solitaire: Choose between drawing 1 or 3 cards from the stock.
     - Spider: Play with 1, 2, or 4 suits for varying difficulty.
 - **Modern & Responsive UI:** A clean, high-contrast interface that works on all screen sizes, from mobile to desktop.
 - **Drag & Drop and Click-to-Move:** Move cards by dragging them or by simply clicking on them for faster play (can be toggled in settings).
@@ -27,6 +26,7 @@ Here is a list of known bugs and planned features for future development.
 - [ ] **Cannot Move Last Stack:** When a stack of cards is the last item in a tableau pile (i.e., there are no face-down cards underneath), it cannot be moved to another pile.
 
 ### Future Features
+- [ ] Implement three-card draw for Solitaire.
 - [ ] Implement Pyramid game mode.
 - [ ] Add a "Hint" feature to suggest a possible move.
 - [ ] Implement an extended Undo feature to revert up to 15 moves.

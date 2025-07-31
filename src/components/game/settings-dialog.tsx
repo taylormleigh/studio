@@ -27,13 +27,18 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
+  const handleNewGameClick = () => {
+    onOpenChange(false); // Close the dialog
+    onNewGame(); // Start a new game with current settings
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Gameplay and layout settings will apply to your current game. Changing the game type or rules will start a new game when you press "New Game".
+            Changing the game type or rules requires starting a new game. Other settings will apply to your current game.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -76,8 +81,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                   <Label htmlFor="draw-1">One card</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="3" id="draw-3" />
-                  <Label htmlFor="draw-3">Three cards</Label>
+                  <RadioGroupItem value="3" id="draw-3" disabled />
+                  <Label htmlFor="draw-3" className="text-muted-foreground">Three cards</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -89,7 +94,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 <RadioGroup
                   id="spider-suits"
                   value={String(settings.spiderSuits)}
-                  onValueChange={(value) => {
+                   onValueChange={(value) => {
                     setSettings({ spiderSuits: Number(value) as SpiderSuitCount });
                   }}
                   className="col-span-3 flex items-center gap-4"
@@ -144,9 +149,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           <DialogClose asChild>
              <Button variant="outline">Close</Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button onClick={onNewGame}>New Game</Button>
-          </DialogClose>
+          <Button onClick={handleNewGameClick}>New Game</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
