@@ -36,7 +36,7 @@ const CardPreview = ({
   isSelected: boolean;
   onClick: () => void;
 }) => {
-  const isClassic = styleType === 'classic';
+  const isDomino = styleType === 'domino';
 
   return (
     <div
@@ -49,14 +49,24 @@ const CardPreview = ({
       <div
         className={cn(
           'aspect-[7/10] w-16 rounded-md border-2 border-black bg-card',
-          isClassic ? 'font-serif' : 'font-sans'
+          isDomino ? 'font-serif' : 'font-sans'
         )}
       >
-        {isClassic ? (
-          <div className="relative h-full p-1" style={{ fontFamily: "'Tinos', serif" }}>
-            <div className="flex flex-col items-center absolute top-1 left-1">
-              <div className="font-bold text-lg leading-none text-black">Q</div>
-              <span className="text-lg leading-none text-[#AE1447]">♥</span>
+        {isDomino ? (
+           <div className="relative h-full p-1 bg-white/80">
+            <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
+                <div className="font-bold text-lg text-black">Q</div>
+                <span className="text-lg leading-none text-[#AE1447]">♥</span>
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-1">
+                <div className="w-full h-1/2 flex items-center justify-center space-x-1">
+                    <div className="w-3 h-3 bg-black rounded-full"></div>
+                    <div className="w-3 h-3 bg-black rounded-full"></div>
+                </div>
+                <div className="h-[2px] w-10/12 bg-black/80 my-[1px]"></div>
+                <div className="w-full h-1/2 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-black rounded-full"></div>
+                </div>
             </div>
           </div>
         ) : (
@@ -196,9 +206,9 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                   onClick={() => handleSettingChange({ cardStyle: 'modern' })}
                 />
                 <CardPreview
-                  styleType="classic"
-                  isSelected={settings.cardStyle === 'classic'}
-                  onClick={() => handleSettingChange({ cardStyle: 'classic' })}
+                  styleType="domino"
+                  isSelected={settings.cardStyle === 'domino'}
+                  onClick={() => handleSettingChange({ cardStyle: 'domino' })}
                 />
               </div>
           </div>

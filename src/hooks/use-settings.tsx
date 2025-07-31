@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 export type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
-export type CardStyle = 'modern' | 'classic';
+export type CardStyle = 'modern' | 'domino';
 
 export interface GameSettings {
   gameType: GameType;

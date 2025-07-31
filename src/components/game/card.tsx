@@ -5,13 +5,12 @@ import type { Card as CardType } from '@/lib/solitaire';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useSettings } from '@/hooks/use-settings';
-import Image from 'next/image';
 
 type CardProps = {
   card?: CardType;
   isSelected?: boolean;
   isHighlighted?: boolean;
-  isStacked?: boolean; // New prop to indicate if card is not on top
+  isStacked?: boolean;
   className?: string;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -20,12 +19,9 @@ type CardProps = {
   style?: React.CSSProperties;
 };
 
-// Using Unicode characters for a classic, high-contrast look
 const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
-  const { settings } = useSettings();
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
   const colorClass = isRed ? 'text-[#AE1447]' : 'text-black';
-  const fontFamily = settings.cardStyle === 'classic' ? "font-['Tinos',_serif]" : "font-sans";
 
   const icons = {
     SPADES: '♠',
@@ -34,55 +30,46 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
     CLUBS: '♣',
   };
 
-  return <span className={cn('select-none', fontFamily, colorClass, className)} style={{color: isRed ? '#AE1447' : 'black'}}>{icons[suit]}</span>;
+  return <span className={cn('select-none', colorClass, className)} style={{color: isRed ? '#AE1447' : 'black'}}>{icons[suit]}</span>;
 }
 
-const FaceCardSvg = ({ rank }: { rank: 'J' | 'Q' | 'K' }) => {
-  const commonCircle = <circle cx="50" cy="50" r="28" stroke="currentColor" strokeWidth="3" fill="none" />;
-  const commonLine = <line x1="30" y1="100" x2="70" y2="100" stroke="currentColor" strokeWidth="3" />;
+const RANK_VALUES: { [key: string]: number } = {
+  'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
+};
 
-  switch (rank) {
-    case 'J':
-      return (
-        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {commonCircle}
-          <path d="M 40 65 Q 50 75, 60 65" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="42" cy="45" r="4" fill="currentColor" />
-          <circle cx="58" cy="45" r="4" fill="currentColor" />
-          {/* Jester Hat */}
-          <path d="M 30 25 Q 50 10, 70 25 L 50 50 Z" stroke="currentColor" strokeWidth="3" fill="none" />
-        </svg>
-      );
-    case 'Q':
-      return (
-        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {commonCircle}
-          <path d="M 40 65 Q 50 70, 60 65" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="42" cy="45" r="4" fill="currentColor" />
-          <circle cx="58" cy="45" r="4" fill="currentColor" />
-          {/* Queen's Crown */}
-          <path d="M 25 30 L 35 20 L 50 25 L 65 20 L 75 30" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="35" cy="20" r="3" fill="currentColor" />
-          <circle cx="50" cy="25" r="3" fill="currentColor" />
-          <circle cx="65" cy="20" r="3" fill="currentColor" />
-        </svg>
-      );
-    case 'K':
-      return (
-        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {commonCircle}
-          <path d="M 40 60 Q 50 55, 60 60" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="42" cy="45" r="4" fill="currentColor" />
-          <circle cx="58" cy="45" r="4" fill="currentColor" />
-          {/* King's Crown with cross */}
-          <path d="M 25 30 L 35 20 L 50 25 L 65 20 L 75 30" stroke="currentColor" strokeWidth="3" fill="none" />
-          <line x1="50" y1="25" x2="50" y2="15" stroke="currentColor" strokeWidth="3" />
-          <line x1="45" y1="20" x2="55" y2="20" stroke="currentColor" strokeWidth="3" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+const Pip = () => <div className="w-3 h-3 bg-black rounded-full" />;
+
+const PipGrid = ({ count }: { count: number }) => {
+  const grids: { [key: number]: string[] } = {
+    1: ["center"],
+    2: ["start", "end"],
+    3: ["start", "center", "end"],
+    4: ["grid-cols-2", "grid-cols-2"],
+    5: ["grid-cols-2", "center", "grid-cols-2"],
+    6: ["grid-cols-2", "grid-cols-2", "grid-cols-2"],
+    7: ["grid-cols-2", "center", "grid-cols-2", "grid-cols-2"],
+    8: ["grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2"],
+    9: ["grid-cols-2", "grid-cols-2", "center", "grid-cols-2", "grid-cols-2"],
+    10: ["grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2"],
+  };
+
+  const renderPips = (layout: string) => {
+    if (layout === 'center') return <div className="col-span-2 flex justify-center items-center"><Pip /></div>;
+    const pipCount = layout === 'grid-cols-2' ? 2 : 0;
+    return Array.from({ length: pipCount }).map((_, i) => <div key={i} className="flex justify-center items-center"><Pip /></div>);
+  };
+  
+  if (count > 10) return null; // Handle face cards separately
+
+  return (
+    <div className="h-full w-full p-1 flex flex-col justify-between">
+      {grids[count]?.map((layout, i) => (
+         <div key={i} className={`grid ${layout} w-full`}>
+           {renderPips(layout)}
+         </div>
+      ))}
+    </div>
+  );
 };
 
 
@@ -117,14 +104,14 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
 
   if (!card.faceUp) {
     const modernBack = "bg-[#5f8fb1] [background-image:radial-gradient(#80ADCC_1px,_transparent_1px)] [background-size:5px_5px]";
-    const classicBack = "bg-[#000080]"; // Simple blue for classic look
+    const dominoBack = "bg-[#2c3e50]";
     return (
       <div
         onClick={onClick}
         className={cn(
           baseClasses,
           'cursor-pointer border-black',
-          cardStyle === 'classic' ? classicBack : modernBack
+          cardStyle === 'domino' ? dominoBack : modernBack
         )}
       >
       </div>
@@ -145,25 +132,25 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       <div className="flex items-center">
         <div className="text-lg font-bold leading-none">{card.rank}</div>
       </div>
-
       <div className="self-center">
         <SuitIcon suit={card.suit} className="text-xl" />
       </div>
-
       <div className="flex items-center self-end rotate-180">
         <div className="text-lg font-bold leading-none">{card.rank}</div>
       </div>
     </div>
   );
 
-  const ClassicCardFace = () => {
+  const DominoCardFace = () => {
     const rank = card.rank;
     const suit = card.suit;
-    const isFaceCard = ['K', 'Q', 'J'].includes(rank);
+    const rankValue = RANK_VALUES[rank];
+
+    const topPips = Math.floor(rankValue / 2);
+    const bottomPips = rankValue - topPips;
 
     return (
-        <div className='relative h-full p-1 bg-white/80' style={{ fontFamily: "'Tinos', serif"}}>
-            {/* Corner Ranks */}
+        <div className='relative h-full p-1 bg-white/80'>
             <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
                 <div className="font-bold text-lg">{rank}</div>
                 <SuitIcon suit={suit} className="text-base" />
@@ -173,17 +160,14 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
                 <SuitIcon suit={suit} className="text-base" />
             </div>
             
-            {/* Center Content */}
-            <div className="absolute inset-0 flex items-center justify-center p-4">
-            {isFaceCard ? (
-                <div className="w-full h-full">
-                  <FaceCardSvg rank={rank as 'J' | 'Q' | 'K'} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                <div className="w-full h-1/2 flex items-center justify-center">
+                    <PipGrid count={topPips} />
                 </div>
-            ) : (
-                <div className="text-5xl">
-                   <SuitIcon suit={suit} />
+                <div className="h-[2px] w-10/12 bg-black/80 my-1"></div>
+                <div className="w-full h-1/2 flex items-center justify-center">
+                   <PipGrid count={bottomPips} />
                 </div>
-            )}
             </div>
         </div>
     );
@@ -203,7 +187,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         draggable && "cursor-grab"
       )}
     >
-      {cardStyle === 'classic' ? <ClassicCardFace /> : <ModernCardFace />}
+      {cardStyle === 'domino' ? <DominoCardFace /> : <ModernCardFace />}
     </div>
   );
 }
