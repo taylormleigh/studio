@@ -713,10 +713,10 @@ export default function GameBoard() {
                       >
                         <div className={cn(
                           "relative w-full",
-                           card.faceUp ? "h-8 sm:h-9" : "h-3"
+                           card.faceUp ? "h-6 sm:h-7" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 28) : 12), 0)}px)`
                           }}
                         >
                           <Card
@@ -839,9 +839,9 @@ export default function GameBoard() {
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full"
                       >
-                         <div className="relative w-full h-7 sm:h-8"
+                         <div className="relative w-full h-6 sm:h-7"
                             style={{
-                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 28 : 32)}px)`
+                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 24 : 28)}px)`
                             }}
                          >
                           <Card
@@ -930,10 +930,10 @@ export default function GameBoard() {
                       >
                         <div className={cn(
                           "relative w-full",
-                           card.faceUp ? "h-8 sm:h-9" : "h-3"
+                           card.faceUp ? "h-6 sm:h-7" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 28) : 12), 0)}px)`
                           }}
                         >
                           <Card
@@ -1009,5 +1009,9 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
+
+    
 
     
