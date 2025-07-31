@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount } from '@/hooks/use-settings';
+import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount, CardStyle } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -114,6 +115,25 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 </RadioGroup>
              </div>
           )}
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+             <Label htmlFor="card-style" className="text-right">Card Style</Label>
+             <RadioGroup
+                id="card-style"
+                value={settings.cardStyle}
+                onValueChange={(value) => setSettings({ cardStyle: value as CardStyle })}
+                className="col-span-3 flex items-center gap-4"
+             >
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="modern" id="style-modern" />
+                    <Label htmlFor="style-modern">Modern</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="classic" id="style-classic" />
+                    <Label htmlFor="style-classic">Classic</Label>
+                </div>
+             </RadioGroup>
+          </div>
 
           <Separator />
 

@@ -6,6 +6,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 export type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
+export type CardStyle = 'modern' | 'classic';
 
 export interface GameSettings {
   gameType: GameType;
@@ -13,6 +14,7 @@ export interface GameSettings {
   spiderSuits: SpiderSuitCount;
   leftHandMode: boolean;
   autoMove: boolean;
+  cardStyle: CardStyle;
 }
 
 const defaultSettings: GameSettings = {
@@ -21,6 +23,7 @@ const defaultSettings: GameSettings = {
   spiderSuits: 2,
   leftHandMode: true,
   autoMove: true,
+  cardStyle: 'modern',
 };
 
 interface SettingsContextType {
