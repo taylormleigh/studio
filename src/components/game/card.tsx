@@ -3,12 +3,11 @@
 
 import type { Card as CardType } from '@/lib/solitaire';
 import { cn } from '@/lib/utils';
-import React from 'react';
 import { useSettings } from '@/hooks/use-settings';
 
 const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-  const colorClass = isRed ? 'text-red-600' : 'text-foreground';
+  const colorClass = isRed ? 'text-red-600' : 'text-card-foreground';
 
   const icons = {
     SPADES: '♠',
@@ -25,7 +24,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   const { cardStyle } = settings;
 
   const ringClass = isHighlighted
-    ? 'ring-2 ring-offset-background ring-offset-2 ring-green-500'
+    ? (cardStyle === 'domino' ? 'ring-2 ring-offset-background ring-offset-2 ring-yellow-400' : 'ring-2 ring-offset-background ring-offset-2 ring-green-500')
     : '';
     
   const cardSize = "w-full aspect-[7/10] max-w-[96px]";
