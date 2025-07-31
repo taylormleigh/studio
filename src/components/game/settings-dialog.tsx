@@ -78,11 +78,11 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="1" id="draw-1" />
-                  <Label htmlFor="draw-1">One card</Label>
+                  <Label htmlFor="draw-1">one card</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="3" id="draw-3" disabled />
-                  <Label htmlFor="draw-3" className="text-muted-foreground">Three cards</Label>
+                  <Label htmlFor="draw-3" className="text-muted-foreground">three cards</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -101,15 +101,15 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 >
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="1" id="suits-1" />
-                        <Label htmlFor="suits-1">One</Label>
+                        <Label htmlFor="suits-1">one</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="2" id="suits-2" />
-                        <Label htmlFor="suits-2">Two</Label>
+                        <Label htmlFor="suits-2">two</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="4" id="suits-4" />
-                        <Label htmlFor="suits-4">Four</Label>
+                        <Label htmlFor="suits-4">four</Label>
                     </div>
                 </RadioGroup>
              </div>

@@ -18,7 +18,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const { settings } = useSettings();
 
   const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
-  const buttonClasses = "flex-col h-auto p-1 md:px-2 md:py-1 md:w-20";
+  const buttonClasses = "flex-col h-auto p-3 md:px-2 md:py-1 md:w-20";
 
   const MainButtons = () => (
     <>
@@ -51,7 +51,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
       </div>
 
       <div className="text-center">
-        <h1 className="text-xl sm:text-2xl font-bold font-headline text-primary">
+        <h1 className="game-title text-2xl sm:text-2xl font-bold font-headline text-primary">
           {settings.gameType}
         </h1>
       </div>
