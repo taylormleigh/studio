@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ type GameHeaderProps = {
 export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, canUndo }: GameHeaderProps) {
   const { settings } = useSettings();
 
-  const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
   const buttonClasses = "flex-col h-auto p-1 md:px-2 md:py-1 md:w-20";
 
   const MainButtons = () => (
@@ -44,10 +44,13 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
     </Button>
   );
 
+  const LeftGroup = () => settings.leftHandMode ? <UndoButton /> : <MainButtons />;
+  const RightGroup = () => settings.leftHandMode ? <MainButtons /> : <UndoButton />;
+
   return (
     <header className={cn("grid grid-cols-3 items-center bg-card border-b p-1 md:py-2")}>
-      <div className={cn(buttonContainerClasses, "justify-start")}>
-        {settings.leftHandMode ? <UndoButton /> : <MainButtons />}
+      <div className={cn("flex items-center gap-1 md:gap-2 justify-start", !settings.leftHandMode && "md:flex-row-reverse")}>
+        <LeftGroup />
       </div>
 
       <div className="text-center">
@@ -56,8 +59,8 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
         </h1>
       </div>
 
-      <div className={cn(buttonContainerClasses, "justify-end")}>
-        {settings.leftHandMode ? <MainButtons /> : <UndoButton />}
+      <div className={cn("flex items-center gap-1 md:gap-2 justify-end", !settings.leftHandMode && "md:flex-row-reverse")}>
+        <RightGroup />
       </div>
     </header>
   );
