@@ -102,16 +102,13 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     >
       <div className="absolute top-1 left-1 flex items-center h-auto">
         <div className="text-base sm:text-lg md:text-base font-bold leading-none">{card.rank}</div>
-        {isStacked && <SuitIcon suit={card.suit} className="text-base sm:text-lg md:text-base ml-1" />}
+        {isStacked && <SuitIcon suit={card.suit} className="text-base sm:text-lg md:text-base" />}
       </div>
 
       {!isStacked && (
           <>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <SuitIcon suit={card.suit} className="text-2xl sm:text-3xl md:text-lg" />
-            </div>
-            <div className="hidden sm:flex md:hidden justify-start items-end h-[25%] rotate-180">
-                <div className="text-base sm:text-lg md:text-base font-bold leading-none">{card.rank}</div>
+                <SuitIcon suit={card.suit} className="text-xl sm:text-xl md:text-lg" />
             </div>
          </>
       )}
