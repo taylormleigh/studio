@@ -53,7 +53,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
       </div>
 
       <div className="text-center">
-        <h1 className="game-title text-2xl sm:text-2xl font-bold font-headline text-primary">
+        <h1 className="game-title font-headline text-primary">
           {settings.gameType}
         </h1>
       </div>
