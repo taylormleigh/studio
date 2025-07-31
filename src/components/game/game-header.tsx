@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -49,7 +47,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
   return (
     <header className={cn("grid grid-cols-3 items-center bg-card border-b p-1 md:py-2")}>
-      <div className={cn("flex items-center gap-1 md:gap-2 justify-start", !settings.leftHandMode && "md:flex-row-reverse")}>
+      <div className="flex items-center gap-1 md:gap-2 justify-start">
         <LeftGroup />
       </div>
 
@@ -59,7 +57,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
         </h1>
       </div>
 
-      <div className={cn("flex items-center gap-1 md:gap-2 justify-end", !settings.leftHandMode && "md:flex-row-reverse")}>
+      <div className="flex items-center gap-1 md:gap-2 justify-end">
         <RightGroup />
       </div>
     </header>

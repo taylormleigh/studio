@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useCallback, DragEvent } from 'react';
@@ -601,10 +599,7 @@ export default function GameBoard() {
     const gs = gameState as SolitaireGameState;
 
     const StockAndWaste = () => (
-      <div className={cn(
-        "flex col-span-3 gap-x-[clamp(2px,1.5vw,12px)]",
-        !settings.leftHandMode && "flex-row-reverse"
-      )}>
+      <div className="flex col-span-3 gap-x-[clamp(2px,1.5vw,12px)]">
         <div onClick={handleDraw} className="cursor-pointer">
           <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
         </div>
@@ -623,7 +618,7 @@ export default function GameBoard() {
     );
 
     const FoundationPiles = () => (
-      <div className={cn("flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]", !settings.leftHandMode && "flex-row-reverse")}>
+      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]">
         {gs.foundation.map((pile, i) => (
           <div 
             key={i} 
@@ -729,7 +724,7 @@ export default function GameBoard() {
     const gs = gameState as FreecellGameState;
 
     const FreecellPiles = () => (
-      <div className={cn("flex col-span-4 gap-x-[clamp(2px,1.5vw,12px)]", !settings.leftHandMode && "flex-row-reverse")}>
+      <div className="flex col-span-4 gap-x-[clamp(2px,1.5vw,12px)]">
         {gs.freecells.map((card, i) => (
           <div 
             key={`freecell-${i}`}
@@ -751,7 +746,7 @@ export default function GameBoard() {
     );
 
     const FoundationPiles = () => (
-      <div className={cn("flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]", !settings.leftHandMode && "flex-row-reverse")}>
+      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]">
         {gs.foundation.map((pile, i) => (
           <div 
             key={`foundation-${i}`} 
@@ -861,7 +856,7 @@ export default function GameBoard() {
     );
 
     const FoundationPiles = () => (
-      <div className={cn("col-span-8 grid grid-cols-8 gap-x-0", !settings.leftHandMode && "flex-row-reverse")}>
+      <div className="col-span-8 grid grid-cols-8 gap-x-0">
        {Array.from({ length: 8 }).map((_, i) => (
          <div key={`foundation-${i}`}>
            <Card card={gs.foundation[i] ? gs.foundation[i][gs.foundation[i].length -1] : undefined} />
@@ -985,13 +980,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
-
-
