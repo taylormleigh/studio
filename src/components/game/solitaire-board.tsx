@@ -153,7 +153,7 @@ export default function SolitaireBoard({
                          card.faceUp ? "h-5 sm:h-6" : "h-3"
                         )}
                         style={{
-                           transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 18 : 22) : 10), 0)}px)`
+                           transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0)}px)`
                         }}
                       >
                         <Card
