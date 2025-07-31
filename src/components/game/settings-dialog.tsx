@@ -27,8 +27,8 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
-  const handleSettingChangeAndNewGame = (setting: Partial<GameSettings>) => {
-    setSettings(setting);
+  const handleSettingChangeAndNewGame = (newSettings: Partial<typeof settings>) => {
+    setSettings(newSettings);
     onNewGame();
   };
 
