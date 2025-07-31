@@ -10,7 +10,7 @@ export default {
   theme: {
     extend: {
       screens: {
-        'xs': '400px',
+        'xs': '500px',
       },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
