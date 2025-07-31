@@ -15,6 +15,11 @@
     border-width: 1.5px;
 }
 
+.text-xl {
+  font-size: 1.8rem;
+  line-height: 1.6rem;
+}
+
 @media (min-width: 640px) {
     .game-title {
         font-size: 2rem;

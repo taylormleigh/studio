@@ -574,7 +574,7 @@ export default function GameBoard() {
           onStats={() => setIsStatsOpen(true)}
           canUndo={false}
         />
-        <main className="flex-grow p-2 md:p-4">
+        <main className="flex-grow p-3 md:p-4">
           <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
               <Skeleton className="w-full aspect-[7/10] rounded-md" />
               <Skeleton className="w-full aspect-[7/10] rounded-md" />
@@ -716,7 +716,7 @@ export default function GameBoard() {
                            card.faceUp ? "h-6 sm:h-7" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 28) : 12), 0)}px)`
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 26) : 10), 0)}px)`
                           }}
                         >
                           <Card
@@ -841,7 +841,7 @@ export default function GameBoard() {
                       >
                          <div className="relative w-full h-6 sm:h-7"
                             style={{
-                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 24 : 28)}px)`
+                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 24 : 26)}px)`
                             }}
                          >
                           <Card
@@ -933,7 +933,7 @@ export default function GameBoard() {
                            card.faceUp ? "h-6 sm:h-7" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 28) : 12), 0)}px)`
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 26) : 10), 0)}px)`
                           }}
                         >
                           <Card
@@ -963,7 +963,7 @@ export default function GameBoard() {
 
   const mainContainerMaxWidth = gameState?.gameType === 'Spider' 
     ? 'md:max-w-[500px]' 
-    : 'md:max-w-[400px]';
+    : 'md:max-w-[420px]';
 
   return (
     <div className="flex flex-col min-h-screen">
