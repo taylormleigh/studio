@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caprasimo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Rubik+Glitch&family=Rubik+Scribble&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Tinos&display=swap');
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,9 @@
 
 
 .game-title {
-  font-family: "Caprasimo", serif;
+  font-family: "Rubik Scribble", system-ui;
+/*   font-family: "Rubik Glitch", system-ui; */
+/*   font-family: "Caprasimo", serif; */
   font-weight: 400;
   font-style: normal;
 }
