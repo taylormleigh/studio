@@ -72,7 +72,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           </DialogTitle>
           <h1>Games</h1>
           <DialogDescription className="text-xs">
-            Settings related to gameplay/view will be updated immediately. Selecting a different game or different game rules will require you to start a new game.
+            Selecting a different game or different game rules will require you to start a new game.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -153,7 +153,13 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           
           <Separator />
           
-          <h1>Settings</h1>
+          <DialogHeader>
+            <h1>Settings</h1>
+            <DialogDescription className="text-xs">
+              Settings related to gameplay/view will be updated immediately.
+            </DialogDescription>
+         </DialogHeader>
+         
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="left-hand-mode" className="text-right">
               Layout
