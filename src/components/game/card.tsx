@@ -37,6 +37,54 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
   return <span className={cn('select-none', fontFamily, colorClass, className)} style={{color: isRed ? '#AE1447' : 'black'}}>{icons[suit]}</span>;
 }
 
+const FaceCardSvg = ({ rank }: { rank: 'J' | 'Q' | 'K' }) => {
+  const commonCircle = <circle cx="50" cy="50" r="28" stroke="currentColor" strokeWidth="3" fill="none" />;
+  const commonLine = <line x1="30" y1="100" x2="70" y2="100" stroke="currentColor" strokeWidth="3" />;
+
+  switch (rank) {
+    case 'J':
+      return (
+        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {commonCircle}
+          <path d="M 40 65 Q 50 75, 60 65" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="42" cy="45" r="4" fill="currentColor" />
+          <circle cx="58" cy="45" r="4" fill="currentColor" />
+          {/* Jester Hat */}
+          <path d="M 30 25 Q 50 10, 70 25 L 50 50 Z" stroke="currentColor" strokeWidth="3" fill="none" />
+        </svg>
+      );
+    case 'Q':
+      return (
+        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {commonCircle}
+          <path d="M 40 65 Q 50 70, 60 65" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="42" cy="45" r="4" fill="currentColor" />
+          <circle cx="58" cy="45" r="4" fill="currentColor" />
+          {/* Queen's Crown */}
+          <path d="M 25 30 L 35 20 L 50 25 L 65 20 L 75 30" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="35" cy="20" r="3" fill="currentColor" />
+          <circle cx="50" cy="25" r="3" fill="currentColor" />
+          <circle cx="65" cy="20" r="3" fill="currentColor" />
+        </svg>
+      );
+    case 'K':
+      return (
+        <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {commonCircle}
+          <path d="M 40 60 Q 50 55, 60 60" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="42" cy="45" r="4" fill="currentColor" />
+          <circle cx="58" cy="45" r="4" fill="currentColor" />
+          {/* King's Crown with cross */}
+          <path d="M 25 30 L 35 20 L 50 25 L 65 20 L 75 30" stroke="currentColor" strokeWidth="3" fill="none" />
+          <line x1="50" y1="25" x2="50" y2="15" stroke="currentColor" strokeWidth="3" />
+          <line x1="45" y1="20" x2="55" y2="20" stroke="currentColor" strokeWidth="3" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 
 export function Card({ card, isSelected, isHighlighted, isStacked, className, onClick, draggable, onDragStart, onDragEnd, style }: CardProps) {
   const { settings } = useSettings();
@@ -128,8 +176,8 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
             {/* Center Content */}
             <div className="absolute inset-0 flex items-center justify-center p-4">
             {isFaceCard ? (
-                <div className="relative w-full h-full p-2">
-                     <Image src={`https://placehold.co/120x180.png`} alt={`${rank} of ${suit}`} layout="fill" objectFit="contain" data-ai-hint="playing card illustration"/>
+                <div className="w-full h-full">
+                  <FaceCardSvg rank={rank as 'J' | 'Q' | 'K'} />
                 </div>
             ) : (
                 <div className="text-5xl">
