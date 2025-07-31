@@ -64,7 +64,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         style={{ 
             backgroundColor: '#5f8fb1',
             backgroundImage: 'radial-gradient(#80ADCC 1px, transparent 1px)',
-            backgroundSize: '10px 10px'
+            backgroundSize: '5px 5px'
         }}
         className={cn(
           cardSize,
