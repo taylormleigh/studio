@@ -2,7 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Rubik Scribble';
+  src: url('/fonts/RubikScribble-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'Google Sans Code';
+  src: url('/fonts/GoogleSansCode-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
@@ -27,8 +41,8 @@
     --input: 0 0% 85%;
     --ring: 0 0% 9%;
     --radius: 0.5rem; /* A bit more rounded */
-    --title-font: "Comic Sans MS", "Comic Sans", cursive;
-    --primary-font: "Courier New", Courier, monospace;
+    --title-font: "Rubik Scribble", system-ui, sans-serif;
+    --primary-font: "Google Sans Code", monospace;
   }
   
   .dark {

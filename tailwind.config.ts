@@ -16,8 +16,8 @@ export default {
         'lg': '2048px',
       },
       fontFamily: {
-        body: ["Courier New", "Courier", "monospace"],
-        headline: ["Comic Sans MS", "Comic Sans", "cursive"],
+        body: ["Google Sans Code", "Courier New", "Courier", "monospace"],
+        headline: ["Rubik Scribble", "Comic Sans MS", "Comic Sans", "cursive"],
         code: ['monospace'],
       },
       colors: {
