@@ -48,17 +48,32 @@ const CardPreview = ({
     >
       <div
         className={cn(
-          'aspect-[7/10] w-16 rounded-md border-2 border-black bg-card',
+          'aspect-[7/10] w-20 rounded-md border-2 border-black bg-card',
           isDomino ? 'font-serif' : 'font-sans'
         )}
       >
         {isDomino ? (
-           <div className="relative h-full p-1 bg-white/95">
-             <div className="absolute top-1 left-1 font-bold text-black">Q</div>
-             <div className="absolute top-1 right-1 text-lg text-[#AE1447]">♥</div>
-             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Crown className="w-4 h-4 mb-[-4px] text-black" />
-                <span className="text-2xl text-[#AE1447]">♥</span>
+           <div className="relative h-full p-1 bg-white/95 text-black">
+            <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
+                <div className="font-bold text-lg">Q</div>
+            </div>
+             <div className="absolute top-1 right-1 flex flex-col items-center leading-none">
+                <span className="text-lg text-[#AE1447]">♥</span>
+            </div>
+            <div className="absolute bottom-1 right-1 flex flex-col items-center leading-none rotate-180">
+                <div className="font-bold text-lg">Q</div>
+            </div>
+            <div className="absolute bottom-1 left-1 flex flex-col items-center leading-none rotate-180">
+                 <span className="text-lg text-[#AE1447]">♥</span>
+            </div>
+             <div className="absolute inset-0 flex flex-col items-center justify-center text-[#AE1447]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-black">
+                    <path d="M19.14 6.86a4 4 0 0 0-5.64 0l-1.5 1.5-1.5-1.5a4 4 0 1 0-5.64 5.64L12 19.34l7.14-7.14a4 4 0 0 0 0-5.64z" />
+                    <circle cx="12" cy="6" r="2"/>
+                    <circle cx="6" cy="9" r="1.5"/>
+                    <circle cx="18" cy="9" r="1.5"/>
+                </svg>
+                <span className="text-4xl">♥</span>
              </div>
           </div>
         ) : (
@@ -245,5 +260,3 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     </Dialog>
   );
 }
-
-    
