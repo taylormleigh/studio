@@ -601,24 +601,44 @@ export default function GameBoard() {
     const gs = gameState as SolitaireGameState;
     const gridCols = 'grid-cols-7';
 
-    const stockPile = (
-      <div onClick={handleDraw} className="cursor-pointer">
-        <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-      </div>
-    );
-    
-    const wastePile = (
-      <div>
-        {gs.waste.length > 0 ?
-          <Card 
-            card={gs.waste[gs.waste.length - 1]} 
-            isSelected={selectedCard?.type === 'waste'}
-            draggable={true}
-            onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
-            onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
-          /> : <Card onClick={handleDraw}/>
-        }
-      </div>
+    const stockAndWaste = (
+      <>
+        {settings.leftHandMode ? (
+          <>
+            <div onClick={handleDraw} className="cursor-pointer">
+              <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
+            </div>
+            <div>
+              {gs.waste.length > 0 ? (
+                <Card 
+                  card={gs.waste[gs.waste.length - 1]} 
+                  isSelected={selectedCard?.type === 'waste'}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
+                  onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
+                />
+              ) : <Card onClick={handleDraw}/>}
+            </div>
+          </>
+        ) : (
+           <>
+            <div>
+              {gs.waste.length > 0 ? (
+                <Card 
+                  card={gs.waste[gs.waste.length - 1]} 
+                  isSelected={selectedCard?.type === 'waste'}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
+                  onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
+                />
+              ) : <Card onClick={handleDraw}/>}
+            </div>
+            <div onClick={handleDraw} className="cursor-pointer">
+              <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
+            </div>
+          </>
+        )}
+      </>
     );
 
     const foundationPiles = (
@@ -655,8 +675,7 @@ export default function GameBoard() {
         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
           {settings.leftHandMode ? (
             <>
-              {stockPile}
-              {wastePile}
+              {stockAndWaste}
               <div className="col-span-1" />
               {foundationPiles}
             </>
@@ -664,8 +683,7 @@ export default function GameBoard() {
             <>
               {foundationPiles}
               <div className="col-span-1" />
-              {wastePile}
-              {stockPile}
+              {stockAndWaste}
             </>
           )}
         </div>
@@ -942,6 +960,10 @@ export default function GameBoard() {
     );
   };
 
+  const mainContainerMaxWidth = gameState?.gameType === 'Solitaire' 
+    ? 'md:max-w-[400px]' 
+    : 'md:max-w-[500px]';
+
   return (
     <div className="flex flex-col min-h-screen">
       <GameHeader 
@@ -951,7 +973,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow p-2 md:p-4 w-full md:max-w-[400px] md:mx-auto">
+      <main className={cn("flex-grow p-2 md:p-4 w-full md:mx-auto", mainContainerMaxWidth)}>
         {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
@@ -986,13 +1008,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
-
-
