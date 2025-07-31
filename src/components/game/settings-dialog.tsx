@@ -41,7 +41,7 @@ const CardPreview = ({
     <div
       onClick={onClick}
       className={cn(
-        'relative cursor-pointer rounded-lg border-2 p-4 transition-all w-28 h-24 flex flex-col items-center justify-center gap-2',
+        'relative cursor-pointer rounded-lg border-2 p-3 transition-all w-24 h-20 flex flex-col items-center justify-center gap-1',
         isSelected ? 'border-primary' : 'border-border',
         isDomino ? 'bg-black text-white' : 'bg-gray-100 text-black'
       )}
@@ -178,22 +178,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
              </div>
           )}
           
-           <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Theme</Label>
-              <div className="col-span-3 flex items-center gap-4">
-                <CardPreview
-                  styleType="modern"
-                  isSelected={settings.cardStyle === 'modern'}
-                  onClick={() => setSettings({ cardStyle: 'modern' })}
-                />
-                <CardPreview
-                  styleType="domino"
-                  isSelected={settings.cardStyle === 'domino'}
-                  onClick={() => setSettings({ cardStyle: 'domino' })}
-                />
-              </div>
-          </div>
-
           <Separator />
 
           <div className="grid grid-cols-4 items-center gap-4">
@@ -221,6 +205,22 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               />
               <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
+          </div>
+
+          <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Theme</Label>
+              <div className="col-span-3 flex items-center gap-4">
+                <CardPreview
+                  styleType="modern"
+                  isSelected={settings.cardStyle === 'modern'}
+                  onClick={() => setSettings({ cardStyle: 'modern' })}
+                />
+                <CardPreview
+                  styleType="domino"
+                  isSelected={settings.cardStyle === 'domino'}
+                  onClick={() => setSettings({ cardStyle: 'domino' })}
+                />
+              </div>
           </div>
 
         </div>
