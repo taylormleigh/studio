@@ -97,8 +97,10 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
             <div className="self-center">
               <SuitIcon suit={card.suit} className="text-xl" />
             </div>
-            <div className="hidden xs:flex md:hidden lg:flex items-center self-end rotate-180">
-              <div className="text-lg font-bold leading-none">{card.rank}</div>
+            <div>
+              <div className="hidden xs:flex sm:flex md:hidden lg:flex items-center self-end rotate-180">
+                <div className="text-lg font-bold leading-none">{card.rank}</div>
+              </div>
             </div>
           </>
         )}
