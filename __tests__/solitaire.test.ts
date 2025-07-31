@@ -378,11 +378,10 @@ describe('Solitaire Game Logic', () => {
             { suit: 'SPADES', rank: '10', faceUp: true },
         ];
         // Setup: A valid destination card in tableau pile 0
-        const destinationCard: Card = { suit: 'HEARTS', rank: 'K', faceUp: true };
         const topOfDest: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
 
         // Place the cards in the simulated state
-        state.tableau[0] = [destinationCard, topOfDest];
+        state.tableau[0] = [topOfDest];
         state.tableau[1] = [...pileToMove];
 
         // Simulate the move:
@@ -395,8 +394,8 @@ describe('Solitaire Game Logic', () => {
       
         // Assertions
         expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
-        expect(state.tableau[0].length).toBe(4); // Destination pile should have the new cards
-        expect(state.tableau[0][3].rank).toBe('10'); // The last card should be the 10 of spades
+        expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
+        expect(state.tableau[0][2].rank).toBe('10'); // The last card should be the 10 of spades
     });
 
     it('should allow moving the final stack of cards from one tableau pile to another', () => {
@@ -443,9 +442,9 @@ describe('Solitaire Game Logic', () => {
 
         // Simplified logic from the component's handleCardClick
         const sourcePile = state.tableau[sourcePileIndex];
-        const cardToClick = sourcePile[sourceCardIndex];
+        const clickedCard = sourcePile[sourceCardIndex];
         
-        if (cardToClick.faceUp) {
+        if (clickedCard.faceUp) {
             // 1. Try foundation (will fail in this test)
             const topCard = sourcePile[sourcePile.length - 1];
             // ... foundation check would go here ...
@@ -600,4 +599,5 @@ describe('Solitaire Game Logic', () => {
     
 
     
+
 
