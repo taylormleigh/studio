@@ -1,6 +1,6 @@
 # Deck of Cards - E-Ink Solitaire
 
-This is a web-based classic card game suite, built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic optimized for e-ink displays, reminiscent of classic Windows 95 Solitaire.
+This is a web-based classic card game suite, built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic optimized for e-ink displays. Used Google Firebase to develop.
 
 ## Screenshots
 
