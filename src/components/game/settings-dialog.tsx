@@ -41,7 +41,7 @@ const CardPreview = ({
     <div
       onClick={onClick}
       className={cn(
-        'relative cursor-pointer rounded-lg border-2 p-3 transition-all w-24 h-20 flex flex-col items-center justify-center gap-1',
+        'relative cursor-pointer rounded-lg border-2 p-3 transition-all w-20 h-16 flex flex-col items-center justify-center gap-1',
         isSelected ? 'border-primary' : 'border-border',
         isDomino ? 'bg-black text-white' : 'bg-gray-100 text-black'
       )}
@@ -51,7 +51,7 @@ const CardPreview = ({
         {isDomino ? 'Dark' : 'Light'}
       </div>
       {isSelected && (
-        <CheckCircle2 className="absolute top-1 right-1 h-5 w-5 text-primary bg-white rounded-full" />
+        <CheckCircle2 className={cn("absolute top-1 right-1 h-5 w-5 bg-white rounded-full", isDomino ? "text-black" : "text-primary")} />
       )}
     </div>
   );
@@ -177,8 +177,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 </RadioGroup>
              </div>
           )}
-          
-          <Separator />
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="left-hand-mode" className="text-right">
@@ -206,7 +204,9 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
           </div>
-
+          
+          <Separator />
+          
           <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Theme</Label>
               <div className="col-span-3 flex items-center gap-4">
