@@ -49,7 +49,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   }
 
   if (!card.faceUp) {
-    const modernBack = "bg-[#5f8fb1] [background-image:radial-gradient(#80ADCC_1px,_transparent_1px)] [background-size:5px_5px]";
+    const modernBack = "bg-[#5f8fb1] [background-image:repeating-linear-gradient(45deg,#80ADCC,#80ADCC_1px,transparent_1px,transparent_5px)]";
     const dominoBack = "bg-[#9FC756] [background-image:repeating-linear-gradient(45deg,#D6E444,#D6E444_1px,transparent_1px,transparent_5px)]";
 
     return (
