@@ -335,34 +335,55 @@ describe('Solitaire Game Logic', () => {
     });
 
     it('should prioritize the user\'s intended pile move over other valid sub-pile moves', () => {
-      // Setup: A main pile the user wants to move
+      // This test simulates "click-to-move" logic.
+      // Setup: A main pile the user wants to move, by clicking its base card ('8 of Hearts').
       const pileToMove: Card[] = [
         { suit: 'HEARTS', rank: '8', faceUp: true },
         { suit: 'CLUBS', rank: '7', faceUp: true },
         { suit: 'DIAMONDS', rank: '6', faceUp: true },
         { suit: 'SPADES', rank: '5', faceUp: true },
       ];
-      // Setup: The destination for the main pile
+      // Setup: The intended destination for the entire pile.
       const destinationCard: Card = { suit: 'SPADES', rank: '9', faceUp: true };
       
-      // Setup: Other piles that could validly take sub-sections of the main pile
-      const otherDest1: Card = { suit: 'HEARTS', rank: '8', faceUp: true }; // Could take [7,6,5]
-      const otherDest2: Card = { suit: 'DIAMONDS', rank: '7', faceUp: true }; // Could take [6,5]
+      // Setup: Other piles that could also validly take sub-sections of the main pile.
+      const otherDest1: Card = { suit: 'DIAMONDS', rank: '8', faceUp: true }; // Could take [7,6,5]
+      const otherDest2: Card = { suit: 'HEARTS', rank: '7', faceUp: true }; // Could take [6,5]
       const otherDest3: Card = { suit: 'CLUBS', rank: '6', faceUp: true }; // Could take [5]
 
-      state.tableau[0] = [ ...pileToMove];
+      state.tableau[0] = [...pileToMove];
       state.tableau[1] = [destinationCard];
       state.tableau[2] = [otherDest1];
       state.tableau[3] = [otherDest2];
       state.tableau[4] = [otherDest3];
 
-      // Simulate a "click to move" on the '8 of Hearts' (the base of the pile to move)
-      const sourcePile = state.tableau[0];
-      const cards = sourcePile.splice(0); // The whole pile
-      const destPile = state.tableau[1];
-      destPile.push(...cards);
+      // Simulate the "click to move" on the '8 of Hearts' (the base of the pile to move).
+      // The logic should find the best destination for the *entire* valid run starting from the clicked card.
+      const sourcePileIndex = 0;
+      const cardIndex = 0;
+      const cardsToMove = state.tableau[sourcePileIndex].slice(cardIndex);
+      let bestDestinationIndex = -1;
 
-      // We expect the entire pile to move to the '9 of Spades'
+      // Find the best destination for the entire run.
+      if(isRun(cardsToMove)){
+          for(let i=0; i<state.tableau.length; i++){
+              if(i === sourcePileIndex) continue;
+              if(canMoveToTableau(cardsToMove[0], state.tableau[i][state.tableau[i].length - 1])){
+                  bestDestinationIndex = i;
+                  break; // Found the first valid destination for the whole pile
+              }
+          }
+      }
+
+      // If a valid destination was found, execute the move.
+      if(bestDestinationIndex !== -1){
+          const sourcePile = state.tableau[sourcePileIndex];
+          const destPile = state.tableau[bestDestinationIndex];
+          const cards = sourcePile.splice(cardIndex);
+          destPile.push(...cards);
+      }
+      
+      expect(bestDestinationIndex).toBe(1); // It should choose tableau[1]
       expect(state.tableau[0].length).toBe(0); // Source pile should be empty
       expect(state.tableau[1].length).toBe(5); // Destination should have the 4 new cards + the original 9
       expect(state.tableau[1][state.tableau[1].length - 1].rank).toBe('5'); // Top card should be 5
@@ -590,7 +611,7 @@ describe('Solitaire Game Logic', () => {
 
     it('should return false when foundation piles are not full', () => {
       const state = createInitialState();
-      expect(isGameWon(state)).toBe(false);
+      expect(isGamewon(state)).toBe(false);
     });
   });
 
@@ -604,5 +625,7 @@ describe('Solitaire Game Logic', () => {
 
 
 
+
+    
 
     
