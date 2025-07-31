@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
+import { calculateScore } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -36,15 +37,6 @@ export type HighlightedPile = {
 
 
 const UNDO_LIMIT = 15;
-
-const calculateScore = (moves: number, time: number) => {
-  if (time === 0) return 0;
-  const timePenalty = Math.floor(time / 10) * 2;
-  const movePenalty = moves * 5;
-  const score = 10000 - timePenalty - movePenalty;
-  return Math.max(0, score);
-};
-
 
 export default function GameBoard() {
   const { settings } = useSettings();
@@ -592,4 +584,3 @@ export default function GameBoard() {
     </div>
   );
 }
-

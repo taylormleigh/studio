@@ -4,20 +4,7 @@
 import type { Card as CardType } from '@/lib/solitaire';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
-
-const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
-  const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-  const colorClass = isRed ? 'text-[#dc2626]' : 'text-card-foreground';
-
-  const icons = {
-    SPADES: '♠',
-    HEARTS: '♥',
-    DIAMONDS: '♦',
-    CLUBS: '♣',
-  };
-
-  return <span className={cn('select-none', colorClass, className)}>{icons[suit]}</span>;
-}
+import { SuitIcon } from './suit-icon';
 
 export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked }: CardProps) {
   const { settings } = useSettings();

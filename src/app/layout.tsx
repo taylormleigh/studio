@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: 'Deck of Cards',
-  description: 'Simple card games designed for e-ink devices.',
+  description: 'Simple card games for web and mobile',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.svg',
