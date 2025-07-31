@@ -889,7 +889,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className="flex-grow p-2 md:p-4">
+      <main className="flex-grow p-2 md:p-4 w-full md:max-w-[500px] md:mx-auto">
         {settings.gameType === 'Solitaire' && gameState.gameType === 'Solitaire' && renderSolitaire()}
         {settings.gameType === 'Freecell' && gameState.gameType === 'Freecell' && renderFreecell()}
         {settings.gameType === 'Spider' && gameState.gameType === 'Spider' && renderSpider()}
@@ -928,5 +928,6 @@ export default function GameBoard() {
     
 
     
+
 
 
