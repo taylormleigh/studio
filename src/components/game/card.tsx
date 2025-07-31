@@ -5,6 +5,7 @@ import type { Card as CardType } from '@/lib/solitaire';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useSettings } from '@/hooks/use-settings';
+import { Crown, Heart, Diamond, Club, Spade } from 'lucide-react';
 
 type CardProps = {
   card?: CardType;
@@ -37,36 +38,73 @@ const RANK_VALUES: { [key: string]: number } = {
   'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
 };
 
-const Pip = () => <div className="w-3 h-3 bg-black rounded-full" />;
 
-const PipGrid = ({ count }: { count: number }) => {
-  const grids: { [key: number]: string[] } = {
-    1: ["center"],
-    2: ["start", "end"],
-    3: ["start", "center", "end"],
-    4: ["grid-cols-2", "grid-cols-2"],
-    5: ["grid-cols-2", "center", "grid-cols-2"],
-    6: ["grid-cols-2", "grid-cols-2", "grid-cols-2"],
-    7: ["grid-cols-2", "center", "grid-cols-2", "grid-cols-2"],
-    8: ["grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2"],
-    9: ["grid-cols-2", "grid-cols-2", "center", "grid-cols-2", "grid-cols-2"],
-    10: ["grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2", "center", "grid-cols-2"],
-  };
+const PipGrid = ({ count, suit }: { count: number, suit: CardType['suit'] }) => {
+  if (count < 1 || count > 10) return null;
 
-  const renderPips = (layout: string) => {
-    if (layout === 'center') return <div className="col-span-2 flex justify-center items-center"><Pip /></div>;
-    const pipCount = layout === 'grid-cols-2' ? 2 : 0;
-    return Array.from({ length: pipCount }).map((_, i) => <div key={i} className="flex justify-center items-center"><Pip /></div>);
-  };
-  
-  if (count > 10) return null; // Handle face cards separately
+  // Simplified grid layout logic for pips
+  const pipStyles: React.CSSProperties[] = [];
+  const baseStyle: React.CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)' };
+
+  if (count === 1) {
+    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+  }
+  if (count >= 2) {
+    pipStyles.push({ ...baseStyle, top: '25%', left: '50%' });
+    pipStyles.push({ ...baseStyle, top: '75%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' });
+  }
+  if (count === 3) {
+    pipStyles[0] = { ...baseStyle, top: '20%', left: '50%' };
+    pipStyles[1] = { ...baseStyle, top: '80%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' };
+    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+  }
+  if (count >= 4) {
+    pipStyles[0] = { ...baseStyle, top: '20%', left: '30%' };
+    pipStyles[1] = { ...baseStyle, top: '80%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)' };
+    pipStyles.push({ ...baseStyle, top: '20%', left: '70%' });
+    pipStyles.push({ ...baseStyle, top: '80%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)' });
+  }
+  if (count === 5) {
+     pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+  }
+  if (count >= 6) {
+    pipStyles.push({ ...baseStyle, top: '50%', left: '30%' });
+    pipStyles.push({ ...baseStyle, top: '50%', left: '70%' });
+  }
+  if (count >= 7) {
+    pipStyles[pipStyles.length-2] = { ...baseStyle, top: '35%', left: '50%' }; // Reposition center for 7
+    pipStyles[4] = ({...baseStyle, top: '50%', left: '30%'}); // remove prior center
+    pipStyles.push({ ...baseStyle, top: '65%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' });
+  }
+  if (count === 8) {
+    pipStyles.push({...baseStyle, top: '65%', left: '50%'})
+    pipStyles[pipStyles.length-1] = { ...baseStyle, top: '65%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' };
+  }
+  if (count >= 9) {
+    pipStyles[0] = { ...baseStyle, top: '15%', left: '30%' };
+    pipStyles[1] = { ...baseStyle, top: '85%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)'};
+    pipStyles[2] = { ...baseStyle, top: '15%', left: '70%' };
+    pipStyles[3] = { ...baseStyle, top: '85%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)'};
+
+    pipStyles[4] = { ...baseStyle, top: '38%', left: '30%'};
+    pipStyles[5] = { ...baseStyle, top: '62%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)'};
+
+    pipStyles.push({ ...baseStyle, top: '38%', left: '70%'});
+    pipStyles.push({ ...baseStyle, top: '62%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)'});
+    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+  }
+   if (count === 10) {
+    pipStyles.pop(); // remove center
+    pipStyles.push({...baseStyle, top: '28%', left: '50%'});
+    pipStyles.push({...baseStyle, top: '72%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)'});
+  }
 
   return (
-    <div className="h-full w-full p-1 flex flex-col justify-between">
-      {grids[count]?.map((layout, i) => (
-         <div key={i} className={`grid ${layout} w-full`}>
-           {renderPips(layout)}
-         </div>
+    <div className="relative h-full w-full">
+      {pipStyles.map((style, i) => (
+        <div key={i} style={style}>
+          <SuitIcon suit={suit} className="text-xl" />
+        </div>
       ))}
     </div>
   );
@@ -104,7 +142,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
 
   if (!card.faceUp) {
     const modernBack = "bg-[#5f8fb1] [background-image:radial-gradient(#80ADCC_1px,_transparent_1px)] [background-size:5px_5px]";
-    const dominoBack = "bg-[#2c3e50]";
+    const dominoBack = "bg-red-800 [background-image:radial-gradient(white_1px,_transparent_1px)] [background-size:7px_7px]";
     return (
       <div
         onClick={onClick}
@@ -146,28 +184,48 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     const suit = card.suit;
     const rankValue = RANK_VALUES[rank];
 
-    const topPips = Math.floor(rankValue / 2);
-    const bottomPips = rankValue - topPips;
+    const QueenCrown = () => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
+            <path d="M19.14 6.86a4 4 0 0 0-5.64 0l-1.5 1.5-1.5-1.5a4 4 0 1 0-5.64 5.64L12 19.34l7.14-7.14a4 4 0 0 0 0-5.64z" />
+            <circle cx="12" cy="6" r="2"/>
+            <circle cx="6" cy="9" r="1.5"/>
+            <circle cx="18" cy="9" r="1.5"/>
+        </svg>
+    )
+
+    const KingCrown = () => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10">
+        <path d="M2 4l3 12h14l3-12-10 6z"/>
+      </svg>
+    )
 
     return (
-        <div className='relative h-full p-1 bg-white/80'>
+        <div className={cn('relative h-full w-full p-1 bg-white/95', suitColorClass)} style={{color: isRed ? '#AE1447' : 'black'}}>
+            {/* Corners */}
             <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
                 <div className="font-bold text-lg">{rank}</div>
-                <SuitIcon suit={suit} className="text-base" />
+            </div>
+             <div className="absolute top-1 right-1 flex flex-col items-center leading-none">
+                <SuitIcon suit={suit} className="text-lg" />
             </div>
             <div className="absolute bottom-1 right-1 flex flex-col items-center leading-none rotate-180">
                 <div className="font-bold text-lg">{rank}</div>
-                <SuitIcon suit={suit} className="text-base" />
+            </div>
+            <div className="absolute bottom-1 left-1 flex flex-col items-center leading-none rotate-180">
+                 <SuitIcon suit={suit} className="text-lg" />
             </div>
             
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
-                <div className="w-full h-1/2 flex items-center justify-center">
-                    <PipGrid count={topPips} />
-                </div>
-                <div className="h-[2px] w-10/12 bg-black/80 my-1"></div>
-                <div className="w-full h-1/2 flex items-center justify-center">
-                   <PipGrid count={bottomPips} />
-                </div>
+            {/* Center Content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                {rankValue <= 10 ? (
+                    <PipGrid count={rankValue} suit={suit} />
+                ) : (
+                    <div className="relative flex flex-col items-center justify-center">
+                        {rank === 'K' && <KingCrown />}
+                        {rank === 'Q' && <QueenCrown />}
+                        <SuitIcon suit={suit} className="text-5xl" />
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -191,3 +249,5 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     </div>
   );
 }
+
+    

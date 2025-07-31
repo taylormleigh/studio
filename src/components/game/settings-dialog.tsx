@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Crown } from 'lucide-react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -53,21 +53,13 @@ const CardPreview = ({
         )}
       >
         {isDomino ? (
-           <div className="relative h-full p-1 bg-white/80">
-            <div className="absolute top-1 left-1 flex flex-col items-center leading-none">
-                <div className="font-bold text-lg text-black">Q</div>
-                <span className="text-lg leading-none text-[#AE1447]">♥</span>
-            </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-1">
-                <div className="w-full h-1/2 flex items-center justify-center space-x-1">
-                    <div className="w-3 h-3 bg-black rounded-full"></div>
-                    <div className="w-3 h-3 bg-black rounded-full"></div>
-                </div>
-                <div className="h-[2px] w-10/12 bg-black/80 my-[1px]"></div>
-                <div className="w-full h-1/2 flex items-center justify-center">
-                    <div className="w-3 h-3 bg-black rounded-full"></div>
-                </div>
-            </div>
+           <div className="relative h-full p-1 bg-white/95">
+             <div className="absolute top-1 left-1 font-bold text-black">Q</div>
+             <div className="absolute top-1 right-1 text-lg text-[#AE1447]">♥</div>
+             <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Crown className="w-4 h-4 mb-[-4px] text-black" />
+                <span className="text-2xl text-[#AE1447]">♥</span>
+             </div>
           </div>
         ) : (
           <div className="relative p-1 flex flex-col justify-between h-full text-[#AE1447]">
@@ -253,3 +245,5 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     </Dialog>
   );
 }
+
+    
