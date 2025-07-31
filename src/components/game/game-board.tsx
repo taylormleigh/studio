@@ -71,7 +71,12 @@ export default function GameBoard() {
 
   useEffect(() => {
     setIsClient(true);
-    handleNewGame();
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      handleNewGame();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 

@@ -28,17 +28,12 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
   const { settings, setSettings } = useSettings();
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      onOpenChange(isOpen);
-      if (!isOpen) {
-        onNewGame();
-      }
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            A new game will start when you close the settings window.
+            Gameplay and layout settings will apply to your current game. Changing the game type or rules will start a new game when you press "New Game".
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -147,7 +142,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button>Close</Button>
+             <Button variant="outline">Close</Button>
+          </DialogClose>
+          <DialogClose asChild>
+            <Button onClick={onNewGame}>New Game</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
