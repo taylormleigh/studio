@@ -27,11 +27,6 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
-  const handleSettingChangeAndNewGame = (newSettings: Partial<typeof settings>) => {
-    setSettings(newSettings);
-    onNewGame();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
@@ -48,7 +43,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             </Label>
             <Select
               value={settings.gameType}
-              onValueChange={(value) => handleSettingChangeAndNewGame({ gameType: value as GameType })}
+              onValueChange={(value) => {
+                setSettings({ gameType: value as GameType });
+                onNewGame();
+              }}
             >
               <SelectTrigger id="game-type" className="col-span-3">
                 <SelectValue placeholder="Select a game" />
@@ -69,7 +67,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <RadioGroup
                 id="draw-count"
                 value={String(settings.solitaireDrawCount)}
-                onValueChange={(value) => handleSettingChangeAndNewGame({ solitaireDrawCount: Number(value) as SolitaireDrawType })}
+                onValueChange={(value) => {
+                  setSettings({ solitaireDrawCount: Number(value) as SolitaireDrawType });
+                  onNewGame();
+                }}
                 className="col-span-3 flex items-center gap-4"
               >
                 <div className="flex items-center space-x-2">
@@ -90,7 +91,10 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 <RadioGroup
                   id="spider-suits"
                   value={String(settings.spiderSuits)}
-                  onValueChange={(value) => handleSettingChangeAndNewGame({ spiderSuits: Number(value) as SpiderSuitCount })}
+                  onValueChange={(value) => {
+                    setSettings({ spiderSuits: Number(value) as SpiderSuitCount });
+                    onNewGame();
+                  }}
                   className="col-span-3 flex items-center gap-4"
                 >
                     <div className="flex items-center space-x-2">
