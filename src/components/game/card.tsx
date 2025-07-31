@@ -19,7 +19,7 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
   return <span className={cn('select-none', colorClass, className)}>{icons[suit]}</span>;
 }
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
@@ -49,7 +49,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   }
 
   if (!card.faceUp) {
-    const modernBack = "bg-[#5f8fb1] [background-image:radial-gradient(#80ADCC_1px,_transparent_1px)] [background-size:5px_5px]";
+    const modernBack = "bg-[#5f8fb1] [background-image:repeating-linear-gradient(45deg,_#80ADCC,_#80ADCC_1px,_transparent_1px,_transparent_5px)] [background-size:5px_5px]";
     const dominoBack = "bg-[#9FC756] [background-image:repeating-linear-gradient(45deg,#D6E444,#D6E444_1px,transparent_1px,transparent_5px)]";
 
     return (
@@ -87,15 +87,21 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
           suitColorClass
         )}
       >
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           <div className="text-lg font-bold leading-none">{card.rank}</div>
+          {isStacked && <SuitIcon suit={card.suit} className="text-md leading-none" />}
         </div>
-        <div className="self-center">
-          <SuitIcon suit={card.suit} className="text-xl" />
-        </div>
-        <div className="hidden xs:flex items-center self-end rotate-180">
-          <div className="text-lg font-bold leading-none">{card.rank}</div>
-        </div>
+
+        {!isStacked && (
+          <>
+            <div className="self-center">
+              <SuitIcon suit={card.suit} className="text-xl" />
+            </div>
+            <div className="hidden xs:flex items-center self-end rotate-180">
+              <div className="text-lg font-bold leading-none">{card.rank}</div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
