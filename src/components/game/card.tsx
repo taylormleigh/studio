@@ -99,7 +99,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         draggable && "cursor-grab"
       )}
     >
-      <div className="flex justify-start items-center h-auto">
+      <div className="absolute top-1 left-1 flex items-center h-auto">
         <div className="text-base sm:text-lg md:text-base font-bold leading-none">{card.rank}</div>
         {isStacked && <SuitIcon suit={card.suit} className="text-base sm:text-lg md:text-base ml-1" />}
       </div>
