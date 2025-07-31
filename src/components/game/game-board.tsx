@@ -36,7 +36,7 @@ export type HighlightedPile = {
 } | null;
 
 
-const UNDO_LIMIT = 15;
+const UNDO_LIMIT = 100;
 
 export default function GameBoard() {
   const { settings } = useSettings();
@@ -430,8 +430,8 @@ export default function GameBoard() {
       return;
     }
   
-    // --- Auto-move logic for Solitaire ---
-    if (settings.autoMove && gameState.gameType === 'Solitaire') {
+    // --- Auto-move logic for "Click to move" mode ---
+    if (settings.autoMove) {
       const gs = gameState as SolitaireGameState;
   
       const findAndExecuteAutoMove = () => {

@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Rubik+Glitch&family=Rubik+Scribble&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Yarndings+12+Charted&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -33,7 +33,7 @@
     --radius: 0.5rem; /* A bit more rounded */
     --title-font: "Rubik Scribble", system-ui;
     --icon-font: "Yarndings 12 Charted", system-ui;
-    --primary-font: "Mukta", Arial, Helvetica, sans-serif;
+    --primary-font: "Google Sans Code", monospace, Arial, Helvetica, sans-serif;
   }
   
   .dark {
@@ -61,7 +61,7 @@
 }
 
 
-body {
+html, body, .font-body, .font-headline {
   font-family: var(--primary-font);
 }
 
