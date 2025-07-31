@@ -302,17 +302,8 @@ describe('Solitaire Game Logic', () => {
         const cardToSelect: Card = { suit: 'HEARTS', rank: 'Q', faceUp: true };
         state.tableau[0] = [cardToSelect];
     
-        // This test simulates the user clicking a card. In the UI, this would set `selectedCard`.
-        // The actual test here is that no game state *mutation* happens on click.
         const originalState = JSON.parse(JSON.stringify(state));
     
-        // Simulate a click that just selects the card
-        // In the UI, this would set selectedCardInfo but not execute a move immediately.
-        // We're verifying no state mutation, which is the key part of the test.
-        // The actual bug was that a click *was* causing a move attempt, which was failing
-        // and leading to weird visual state.
-    
-        // No move should happen, so state remains unchanged
         expect(state).toEqual(originalState);
     });
 
@@ -359,13 +350,13 @@ describe('Solitaire Game Logic', () => {
       const otherDest2: Card = { suit: 'DIAMONDS', rank: '7', faceUp: true }; // Could take [6,5]
       const otherDest3: Card = { suit: 'CLUBS', rank: '6', faceUp: true }; // Could take [5]
 
-      state.tableau[0] = pileToMove;
+      state.tableau[0] = [ ...pileToMove];
       state.tableau[1] = [destinationCard];
       state.tableau[2] = [otherDest1];
       state.tableau[3] = [otherDest2];
       state.tableau[4] = [otherDest3];
 
-      // Simulate a "click to move" on the '5 of Spades' (the top card of the pile to move)
+      // Simulate a "click to move" on the '8 of Hearts' (the base of the pile to move)
       const sourcePile = state.tableau[0];
       const cards = sourcePile.splice(0); // The whole pile
       const destPile = state.tableau[1];
@@ -447,28 +438,34 @@ describe('Solitaire Game Logic', () => {
         // Simulate click-to-move by finding and executing the move
         const sourcePileIndex = 0;
         const sourceCardIndex = 0;
-        const cardToClick = state.tableau[sourcePileIndex][sourceCardIndex];
         
         let moved = false;
 
         // Simplified logic from the component's handleCardClick
-        // 1. Try foundation (will fail in this test)
-        // 2. Try tableau
-        const cardsToMove = state.tableau[sourcePileIndex].slice(sourceCardIndex);
-        for (let i = 0; i < state.tableau.length; i++) {
-            if (i === sourcePileIndex) continue;
-            const destTopCard = state.tableau[i][state.tableau[i].length - 1];
-            if (canMoveToTableau(cardsToMove[0], destTopCard)) {
-                // Execute move
-                const sourcePile = state.tableau[sourcePileIndex];
-                const destPile = state.tableau[i];
-                const cards = sourcePile.splice(sourceCardIndex);
-                destPile.push(...cards);
-                if (sourcePile.length > 0) {
-                    sourcePile[sourcePile.length - 1].faceUp = true;
+        const sourcePile = state.tableau[sourcePileIndex];
+        const cardToClick = sourcePile[sourceCardIndex];
+        
+        if (cardToClick.faceUp) {
+            // 1. Try foundation (will fail in this test)
+            const topCard = sourcePile[sourcePile.length - 1];
+            // ... foundation check would go here ...
+
+            // 2. Try tableau
+            const cardsToMove = sourcePile.slice(sourceCardIndex);
+            for (let i = 0; i < state.tableau.length; i++) {
+                if (i === sourcePileIndex) continue;
+                const destTopCard = state.tableau[i][state.tableau[i].length - 1];
+                if (canMoveToTableau(cardsToMove[0], destTopCard)) {
+                    // Execute move
+                    const destPile = state.tableau[i];
+                    const cards = sourcePile.splice(sourceCardIndex);
+                    destPile.push(...cards);
+                    if (sourcePile.length > 0) {
+                        sourcePile[sourcePile.length - 1].faceUp = true;
+                    }
+                    moved = true;
+                    break;
                 }
-                moved = true;
-                break;
             }
         }
 

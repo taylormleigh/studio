@@ -1,4 +1,5 @@
 
+
 export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
 
@@ -117,4 +118,13 @@ export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
 }
 
+// Helper to check if a sequence of cards in a tableau is valid to move
+export function isRun(cards: Card[]): boolean {
+  if (cards.length <= 1) return true;
+  for (let i = 0; i < cards.length - 1; i++) {
+    if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
+    if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) return false;
+  }
+  return true;
+}
     
