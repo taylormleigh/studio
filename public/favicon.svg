@@ -1,10 +1,8 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- White background -->
-  <rect width="100" height="100" fill="white"/>
-  <!-- Rounded square outline -->
-  <rect x="2" y="2" width="96" height="96" rx="15" stroke="black" stroke-width="4"/>
-  <!-- Spade Icon Path -->
-  <path fill-rule="evenodd" clip-rule="evenodd" d="M50 22C45 22 39.5 29.957 39.5 37.647C39.5 43.197 43.5 50.457 50 63C56.5 50.457 60.5 43.197 60.5 37.647C60.5 29.957 55 22 50 22ZM50 67.5C47.5 67.5 45.5 68.5 45.5 70.5C45.5 71.5 46.5 72.5 48 72.5H52C53.5 72.5 54.5 71.5 54.5 70.5C54.5 68.5 52.5 67.5 50 67.5Z" fill="black"/>
-  <path d="M48 72.5H52C53.5 72.5 54.5 71.5 54.5 70.5C54.5 68.5 52.5 67.5 50 67.5C47.5 67.5 45.5 68.5 45.5 70.5C45.5 71.5 46.5 72.5 48 72.5Z" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M50 72.5V78L46 76" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="256" height="256" fill="none"/>
+<rect x="32" y="32" width="192" height="192" rx="28" fill="white" stroke="black" stroke-width="8"/>
+<g transform="translate(48, 48) scale(10)">
+<path d="M7.184 11.246A3.5 3.5 0 0 1 1 9c0-1.602 1.07-2.923 2.52-3.415C4.872 4.072 6.59 2.5 8 2.5s3.128 1.572 4.48 3.085C13.93 6.077 15 7.398 15 9a3.5 3.5 0 0 1-6.184 2.246l-.002.001a3.493 3.493 0 0 1-1.629 0l-.001-.001Z" fill="black"/>
+<path d="M7.5 11.852a4.493 4.493 0 0 1-1.646-.354c.168.187.352.36.556.522l.186.148a3.5 3.5 0 0 0 4.208 0l.186-.148c.204-.162.388-.335.556-.522a4.493 4.493 0 0 1-1.646.354L8 13.5z" fill="black"/>
+</g>
 </svg>
