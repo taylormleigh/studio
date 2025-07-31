@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount, CardStyle } from '@/hooks/use-settings';
+import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount, CardStyle, GameSettings } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -88,6 +88,11 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         onNewGame();
     }
     onOpenChange(false);
+  }
+
+  const handleNewGameClick = () => {
+    onOpenChange(false);
+    onNewGame();
   }
 
   return (
@@ -221,7 +226,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>Close</Button>
-          <Button onClick={onNewGame}>New Game</Button>
+          <Button onClick={handleNewGameClick}>New Game</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
