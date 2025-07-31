@@ -20,9 +20,9 @@ type CardProps = {
 };
 
 // Using Unicode characters for a classic, high-contrast look
-const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
+const SuitIcon = ({ suit, className, color }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string, color?: string }) => {
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-  const colorClass = isRed ? 'text-red-600' : 'text-black';
+  const colorClass = isRed ? 'text-[#ED4267]' : 'text-black';
 
   const icons = {
     SPADES: '♠',
@@ -31,7 +31,7 @@ const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' 
     CLUBS: '♣',
   };
 
-  return <span className={cn('font-sans select-none', colorClass, className)}>{icons[suit]}</span>;
+  return <span className={cn('font-sans select-none', colorClass, className)} style={{color: isRed ? '#ED4267' : 'black'}}>{icons[suit]}</span>;
 }
 
 
@@ -61,21 +61,22 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     return (
       <div
         onClick={onClick}
+        style={{ backgroundColor: '#1E425C' }}
         className={cn(
           cardSize,
-          'rounded-md bg-blue-700 border-2 border-black cursor-pointer transition-all',
+          'rounded-md border-2 border-black cursor-pointer transition-all',
           'flex items-center justify-center p-1',
           ringClass,
           className
         )}
       >
-        <div className="w-full h-full rounded-sm border-2 border-blue-900 bg-blue-800" />
+        <div className="w-full h-full rounded-sm border-2 border-[#152f40] bg-[#1a3a50]" />
       </div>
     );
   }
 
   const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
-  const suitColorClass = isRed ? 'text-red-600' : 'text-black';
+  const suitColorClass = isRed ? 'text-[#ED4267]' : 'text-black';
 
   return (
     <div
@@ -83,7 +84,10 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      style={style}
+      style={{
+        ...style,
+        color: isRed ? '#ED4267' : 'black'
+      }}
       className={cn(
         cardSize,
         'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 flex flex-col justify-between transition-all duration-300 ease-in-out',
