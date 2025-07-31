@@ -32,10 +32,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#E0E0E0" />
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
-
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background">
         {children}

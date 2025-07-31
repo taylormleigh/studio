@@ -16,8 +16,8 @@ export default {
         'lg': '2048px',
       },
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ["Courier New", "Courier", "monospace"],
+        headline: ["Comic Sans MS", "Comic Sans", "cursive"],
         code: ['monospace'],
       },
       colors: {

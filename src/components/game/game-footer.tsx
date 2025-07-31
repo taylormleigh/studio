@@ -3,8 +3,8 @@
 
 import { Pointer, Hourglass, Smile } from 'lucide-react';
 
-const iconStrokeWidth = 1.25;
-const iconSize = 16;
+const iconStrokeWidth = 1.85;
+const iconSize = 18;
 
 interface GameFooterProps {
   moves: number;
