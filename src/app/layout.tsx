@@ -3,12 +3,12 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'E-Ink Solitaire',
-  description: 'A simple solitaire game for e-ink devices.',
+  title: 'Deck of Cards',
+  description: 'Simple card games designed for e-ink devices.',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.svg',
-    apple: '/icons/icon-192x192.png',
+    apple: '/favicon.svg',
   },
 };
 
@@ -20,10 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="application-name" content="E-Ink Solitaire" />
+        <meta name="application-name" content="Deck of Cards" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="E-Ink Solitaire" />
+        <meta name="apple-mobile-web-app-title" content="Deck of Cards" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
