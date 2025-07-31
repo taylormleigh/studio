@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, DragEvent } from 'react';
@@ -713,10 +714,8 @@ export default function GameBoard() {
                         <div className={cn(
                           "relative w-full",
                            card.faceUp ? "h-8 sm:h-9" : "h-3"
-                           card.faceUp ? "h-8 sm:h-9" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                              transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                           }}
                         >
@@ -769,7 +768,6 @@ export default function GameBoard() {
           </div>
         ))}
       </div>
-      </div>
     );
 
     const foundationPiles = (
@@ -801,21 +799,20 @@ export default function GameBoard() {
           </div>
         ))}
       </div>
-      </div>
     );
     
     return (
       <>
-         <div className={`grid ${gridCols} gap-x-0 mb-4`}>
+         <div className="grid grid-cols-8 gap-x-0 mb-4">
             {settings.leftHandMode ? (
               <>
-                <FreecellPiles />
-                <FoundationPiles />
+                {freecellPiles}
+                {foundationPiles}
               </>
             ) : (
               <>
-                <FoundationPiles />
-                <FreecellPiles />
+                {foundationPiles}
+                {freecellPiles}
               </>
             )}
         </div>
@@ -844,7 +841,6 @@ export default function GameBoard() {
                       >
                          <div className="relative w-full h-8 sm:h-9"
                             style={{
-                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : 36)}px)`
                               transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : 36)}px)`
                             }}
                          >
@@ -935,10 +931,8 @@ export default function GameBoard() {
                         <div className={cn(
                           "relative w-full",
                            card.faceUp ? "h-8 sm:h-9" : "h-3"
-                           card.faceUp ? "h-8 sm:h-9" : "h-3"
                           )}
                           style={{
-                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                              transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                           }}
                         >
