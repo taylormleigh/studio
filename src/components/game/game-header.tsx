@@ -52,7 +52,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
         )}>
         <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
           <PlusSquare className="w-7 h-7" />
-           <span className="hidden md:block text-xs font-medium">new game</span>
+           <span className="hidden md:block text-xs font-medium">new</span>
         </Button>
          <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
           <RotateCcw className="w-7 h-7" />
