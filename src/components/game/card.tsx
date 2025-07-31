@@ -7,7 +7,7 @@ import { useSettings } from '@/hooks/use-settings';
 
 const SuitIcon = ({ suit, className }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string }) => {
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-  const colorClass = isRed ? 'text-red-600' : 'text-card-foreground';
+  const colorClass = isRed ? 'text-[#dc2626]' : 'text-card-foreground';
 
   const icons = {
     SPADES: '♠',
@@ -66,7 +66,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   }
 
   const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
-  const suitColorClass = isRed ? 'text-red-600' : 'text-card-foreground';
+  const suitColorClass = isRed ? 'text-[#dc2626]' : 'text-card-foreground';
 
   return (
     <div
