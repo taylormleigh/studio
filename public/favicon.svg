@@ -1,7 +1,10 @@
-<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="256" height="256" fill="white"/>
-<rect x="32" y="32" width="192" height="192" rx="48" stroke="black" stroke-width="16"/>
-<path d="M128 56C148.5 83 177 96.5 177 128C177 151.5 158.5 170 128 170C97.5 170 79 151.5 79 128C79 96.5 107.5 83 128 56Z" stroke="black" stroke-width="16" stroke-linejoin="round"/>
-<path d="M161 170C161 179.5 146.167 192.5 128 192.5C109.833 192.5 95 179.5 95 170H161Z" stroke="black" stroke-width="16" stroke-linejoin="round"/>
-<rect x="116" y="181" width="24" height="24" rx="6" fill="black"/>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- White background -->
+  <rect width="100" height="100" fill="white"/>
+  <!-- Rounded square outline -->
+  <rect x="2" y="2" width="96" height="96" rx="15" stroke="black" stroke-width="4"/>
+  <!-- Spade Icon Path -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M50 22C45 22 39.5 29.957 39.5 37.647C39.5 43.197 43.5 50.457 50 63C56.5 50.457 60.5 43.197 60.5 37.647C60.5 29.957 55 22 50 22ZM50 67.5C47.5 67.5 45.5 68.5 45.5 70.5C45.5 71.5 46.5 72.5 48 72.5H52C53.5 72.5 54.5 71.5 54.5 70.5C54.5 68.5 52.5 67.5 50 67.5Z" fill="black"/>
+  <path d="M48 72.5H52C53.5 72.5 54.5 71.5 54.5 70.5C54.5 68.5 52.5 67.5 50 67.5C47.5 67.5 45.5 68.5 45.5 70.5C45.5 71.5 46.5 72.5 48 72.5Z" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M50 72.5V78L46 76" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
