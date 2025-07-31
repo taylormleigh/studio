@@ -816,7 +816,7 @@ export default function GameBoard() {
               </>
             )}
         </div>
-        <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
+        <div className="grid grid-cols-8 gap-x-[2px] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -839,9 +839,9 @@ export default function GameBoard() {
                         key={`${card.suit}-${card.rank}-${cardIndex}`} 
                         className="absolute w-full"
                       >
-                         <div className="relative w-full h-8 sm:h-9"
+                         <div className="relative w-full h-7 sm:h-8"
                             style={{
-                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : 36)}px)`
+                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 28 : 32)}px)`
                             }}
                          >
                           <Card
@@ -1009,3 +1009,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+    
