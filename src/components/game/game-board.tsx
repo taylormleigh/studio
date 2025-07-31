@@ -241,9 +241,10 @@ export default function GameBoard() {
                     newGameState.foundation[sourcePileIndex].pop();
                 } else { // tableau
                     const sourcePile = newGameState.tableau[sourcePileIndex];
-                    sourcePile.splice(sourceCardIndex);
-                    if (sourcePile.length > 0 && !sourcePile[sourcePile.length - 1].faceUp) {
-                        sourcePile[sourcePile.length - 1].faceUp = true;
+                    newGameState.tableau[sourcePileIndex] = sourcePile.slice(0, sourceCardIndex);
+                    const updatedSourcePile = newGameState.tableau[sourcePileIndex];
+                    if (updatedSourcePile.length > 0 && !updatedSourcePile[updatedSourcePile.length - 1].faceUp) {
+                        updatedSourcePile[updatedSourcePile.length - 1].faceUp = true;
                     }
                 }
                 newGameState.moves++;
@@ -474,12 +475,11 @@ export default function GameBoard() {
   
     // --- Auto-move logic ---
     if (settings.autoMove && gameState.gameType === 'Solitaire') {
-      let cardToMove: CardType;
       const gs = gameState as SolitaireGameState;
   
       if (sourceType === 'waste') {
-          if (gs.waste.length === 0) return;
-          cardToMove = gs.waste[gs.waste.length - 1];
+          const cardToMove = gs.waste[gs.waste.length - 1];
+          if (!cardToMove) return;
           // 1. Try foundation
           for (let i = 0; i < gs.foundation.length; i++) {
               if (canMoveSolitaireToFoundation(cardToMove, gs.foundation[i][gs.foundation[i].length - 1])) {
@@ -520,7 +520,10 @@ export default function GameBoard() {
           // Logic for clicking a card WITHIN a pile
           else {
               const cardsToMove = sourcePile.slice(cardIndex);
-              if (!isSolitaireRun(cardsToMove)) return; // Not a valid stack to move
+              if (!isSolitaireRun(cardsToMove)) {
+                 setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+                 return;
+              }
   
               // Try to move the entire stack to another tableau pile
               for (let i = 0; i < gs.tableau.length; i++) {
@@ -925,4 +928,5 @@ export default function GameBoard() {
     
 
     
+
 
