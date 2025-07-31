@@ -22,7 +22,7 @@ type CardProps = {
 // Using Unicode characters for a classic, high-contrast look
 const SuitIcon = ({ suit, className, color }: { suit: 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS', className?: string, color?: string }) => {
   const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-  const colorClass = isRed ? 'text-[#AB2755]' : 'text-black';
+  const colorClass = isRed ? 'text-[#A91134]' : 'text-black';
 
   const icons = {
     SPADES: '♠',
@@ -31,7 +31,7 @@ const SuitIcon = ({ suit, className, color }: { suit: 'SPADES' | 'HEARTS' | 'DIA
     CLUBS: '♣',
   };
 
-  return <span className={cn('font-sans select-none', colorClass, className)} style={{color: isRed ? '#AB2755' : 'black'}}>{icons[suit]}</span>;
+  return <span className={cn('font-sans select-none', colorClass, className)} style={{color: isRed ? '#A91134' : 'black'}}>{icons[suit]}</span>;
 }
 
 
@@ -65,18 +65,16 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         className={cn(
           cardSize,
           'rounded-md border-2 border-black cursor-pointer transition-all',
-          'flex items-center justify-center p-1',
           ringClass,
           className
         )}
       >
-        <div className="w-full h-full rounded-sm border-2 border-[#152f40] bg-[#1a3a50]" />
       </div>
     );
   }
 
   const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
-  const suitColorClass = isRed ? 'text-[#AB2755]' : 'text-black';
+  const suitColorClass = isRed ? 'text-[#A91134]' : 'text-black';
 
   return (
     <div
@@ -86,7 +84,7 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
       onDragEnd={onDragEnd}
       style={{
         ...style,
-        color: isRed ? '#AB2755' : 'black'
+        color: isRed ? '#A91134' : 'black'
       }}
       className={cn(
         cardSize,
