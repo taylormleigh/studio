@@ -43,8 +43,8 @@ body {
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 0 0% 15%; /* Black text on cards */
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     --primary: 262.1 83.3% 57.8%;
