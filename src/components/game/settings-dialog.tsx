@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from 'react';
 import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount, CardStyle } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,11 +68,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     if (isOpen) {
       setInitialSettings(settings); // snapshot settings on open
       setHasRuleChanged(false);
-    } else {
-        // if settings that require a new game have changed, prompt user
-        if(hasRuleChanged) {
-            onNewGame();
-        }
     }
   };
   
@@ -86,6 +82,13 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         setHasRuleChanged(true);
     }
   };
+
+  const handleClose = () => {
+    if(hasRuleChanged) {
+        onNewGame();
+    }
+    onOpenChange(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -217,7 +220,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
 
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={handleClose}>Close</Button>
           <Button onClick={onNewGame}>New Game</Button>
         </DialogFooter>
       </DialogContent>
