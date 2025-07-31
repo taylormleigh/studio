@@ -42,16 +42,21 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     
   // Responsive card size. Maintains a 7:10 aspect ratio.
   const cardSize = "w-full aspect-[7/10] max-w-[96px]";
+  const baseClasses = cn(
+    cardSize,
+    'rounded-md transition-all',
+    ringClass,
+    className
+  );
+
 
   if (!card) {
     return (
       <div
         onClick={onClick}
         className={cn(
-          cardSize,
-          'rounded-md bg-muted/60 border-2 border-dashed border-muted-foreground/40 transition-all',
-          ringClass,
-          className
+          baseClasses,
+          'bg-muted/60 border-2 border-dashed border-muted-foreground/40'
         )}
       />
     );
@@ -67,10 +72,8 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
             backgroundSize: '5px 5px'
         }}
         className={cn(
-          cardSize,
-          'rounded-md border-2 border-black cursor-pointer transition-all',
-          ringClass,
-          className
+          baseClasses,
+          'border-2 border-black cursor-pointer'
         )}
       >
       </div>
@@ -91,11 +94,9 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
         color: isRed ? '#AE1447' : 'black'
       }}
       className={cn(
-        cardSize,
-        'rounded-md bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 md:p-px flex flex-col justify-between transition-all duration-300 ease-in-out',
-        ringClass,
+        baseClasses,
+        'bg-card border-2 border-black cursor-pointer relative p-0.5 sm:p-1 md:p-px flex flex-col justify-between duration-300 ease-in-out',
         suitColorClass,
-        className,
         draggable && "cursor-grab"
       )}
     >
