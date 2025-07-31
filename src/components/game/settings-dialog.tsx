@@ -46,12 +46,12 @@ const CardPreview = ({
         isDomino ? 'bg-black text-white' : 'bg-gray-100 text-black'
       )}
     >
-        {isDomino ? <Moon /> : <Sun />}
-      <div className="text-center text-sm font-medium capitalize">
+      {isDomino ? <Moon /> : <Sun className="text-black"/>}
+      <div className={cn("text-center text-sm font-medium capitalize", isDomino ? 'text-white' : 'text-black')}>
         {isDomino ? 'Dark' : 'Light'}
       </div>
       {isSelected && (
-        <CheckCircle2 className={cn("absolute top-1 right-1 h-5 w-5 bg-white rounded-full", isDomino ? "text-black" : "text-primary")} />
+        <CheckCircle2 className={cn("absolute top-1 right-1 h-5 w-5 rounded-full", isDomino ? "text-black bg-white" : "text-primary bg-white")} />
       )}
     </div>
   );
@@ -91,8 +91,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
   }
 
   const handleNewGameClick = () => {
-    onNewGame();
     onOpenChange(false);
+    onNewGame();
   }
 
   return (
@@ -177,7 +177,9 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 </RadioGroup>
              </div>
           )}
-
+          
+          <Separator />
+          
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="left-hand-mode" className="text-right">
               Layout
@@ -204,8 +206,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
             </div>
           </div>
-          
-          <Separator />
           
           <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Theme</Label>
