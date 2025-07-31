@@ -600,48 +600,70 @@ export default function GameBoard() {
     if (gameState.gameType !== 'Solitaire') return null;
     const gs = gameState as SolitaireGameState;
     const gridCols = 'grid-cols-7';
+
+    const stockAndWaste = (
+      <>
+        <div onClick={handleDraw} className="cursor-pointer">
+          <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
+        </div>
+        <div>
+          {gs.waste.length > 0 ?
+            <Card 
+              card={gs.waste[gs.waste.length - 1]} 
+              isSelected={selectedCard?.type === 'waste'}
+              draggable={true}
+              onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
+              onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
+            /> : <Card onClick={handleDraw}/>
+          }
+        </div>
+        <div className="col-span-1" />
+      </>
+    );
+
+    const foundationPiles = (
+      <>
+        {gs.foundation.map((pile, i) => (
+          <div 
+            key={i} 
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, 'foundation', i)}
+          >
+            <Card 
+              card={pile.length > 0 ? pile[pile.length - 1] : undefined}
+              isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
+              draggable={pile.length > 0}
+              onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+              onClick={(e) => {
+                  e.stopPropagation();
+                    if (selectedCard) {
+                      handleFoundationClick(i);
+                    } else if (pile.length > 0) {
+                      handleCardClick('foundation', i, pile.length - 1);
+                  } else {
+                        handleFoundationClick(i);
+                  }
+              }}
+            />
+          </div>
+        ))}
+      </>
+    );
+
     return (
       <>
         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
-          <div onClick={handleDraw} className="cursor-pointer">
-            <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-          </div>
-          <div>
-            {gs.waste.length > 0 ?
-              <Card 
-                card={gs.waste[gs.waste.length - 1]} 
-                isSelected={selectedCard?.type === 'waste'}
-                draggable={true}
-                onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gs.waste.length-1})}
-                onClick={() => handleCardClick('waste', 0, gs.waste.length - 1)}
-              /> : <Card onClick={handleDraw}/>
-            }
-          </div>
-          <div className="col-span-1" />
-          {gs.foundation.map((pile, i) => (
-            <div 
-              key={i} 
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'foundation', i)}
-            >
-              <Card 
-                card={pile.length > 0 ? pile[pile.length - 1] : undefined}
-                isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-                draggable={pile.length > 0}
-                onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                onClick={(e) => {
-                    e.stopPropagation();
-                     if (selectedCard) {
-                        handleFoundationClick(i);
-                     } else if (pile.length > 0) {
-                        handleCardClick('foundation', i, pile.length - 1);
-                    } else {
-                         handleFoundationClick(i);
-                    }
-                }}
-              />
-            </div>
-          ))}
+          {settings.leftHandMode ? (
+            <>
+              {stockAndWaste}
+              {foundationPiles}
+            </>
+          ) : (
+            <>
+              {foundationPiles}
+              {stockAndWaste}
+            </>
+          )}
         </div>
         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
@@ -704,53 +726,72 @@ export default function GameBoard() {
     if (gameState.gameType !== 'Freecell') return null;
     const gs = gameState as FreecellGameState;
     const gridCols = 'grid-cols-8';
+
+    const freecellPiles = (
+      <>
+        {gs.freecells.map((card, i) => (
+          <div 
+            key={`freecell-${i}`}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, 'freecell', i)}
+              onClick={() => handleFreecellClick(i)}
+          >
+            <Card 
+              card={card || undefined} 
+              isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
+              isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
+              draggable={!!card}
+              onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+            />
+          </div>
+        ))}
+      </>
+    );
+
+    const foundationPiles = (
+      <>
+        {gs.foundation.map((pile, i) => (
+          <div 
+            key={`foundation-${i}`} 
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, 'foundation', i)}
+          >
+            <Card 
+              card={pile[pile.length - 1]} 
+              isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
+              isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
+              draggable={pile.length > 0}
+              onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (selectedCard) {
+                      handleFoundationClick(i);
+                  } else if (pile.length > 0) {
+                      handleCardClick('foundation', i, pile.length-1);
+                  } else {
+                      handleFoundationClick(i);
+                  }
+              }}
+            />
+          </div>
+        ))}
+      </>
+    );
+    
     return (
       <>
          <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
-          {/* Freecells */}
-          {gs.freecells.map((card, i) => (
-            <div 
-              key={`freecell-${i}`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'freecell', i)}
-               onClick={() => handleFreecellClick(i)}
-            >
-              <Card 
-                card={card || undefined} 
-                isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
-                isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
-                draggable={!!card}
-                onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-              />
-            </div>
-          ))}
-
-          {/* Foundations */}
-          {gs.foundation.map((pile, i) => (
-            <div 
-              key={`foundation-${i}`} 
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, 'foundation', i)}
-            >
-              <Card 
-                card={pile[pile.length - 1]} 
-                isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-                isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
-                draggable={pile.length > 0}
-                onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-                 onClick={(e) => {
-                    e.stopPropagation();
-                    if (selectedCard) {
-                        handleFoundationClick(i);
-                    } else if (pile.length > 0) {
-                        handleCardClick('foundation', i, pile.length-1);
-                    } else {
-                        handleFoundationClick(i);
-                    }
-                }}
-              />
-            </div>
-          ))}
+            {settings.leftHandMode ? (
+              <>
+                {freecellPiles}
+                {foundationPiles}
+              </>
+            ) : (
+              <>
+                {foundationPiles}
+                {freecellPiles}
+              </>
+            )}
         </div>
         <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
@@ -809,22 +850,39 @@ export default function GameBoard() {
     if (gameState.gameType !== 'Spider') return null;
     const gs = gameState as SpiderGameState;
     const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
+
+    const stockPile = (
+      <div onClick={handleDraw} className="cursor-pointer">
+        <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
+      </div>
+    );
+
+    const foundationPiles = (
+      <div className="col-span-8 grid grid-cols-8 gap-x-0">
+       {Array.from({ length: 8 }).map((_, i) => (
+         <div key={`foundation-${i}`}>
+           <Card card={gs.foundation[i] ? gs.foundation[i][gs.foundation[i].length -1] : undefined} />
+         </div>
+       ))}
+     </div>
+    );
+
     return (
       <>
         <div className={`grid ${gridCols} mb-4 gap-x-0`}>
-          {/* Stock pile */}
-          <div onClick={handleDraw} className="cursor-pointer">
-            <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
-          </div>
-          <div className="col-span-1" />
-           {/* Foundation Piles */}
-           <div className="col-span-8 grid grid-cols-8 gap-x-0">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={`foundation-${i}`}>
-                <Card card={gs.foundation[i] ? gs.foundation[i][gs.foundation[i].length -1] : undefined} />
-              </div>
-            ))}
-          </div>
+          {settings.leftHandMode ? (
+            <>
+              {stockPile}
+              <div className="col-span-1" />
+              {foundationPiles}
+            </>
+          ) : (
+            <>
+              {foundationPiles}
+              <div className="col-span-1" />
+              {stockPile}
+            </>
+          )}
         </div>
         <div className={`grid ${gridCols} gap-x-0 min-h-[28rem]`}>
           {gs.tableau.map((pile, pileIndex) => (
@@ -928,6 +986,7 @@ export default function GameBoard() {
     
 
     
+
 
 
 

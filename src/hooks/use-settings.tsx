@@ -19,7 +19,7 @@ const defaultSettings: GameSettings = {
   gameType: 'Solitaire',
   solitaireDrawCount: 1,
   spiderSuits: 2,
-  leftHandMode: false,
+  leftHandMode: true,
   autoMove: true,
 };
 
