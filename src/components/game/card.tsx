@@ -42,61 +42,57 @@ const RANK_VALUES: { [key: string]: number } = {
 const PipGrid = ({ count, suit }: { count: number, suit: CardType['suit'] }) => {
   if (count < 1 || count > 10) return null;
 
-  // Simplified grid layout logic for pips
+  // Standard playing card pip arrangements
   const pipStyles: React.CSSProperties[] = [];
   const baseStyle: React.CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)' };
+  const baseInvertedStyle: React.CSSProperties = { ...baseStyle, transform: 'translate(-50%, -50%) rotate(180deg)' };
 
-  if (count === 1) {
-    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+  if ([1, 3, 5, 9].includes(count)) {
+    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' }); // Center
   }
   if (count >= 2) {
-    pipStyles.push({ ...baseStyle, top: '25%', left: '50%' });
-    pipStyles.push({ ...baseStyle, top: '75%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' });
+    pipStyles.push({ ...baseStyle, top: '25%', left: '50%' }); // Top-center
+    pipStyles.push({ ...baseInvertedStyle, top: '75%', left: '50%' }); // Bottom-center
   }
   if (count === 3) {
-    pipStyles[0] = { ...baseStyle, top: '20%', left: '50%' };
-    pipStyles[1] = { ...baseStyle, top: '80%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' };
-    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+    pipStyles[1] = { ...baseStyle, top: '20%', left: '50%' };
+    pipStyles[2] = { ...baseInvertedStyle, top: '80%', left: '50%' };
   }
   if (count >= 4) {
-    pipStyles[0] = { ...baseStyle, top: '20%', left: '30%' };
-    pipStyles[1] = { ...baseStyle, top: '80%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)' };
-    pipStyles.push({ ...baseStyle, top: '20%', left: '70%' });
-    pipStyles.push({ ...baseStyle, top: '80%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)' });
-  }
-  if (count === 5) {
-     pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+    pipStyles[1] = { ...baseStyle, top: '20%', left: '25%' }; // Top-left
+    pipStyles[2] = { ...baseInvertedStyle, top: '80%', left: '75%' }; // Bottom-right
+    pipStyles.push({ ...baseStyle, top: '20%', left: '75%' }); // Top-right
+    pipStyles.push({ ...baseInvertedStyle, top: '80%', left: '25%' }); // Bottom-left
   }
   if (count >= 6) {
-    pipStyles.push({ ...baseStyle, top: '50%', left: '30%' });
-    pipStyles.push({ ...baseStyle, top: '50%', left: '70%' });
+    pipStyles.push({ ...baseStyle, top: '50%', left: '25%' }); // Mid-left
+    pipStyles.push({ ...baseStyle, top: '50%', left: '75%' }); // Mid-right
   }
   if (count >= 7) {
-    pipStyles[pipStyles.length-2] = { ...baseStyle, top: '35%', left: '50%' }; // Reposition center for 7
-    pipStyles[4] = ({...baseStyle, top: '50%', left: '30%'}); // remove prior center
-    pipStyles.push({ ...baseStyle, top: '65%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' });
+    // Reposition top-center for 7
+    pipStyles[1] = { ...baseStyle, top: '15%', left: '50%' };
+    pipStyles[2] = { ...baseInvertedStyle, top: '85%', left: '50%' };
+     // remove mid-right for 7
+    pipStyles.pop();
+    pipStyles[5] = { ...baseStyle, top: '32.5%', left: '50%' };
   }
   if (count === 8) {
-    pipStyles.push({...baseStyle, top: '65%', left: '50%'})
-    pipStyles[pipStyles.length-1] = { ...baseStyle, top: '65%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)' };
+    pipStyles[1] = { ...baseStyle, top: '15%', left: '50%' };
+    pipStyles[2] = { ...baseInvertedStyle, top: '85%', left: '50%' };
+    pipStyles.push({ ...baseInvertedStyle, top: '67.5%', left: '50%' });
   }
   if (count >= 9) {
-    pipStyles[0] = { ...baseStyle, top: '15%', left: '30%' };
-    pipStyles[1] = { ...baseStyle, top: '85%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)'};
-    pipStyles[2] = { ...baseStyle, top: '15%', left: '70%' };
-    pipStyles[3] = { ...baseStyle, top: '85%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)'};
-
-    pipStyles[4] = { ...baseStyle, top: '38%', left: '30%'};
-    pipStyles[5] = { ...baseStyle, top: '62%', left: '70%', transform: 'translate(-50%, -50%) rotate(180deg)'};
-
-    pipStyles.push({ ...baseStyle, top: '38%', left: '70%'});
-    pipStyles.push({ ...baseStyle, top: '62%', left: '30%', transform: 'translate(-50%, -50%) rotate(180deg)'});
-    pipStyles.push({ ...baseStyle, top: '50%', left: '50%' });
+    // Reposition corners for 9 & 10
+    pipStyles[1] = { ...baseStyle, top: '15%', left: '25%' }; // Top-left
+    pipStyles[2] = { ...baseInvertedStyle, top: '85%', left: '75%' }; // Bottom-right
+    pipStyles[3] = { ...baseStyle, top: '15%', left: '75%' }; // Top-right
+    pipStyles[4] = { ...baseInvertedStyle, top: '85%', left: '25%' }; // Bottom-left
   }
-   if (count === 10) {
-    pipStyles.pop(); // remove center
-    pipStyles.push({...baseStyle, top: '28%', left: '50%'});
-    pipStyles.push({...baseStyle, top: '72%', left: '50%', transform: 'translate(-50%, -50%) rotate(180deg)'});
+  if (count === 10) {
+    pipStyles[5] = { ...baseStyle, top: '35%', left: '25%' }; // Mid-left
+    pipStyles[6] = { ...baseStyle, top: '35%', left: '75%' }; // Mid-right
+    pipStyles.push({ ...baseInvertedStyle, top: '65%', left: '25%' }); // Bottom-mid-left
+    pipStyles.push({ ...baseInvertedStyle, top: '65%', left: '75%' }); // Bottom-mid-right
   }
 
   return (
@@ -249,5 +245,3 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     </div>
   );
 }
-
-    
