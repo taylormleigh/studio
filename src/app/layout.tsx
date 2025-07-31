@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: 'A simple solitaire game for e-ink devices.',
   manifest: '/manifest.json',
   icons: {
+    icon: '/favicon.svg',
     apple: '/icons/icon-192x192.png',
   },
 };
