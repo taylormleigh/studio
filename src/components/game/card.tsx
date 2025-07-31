@@ -112,40 +112,6 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
     const rank = card.rank;
     const suit = card.suit;
     const isFaceCard = ['K', 'Q', 'J'].includes(rank);
-    const rankValue = parseInt(rank, 10);
-
-    const pipLayouts: { [key: number]: string[] } = {
-        1: ['center-center'],
-        2: ['top-center', 'bottom-center'],
-        3: ['top-center', 'center-center', 'bottom-center'],
-        4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
-        5: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center-center'],
-        6: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right'],
-        7: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right', 'center-top'],
-        8: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right', 'center-top', 'center-bottom'],
-        9: ['top-left', 'top-right', 'mid-top-left', 'mid-top-right', 'center-center', 'mid-bottom-left', 'mid-bottom-right', 'bottom-left', 'bottom-right'],
-        10: ['top-left', 'top-right', 'mid-top-left', 'mid-top-right', 'center-top', 'center-bottom', 'mid-bottom-left', 'mid-bottom-right', 'bottom-left', 'bottom-right'],
-    };
-    
-    const pips = rank === 'A' ? pipLayouts[1] : (rankValue >= 2 && rankValue <= 10) ? pipLayouts[rankValue] : [];
-
-    const pipGridClasses: { [key: string]: string } = {
-        'center-center': 'col-start-2 row-start-3',
-        'top-center': 'col-start-2 row-start-1',
-        'bottom-center': 'col-start-2 row-start-5 rotate-180',
-        'top-left': 'col-start-1 row-start-1',
-        'top-right': 'col-start-3 row-start-1',
-        'bottom-left': 'col-start-1 row-start-5 rotate-180',
-        'bottom-right': 'col-start-3 row-start-5 rotate-180',
-        'mid-left': 'col-start-1 row-start-3',
-        'mid-right': 'col-start-3 row-start-3',
-        'center-top': 'col-start-2 row-start-2',
-        'center-bottom': 'col-start-2 row-start-4 rotate-180',
-        'mid-top-left': 'col-start-1 row-start-2',
-        'mid-top-right': 'col-start-3 row-start-2',
-        'mid-bottom-left': 'col-start-1 row-start-4 rotate-180',
-        'mid-bottom-right': 'col-start-3 row-start-4 rotate-180'
-    };
 
     return (
         <div className='relative h-full p-1 bg-white/80' style={{ fontFamily: "'Tinos', serif"}}>
@@ -159,19 +125,15 @@ export function Card({ card, isSelected, isHighlighted, isStacked, className, on
                 <SuitIcon suit={suit} className="text-base" />
             </div>
             
-            {/* Pips and Face Cards */}
+            {/* Center Content */}
             <div className="absolute inset-0 flex items-center justify-center p-4">
             {isFaceCard ? (
                 <div className="w-full h-full p-2">
                      <Image src={`https://placehold.co/120x180.png`} alt={`${rank} of ${suit}`} layout="fill" objectFit="contain" data-ai-hint="playing card illustration"/>
                 </div>
             ) : (
-                <div className="grid grid-cols-3 grid-rows-5 w-full h-full text-2xl">
-                    {pips.map(pos => (
-                        <div key={pos} className={cn('flex items-center justify-center', pipGridClasses[pos])}>
-                           <SuitIcon suit={suit} className={cn(rank === 'A' && 'text-5xl')}/>
-                        </div>
-                    ))}
+                <div className="text-5xl">
+                   <SuitIcon suit={suit} />
                 </div>
             )}
             </div>
