@@ -155,12 +155,14 @@ export default function GameBoard() {
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
   
+  // This effect will run once on mount, and then whenever a game-specific setting changes.
   useEffect(() => {
     if (isClient) {
       handleNewGame();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.gameType, isClient]);
+  }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits, isClient]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

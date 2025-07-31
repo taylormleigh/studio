@@ -21,10 +21,10 @@ import { Separator } from '@/components/ui/separator';
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onNewGame: () => void;
+  onNewGame: () => void; // This prop is kept for now but the primary logic will be in GameBoard
 }
 
-export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
   return (
@@ -33,7 +33,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Changing a setting will automatically start a new game.
+            Changing a game-specific setting will start a new game.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -45,7 +45,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               value={settings.gameType}
               onValueChange={(value) => {
                 setSettings({ gameType: value as GameType });
-                onNewGame();
               }}
             >
               <SelectTrigger id="game-type" className="col-span-3">
@@ -69,7 +68,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 value={String(settings.solitaireDrawCount)}
                 onValueChange={(value) => {
                   setSettings({ solitaireDrawCount: Number(value) as SolitaireDrawType });
-                  onNewGame();
                 }}
                 className="col-span-3 flex items-center gap-4"
               >
@@ -93,7 +91,6 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                   value={String(settings.spiderSuits)}
                   onValueChange={(value) => {
                     setSettings({ spiderSuits: Number(value) as SpiderSuitCount });
-                    onNewGame();
                   }}
                   className="col-span-3 flex items-center gap-4"
                 >
