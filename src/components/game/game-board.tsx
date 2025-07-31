@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useCallback, DragEvent } from 'react';
@@ -600,7 +598,6 @@ export default function GameBoard() {
   const renderSolitaire = () => {
     if (gameState.gameType !== 'Solitaire') return null;
     const gs = gameState as SolitaireGameState;
-    const gridCols = 'grid-cols-7';
 
     const stockAndWaste = (
       <>
@@ -642,11 +639,12 @@ export default function GameBoard() {
       </>
     );
 
-    const foundationPiles = (
-      <>
+    const FoundationPiles = () => (
+      <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1.5vw,12px)]">
         {gs.foundation.map((pile, i) => (
           <div 
             key={i} 
+            className="w-full max-w-[96px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'foundation', i)}
           >
@@ -668,12 +666,12 @@ export default function GameBoard() {
             />
           </div>
         ))}
-      </>
+      </div>
     );
 
     return (
       <>
-        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] mb-4`}>
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] mb-4">
           {settings.leftHandMode ? (
             <>
               {stockAndWaste}
@@ -688,7 +686,7 @@ export default function GameBoard() {
             </>
           )}
         </div>
-        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
+        <div className="grid grid-cols-7 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -715,8 +713,10 @@ export default function GameBoard() {
                         <div className={cn(
                           "relative w-full",
                            card.faceUp ? "h-8 sm:h-9" : "h-3"
+                           card.faceUp ? "h-8 sm:h-9" : "h-3"
                           )}
                           style={{
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                              transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                           }}
                         >
@@ -748,13 +748,13 @@ export default function GameBoard() {
   const renderFreecell = () => {
     if (gameState.gameType !== 'Freecell') return null;
     const gs = gameState as FreecellGameState;
-    const gridCols = 'grid-cols-8';
 
     const freecellPiles = (
       <div className="col-span-4 grid grid-cols-4 gap-x-0">
         {gs.freecells.map((card, i) => (
           <div 
             key={`freecell-${i}`}
+            className="w-full max-w-[96px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'freecell', i)}
               onClick={() => handleFreecellClick(i)}
@@ -769,6 +769,7 @@ export default function GameBoard() {
           </div>
         ))}
       </div>
+      </div>
     );
 
     const foundationPiles = (
@@ -776,6 +777,7 @@ export default function GameBoard() {
         {gs.foundation.map((pile, i) => (
           <div 
             key={`foundation-${i}`} 
+            className="w-full max-w-[96px]"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'foundation', i)}
           >
@@ -799,6 +801,7 @@ export default function GameBoard() {
           </div>
         ))}
       </div>
+      </div>
     );
     
     return (
@@ -806,17 +809,17 @@ export default function GameBoard() {
          <div className={`grid ${gridCols} gap-x-0 mb-4`}>
             {settings.leftHandMode ? (
               <>
-                {freecellPiles}
-                {foundationPiles}
+                <FreecellPiles />
+                <FoundationPiles />
               </>
             ) : (
               <>
-                {foundationPiles}
-                {freecellPiles}
+                <FoundationPiles />
+                <FreecellPiles />
               </>
             )}
         </div>
-        <div className={`grid ${gridCols} gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]`}>
+        <div className="grid grid-cols-8 gap-x-[clamp(2px,1.5vw,12px)] min-h-[28rem]">
           {gs.tableau.map((pile, pileIndex) => (
             <div 
               key={pileIndex} 
@@ -841,6 +844,7 @@ export default function GameBoard() {
                       >
                          <div className="relative w-full h-8 sm:h-9"
                             style={{
+                              transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : 36)}px)`
                               transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 32 : 36)}px)`
                             }}
                          >
@@ -874,13 +878,13 @@ export default function GameBoard() {
     const gs = gameState as SpiderGameState;
     const gridCols = 'grid-cols-10'; // Spider has 10 tableau piles
 
-    const stockPile = (
+    const StockPile = () => (
       <div onClick={handleDraw} className="cursor-pointer">
         <Card card={gs.stock.length > 0 ? { ...gs.stock[0], faceUp: false } : undefined} />
       </div>
     );
 
-    const foundationPiles = (
+    const FoundationPiles = () => (
       <div className="col-span-8 grid grid-cols-8 gap-x-0">
        {Array.from({ length: 8 }).map((_, i) => (
          <div key={`foundation-${i}`}>
@@ -895,15 +899,15 @@ export default function GameBoard() {
         <div className={`grid ${gridCols} mb-4 gap-x-0`}>
           {settings.leftHandMode ? (
             <>
-              {stockPile}
+              <StockPile />
               <div className="col-span-1" />
-              {foundationPiles}
+              <FoundationPiles />
             </>
           ) : (
             <>
-              {foundationPiles}
+              <FoundationPiles />
               <div className="col-span-1" />
-              {stockPile}
+              <StockPile />
             </>
           )}
         </div>
@@ -931,8 +935,10 @@ export default function GameBoard() {
                         <div className={cn(
                           "relative w-full",
                            card.faceUp ? "h-8 sm:h-9" : "h-3"
+                           card.faceUp ? "h-8 sm:h-9" : "h-3"
                           )}
                           style={{
+                             transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                              transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 32 : 36) : 12), 0)}px)`
                           }}
                         >
