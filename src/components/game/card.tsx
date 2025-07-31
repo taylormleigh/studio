@@ -78,7 +78,6 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
       className={cn(
         baseClasses,
         'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
-        isSelected && (cardStyle === 'modern' ? 'ring-2 ring-blue-500' : 'ring-2 ring-offset-2 ring-yellow-400'),
         draggable && "cursor-grab"
       )}
     >
