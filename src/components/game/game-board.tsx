@@ -677,11 +677,11 @@ export default function GameBoard() {
             <>
               {stockAndWaste}
               <div className="col-span-1" />
-              {foundationPiles}
+              <FoundationPiles />
             </>
           ) : (
             <>
-              {foundationPiles}
+              <FoundationPiles />
               <div className="col-span-1" />
               {stockAndWaste}
             </>
