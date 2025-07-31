@@ -511,7 +511,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={false}
       />
-      <main className="flex-grow p-3 md:p-4">
+      <main className="flex-grow p-3">
         <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
             {Array.from({length: 7}).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] rounded-md"/>)}
         </div>
@@ -527,8 +527,8 @@ export default function GameBoard() {
   }
   
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
-  ? 'md:max-w-[500px]' 
-  : (gameState.gameType === 'Freecell' ? 'md:max-w-[420px]' : 'md:max-w-[400px]');
+  ? 'md:max-w-[420px]' 
+  : (gameState.gameType === 'Freecell' ? 'md:max-w-[420px]' : 'md:max-w-[420px]');
 
   const boardProps = {
     gameState: gameState as any, // Cast to any to satisfy specific board props
@@ -550,7 +550,7 @@ export default function GameBoard() {
         onStats={() => setIsStatsOpen(true)}
         canUndo={history.length > 0}
       />
-      <main className={cn("flex-grow p-2 md:p-4 w-full md:mx-auto", mainContainerMaxWidth)}>
+      <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
         {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
         {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}

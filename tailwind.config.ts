@@ -11,9 +11,9 @@ export default {
     extend: {
       screens: {
         'xs': '390px',
-        'sm': '420px',
-        'md': '550px',
-        'lg': '2048px',
+        'sm': '400px',
+        'md': '420px',
+        'lg': '620px',
       },
       fontFamily: {
         body: ["Google Sans Code", "Courier New", "Courier", "monospace"],

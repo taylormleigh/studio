@@ -64,7 +64,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
       style={style}
       className={cn(
         baseClasses,
-        'bg-card overflow-hidden border-black cursor-pointer relative duration-300 ease-in-out',
+        'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
         draggable && "cursor-grab"
       )}
     >
@@ -75,18 +75,18 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
         )}
       >
         <div className="flex items-center gap-1">
-          <div className="text-lg font-bold leading-none">{card.rank}</div>
-          {isStacked && <SuitIcon suit={card.suit} className="text-md leading-none" />}
+          <div className="sm:text-md md:text-md font-bold leading-none">{card.rank}</div>
+          {isStacked && <SuitIcon suit={card.suit} className="text-lg leading-none" />}
         </div>
 
         {!isStacked && (
           <>
-            <div className="self-center">
-              <SuitIcon suit={card.suit} className="text-xl" />
+            <div className="self-center flex">
+              <SuitIcon suit={card.suit} className="text-2xl" />
             </div>
             <div>
-              <div className="hidden xs:flex sm:flex md:hidden lg:flex items-center self-end rotate-180">
-                <div className="text-lg font-bold leading-none">{card.rank}</div>
+              <div className="hidden xs:hidden sm:flex self-end rotate-180">
+                <div className="sm:text-md md:text-md font-bold leading-none">{card.rank}</div>
               </div>
             </div>
           </>

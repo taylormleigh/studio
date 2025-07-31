@@ -71,7 +71,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
             a deck of cards
           </DialogTitle>
           <h1>Games</h1>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Settings related to gameplay/view will be updated immediately. Selecting a different game or different game rules will require you to start a new game.
           </DialogDescription>
         </DialogHeader>
@@ -112,11 +112,11 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="1" id="draw-1" />
-                  <Label htmlFor="draw-1">one card</Label>
+                  <Label htmlFor="draw-1">one</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="3" id="draw-3" disabled />
-                  <Label htmlFor="draw-3" className="text-muted-foreground">three cards</Label>
+                  <Label htmlFor="draw-3" className="text-muted-foreground">three</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -148,6 +148,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
                 </RadioGroup>
              </div>
           )}
+
+          <Button onClick={handleNewGameClick}>New Game</Button>
           
           <Separator />
           
@@ -196,10 +198,8 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           </div>
 
         </div>
-        <DialogFooter>
           <Button variant="outline" onClick={handleClose}>Close</Button>
-          <Button onClick={handleNewGameClick}>New Game</Button>
-        </DialogFooter>
+        
       </DialogContent>
     </Dialog>
   );

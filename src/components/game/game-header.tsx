@@ -14,24 +14,24 @@ type GameHeaderProps = {
   canUndo: boolean;
 };
 
-const iconSize = 20;
-const iconStrokeWidth = 1.25;
+const iconSize = 26;
+const iconStrokeWidth = 1.85;
 
 export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, canUndo }: GameHeaderProps) {
   const { settings } = useSettings();
 
   const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
-  const buttonClasses = "flex-col h-auto p-3 md:px-2 md:py-1 md:w-20";
+  const buttonClasses = "flex-col h-auto p-2 lg:w-20";
 
   const MainButtons = () => (
     <>
       <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
         <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
-        <span className="hidden md:block text-xs font-medium">settings</span>
+        <span className="hidden lg:block text-xs font-medium">settings</span>
       </Button>
       <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
         <Sparkles size={iconSize} strokeWidth={iconStrokeWidth} />
-        <span className="hidden md:block text-xs font-medium">new</span>
+        <span className="hidden lg:block text-xs font-medium">new</span>
       </Button>
     </>
   );
@@ -39,7 +39,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const UndoButton = () => (
     <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
       <MousePointer size={iconSize} strokeWidth={iconStrokeWidth} />
-      <span className="hidden md:block text-xs font-medium">undo</span>
+      <span className="hidden lg:block text-xs font-medium">undo</span>
     </Button>
   );
 
@@ -47,7 +47,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const RightGroup = () => settings.leftHandMode ? <MainButtons /> : <UndoButton />;
 
   return (
-    <header className={cn("grid grid-cols-3 items-center bg-[hsl(var(--header-background))] border-b p-1 md:py-2")}>
+    <header className={cn("grid grid-cols-3 items-center bg-[hsl(var(--header-background))] border-b p-1")}>
       <div className={cn(buttonContainerClasses, "justify-start")}>
         <LeftGroup />
       </div>

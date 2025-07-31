@@ -140,7 +140,7 @@ export default function FreecellBoard({
                     >
                        <div className="relative w-full h-5 sm:h-6"
                           style={{
-                            transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 20 : 22)}px)`
+                            transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 22 : 24)}px)`
                           }}
                        >
                         <Card
