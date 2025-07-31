@@ -26,11 +26,11 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
   const MainButtons = () => (
     <>
       <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
-        <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
+        <Sparkles size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden lg:block text-xs font-medium">settings</span>
       </Button>
       <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
-        <Sparkles size={iconSize} strokeWidth={iconStrokeWidth} />
+        <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden lg:block text-xs font-medium">new</span>
       </Button>
     </>

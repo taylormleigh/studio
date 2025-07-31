@@ -122,7 +122,7 @@ describe('Solitaire Game Logic', () => {
     
         const sourcePile = state.tableau[1];
         const destPile = state.tableau[0];
-        const cards = sourcePile.splice(1, 2);
+        const cards = sourcePile.splice(1); // Correctly splice from index 1 to the end
         destPile.push(...cards);
         if(sourcePile.length > 0) {
             sourcePile[sourcePile.length - 1].faceUp = true;
@@ -599,6 +599,7 @@ describe('Solitaire Game Logic', () => {
     
 
     
+
 
 
 
