@@ -12,14 +12,21 @@ export interface GameState {
   score: number;
 }
 
+// Map card ranks to numerical values for comparison.
 const RANK_VALUES: Record<Rank, number> = {
   'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
 };
 
+/**
+ * Creates the initial game state for a new game of Freecell.
+ * All 52 cards are dealt face-up into the 8 tableau piles.
+ * @returns A new GameState object.
+ */
 export function createInitialState(): GameState {
   const deck = shuffleDeck(createDeck()).map(c => ({ ...c, faceUp: true }));
   const tableau: Card[][] = Array.from({ length: 8 }, () => []);
   
+  // Deal all cards to the tableau.
   deck.forEach((card, index) => {
     tableau[index % 8].push(card);
   });
@@ -34,31 +41,57 @@ export function createInitialState(): GameState {
   };
 }
 
-
+/**
+ * Checks if a card can be legally moved to a tableau pile.
+ * @param cardToMove The card being moved.
+ * @param destinationCard The top card of the destination pile, or undefined if the pile is empty.
+ * @returns True if the move is valid, false otherwise.
+ */
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
+  // Any card can move to an empty tableau pile.
   if (!destinationCard) {
-    return true; // Any card can move to an empty tableau pile
+    return true; 
   }
+  // Cards must be of alternating colors.
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
+  // Ranks must be in descending order.
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   return !colorsMatch && ranksCorrect;
 }
 
+/**
+ * Checks if a card can be legally moved to a foundation pile.
+ * @param cardToMove The card being moved.
+ * @param foundationPile The destination foundation pile.
+ * @returns True if the move is valid, false otherwise.
+ */
 export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = foundationPile[foundationPile.length - 1];
+  // An Ace can be moved to an empty foundation pile.
   if (!topCard) {
     return cardToMove.rank === 'A';
   }
+  // Subsequent cards must be of the same suit and one rank higher.
   const suitsMatch = cardToMove.suit === topCard.suit;
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
   return suitsMatch && ranksCorrect;
 }
 
+/**
+ * Checks if the game has been won (all cards are in the foundation piles).
+ * @param state The current game state.
+ * @returns True if the game is won, false otherwise.
+ */
 export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
 }
 
-// Helper to check if a sequence of cards in a tableau is valid to move
+/**
+ * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
+ * This is used to validate moving multiple cards at once in the tableau.
+ * @param cards The stack of cards to check.
+ * @returns True if the stack is a valid run, false otherwise.
+ */
 export function isRun(cards: Card[]): boolean {
   if (cards.length <= 1) return true;
   for (let i = 0; i < cards.length - 1; i++) {
@@ -69,10 +102,15 @@ export function isRun(cards: Card[]): boolean {
 }
 
 
-// Calculate how many cards can be moved at once
+/**
+ * Calculates how many cards can be moved at once based on the number of empty
+ * freecells and empty tableau piles. This is a core rule of Freecell.
+ * @param state The current game state.
+ * @returns The maximum number of cards that can be moved in a single stack.
+ */
 export function getMovableCardCount(state: GameState): number {
   const emptyFreecells = state.freecells.filter(c => c === null).length;
   const emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
-  // (1 + number of empty freecells) * 2 ^ (number of empty tableau piles)
+  // The formula for movable cards: (1 + number of empty freecells) * 2^(number of empty tableau piles).
   return (1 + emptyFreecells) * Math.pow(2, emptyTableauPiles);
 };
