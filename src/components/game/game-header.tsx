@@ -26,16 +26,16 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
     )}>
       <div className={cn(
           buttonContainerClasses, 
-          "flex-1 justify-start",
-          settings.leftHandMode ? "order-1" : "order-3"
+          "justify-start",
+          settings.leftHandMode ? "order-3" : "order-1"
         )}>
-        <Button variant="ghost" size="icon" onClick={onStats} aria-label="Statistics" className={buttonClasses}>
-          <BarChartBig className="w-7 h-7" />
-           <span className="hidden md:block text-xs font-medium">stats</span>
+        <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
+          <PlusSquare className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">new</span>
         </Button>
-        <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
-          <Settings className="w-7 h-7" />
-           <span className="hidden md:block text-xs font-medium">settings</span>
+         <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
+          <RotateCcw className="w-7 h-7" />
+          <span className="hidden md:block text-xs font-medium">undo</span>
         </Button>
       </div>
 
@@ -47,16 +47,16 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
 
       <div className={cn(
           buttonContainerClasses,
-          "flex-1 justify-end",
-          settings.leftHandMode ? "order-3" : "order-1"
+          "justify-end",
+          settings.leftHandMode ? "order-1" : "order-3"
         )}>
-        <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
-          <PlusSquare className="w-7 h-7" />
-           <span className="hidden md:block text-xs font-medium">new</span>
+        <Button variant="ghost" size="icon" onClick={onStats} aria-label="Statistics" className={buttonClasses}>
+          <BarChartBig className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">stats</span>
         </Button>
-         <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
-          <RotateCcw className="w-7 h-7" />
-          <span className="hidden md:block text-xs font-medium">undo</span>
+        <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
+          <Settings className="w-7 h-7" />
+           <span className="hidden md:block text-xs font-medium">settings</span>
         </Button>
       </div>
     </header>
