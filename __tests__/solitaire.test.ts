@@ -521,6 +521,50 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[1][1].rank).toBe('6'); // The base of the moved stack
       expect(state.tableau[1][3].rank).toBe('4'); // The top of the moved stack
     });
+
+    it('should auto-move card from waste to foundation', () => {
+      state.waste = [{ suit: 'HEARTS', rank: 'A', faceUp: true }];
+      const heartsFoundationIndex = SUITS.indexOf('HEARTS');
+      state.foundation[heartsFoundationIndex] = [];
+
+      // Simulate click
+      const card = state.waste[state.waste.length - 1];
+      let foundationDestIndex = -1;
+      for (let i = 0; i < state.foundation.length; i++) {
+        if (canMoveToFoundation(card, state.foundation[i][state.foundation[i].length - 1])) {
+          foundationDestIndex = i;
+          break;
+        }
+      }
+      if (foundationDestIndex !== -1) {
+        state.foundation[foundationDestIndex].push(state.waste.pop()!);
+      }
+
+      expect(state.waste.length).toBe(0);
+      expect(state.foundation[heartsFoundationIndex].length).toBe(1);
+    });
+
+    it('should auto-move card from waste to tableau', () => {
+        state.waste = [{ suit: 'HEARTS', rank: 'Q', faceUp: true }];
+        state.tableau[0] = [{ suit: 'SPADES', rank: 'K', faceUp: true }];
+
+        // Simulate click
+        const card = state.waste[state.waste.length - 1];
+        let tableauDestIndex = -1;
+        for (let i = 0; i < state.tableau.length; i++) {
+            if (canMoveToTableau(card, state.tableau[i][state.tableau[i].length - 1])) {
+                tableauDestIndex = i;
+                break;
+            }
+        }
+        if (tableauDestIndex !== -1) {
+            state.tableau[tableauDestIndex].push(state.waste.pop()!);
+        }
+
+        expect(state.waste.length).toBe(0);
+        expect(state.tableau[0].length).toBe(2);
+        expect(state.tableau[0][1].rank).toBe('Q');
+    });
   });
 
   describe('isGameWon', () => {
@@ -556,3 +600,4 @@ describe('Solitaire Game Logic', () => {
     
 
     
+

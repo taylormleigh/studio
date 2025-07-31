@@ -463,62 +463,81 @@ export default function GameBoard() {
   
     // If a card is already selected, this click is the destination
     if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
+      if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex > cardIndex) {
+        // do nothing if a card is selected and the user clicks on a card above it in the same pile
+      } else {
+         moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as 'tableau' | 'foundation' | 'freecell', pileIndex);
+      }
       setSelectedCard(null);
       return;
     }
   
-    // --- Auto-move logic for Solitaire ---
-    if (settings.autoMove && gameState.gameType === 'Solitaire' && sourceType === 'tableau') {
-      const sourcePile = (gameState as SolitaireGameState).tableau[pileIndex];
-      const clickedCard = sourcePile?.[cardIndex];
-      if (!clickedCard || !clickedCard.faceUp) return;
+    // --- Auto-move logic ---
+    if (settings.autoMove && gameState.gameType === 'Solitaire') {
+      let cardToMove: CardType;
+      let cardsToMove: CardType[] | undefined = undefined;
+      const gs = gameState as SolitaireGameState;
   
-      // Scenario 1: User clicks the TOP card of a pile.
-      if (cardIndex === sourcePile.length - 1) {
-        // 1a. Try to move the single card to any foundation
-        for (let i = 0; i < gameState.foundation.length; i++) {
-          const destPile = gameState.foundation[i];
-          const topDestCard = destPile[destPile.length - 1];
-          if (canMoveSolitaireToFoundation(clickedCard, topDestCard)) {
-              if (destPile.length === 0 || destPile[0].suit === clickedCard.suit) {
-                 moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-                 return;
-              }
+      if (sourceType === 'waste') {
+        if (gs.waste.length === 0) return;
+        cardToMove = gs.waste[gs.waste.length - 1];
+      } else if (sourceType === 'tableau') {
+        const sourcePile = gs.tableau[pileIndex];
+        cardToMove = sourcePile?.[cardIndex];
+        if (!cardToMove || !cardToMove.faceUp) return;
+        // if the user clicks a card in a stack, we want to move the whole stack
+        if (cardIndex < sourcePile.length - 1) {
+          const tempCardsToMove = sourcePile.slice(cardIndex);
+          if(isSolitaireRun(tempCardsToMove)) {
+            cardsToMove = tempCardsToMove;
+          } else {
+            return; // Invalid run, do nothing
           }
         }
-        // 1b. If no foundation move, try to move the single card to any other tableau pile
-        for (let i = 0; i < gameState.tableau.length; i++) {
-          if (i === pileIndex) continue;
-          const destTopCard = gameState.tableau[i][gameState.tableau[i].length - 1];
-          if (canMoveSolitaireToTableau(clickedCard, destTopCard)) {
+      } else {
+        // Not a tableau or waste click, so no auto-move
+        return;
+      }
+      
+      // Auto-move a single card (from waste or top of tableau)
+      if (!cardsToMove) {
+        // 1. Try to move the single card to any foundation
+        for (let i = 0; i < gs.foundation.length; i++) {
+          const destPile = gs.foundation[i];
+          const topDestCard = destPile[destPile.length - 1];
+          if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
+            if (destPile.length === 0 || destPile[0].suit === cardToMove.suit) {
+              moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+              return;
+            }
+          }
+        }
+        // 2. If no foundation move, try to move the single card to any other tableau pile
+        for (let i = 0; i < gs.tableau.length; i++) {
+          if (sourceType === 'tableau' && i === pileIndex) continue;
+          const destTopCard = gs.tableau[i][gs.tableau[i].length - 1];
+          if (canMoveSolitaireToTableau(cardToMove, destTopCard)) {
             moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
             return;
           }
         }
-      }
-      // Scenario 2: User clicks a card WITHIN a stack.
+      } 
+      // Auto-move a stack from the tableau
       else {
-        const cardsToMove = sourcePile.slice(cardIndex);
-        if (isSolitaireRun(cardsToMove)) {
-          // Try to move the entire stack to another tableau pile
-          for (let i = 0; i < gameState.tableau.length; i++) {
+          for (let i = 0; i < gs.tableau.length; i++) {
             if (i === pileIndex) continue;
-            const destTopCard = gameState.tableau[i][gameState.tableau[i].length - 1];
+            const destTopCard = gs.tableau[i][gs.tableau[i].length - 1];
             if (canMoveSolitaireToTableau(cardsToMove[0], destTopCard)) {
               moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
               return;
             }
           }
-        }
       }
-      // If no auto-move is found, do nothing.
-      return;
     }
   
-    // Default manual selection logic for "drag to move" or if no auto-move was found
-    if (gameState.tableau[pileIndex]?.[cardIndex]?.faceUp) {
-        setSelectedCard({ type: sourceType, pileIndex, cardIndex });
+    // Default manual selection ("drag to move" or if no auto-move was found)
+    if (sourceType === 'waste' || (gameState.tableau[pileIndex]?.[cardIndex]?.faceUp)) {
+      setSelectedCard({ type: sourceType, pileIndex, cardIndex });
     }
   };  
   
