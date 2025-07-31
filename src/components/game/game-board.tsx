@@ -71,7 +71,9 @@ export default function GameBoard() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    handleNewGame();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClient]);
 
   const updateState = useCallback((newState: GameState | ((prevState: GameState) => GameState), saveHistory = true) => {
     if (saveHistory && gameState) {
@@ -155,14 +157,6 @@ export default function GameBoard() {
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
   
-  // This effect will run once on mount, and then whenever a game-specific setting changes.
-  useEffect(() => {
-    if (isClient) {
-      handleNewGame();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits, isClient]);
-
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

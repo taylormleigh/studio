@@ -21,19 +21,24 @@ import { Separator } from '@/components/ui/separator';
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onNewGame: () => void; // This prop is kept for now but the primary logic will be in GameBoard
+  onNewGame: () => void;
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialogProps) {
   const { settings, setSettings } = useSettings();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      onOpenChange(isOpen);
+      if (!isOpen) {
+        onNewGame();
+      }
+    }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Game Settings</DialogTitle>
           <DialogDescription>
-            Changing a game-specific setting will start a new game.
+            A new game will start when you close the settings window.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
