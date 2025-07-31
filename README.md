@@ -18,6 +18,7 @@ This is a web-based classic card game suite, built with Next.js, React, and Tail
 - **Undo Functionality:** Undo your last move if you make a mistake.
 - **Persistent Settings:** Your preferred game type and settings are saved locally in your browser.
 
+
 ## To-Do List
 
 Here is a list of known bugs and planned features for future development.
