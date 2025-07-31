@@ -41,17 +41,16 @@ const CardPreview = ({
     <div
       onClick={onClick}
       className={cn(
-        'relative cursor-pointer rounded-lg border-2 p-3 transition-all w-20 h-16 flex flex-col items-center justify-center gap-1',
+        'relative cursor-pointer rounded-lg border-2 p-3 transition-all w-16 h-14 flex flex-col items-center justify-center gap-1',
         isSelected ? 'border-primary' : 'border-border',
         isDomino ? 'bg-black text-white' : 'bg-gray-100 text-black'
       )}
     >
       {isDomino ? <Moon /> : <Sun className="text-black"/>}
       <div className={cn("text-center text-sm font-medium capitalize", isDomino ? 'text-white' : 'text-black')}>
-        {isDomino ? 'Dark' : 'Light'}
       </div>
       {isSelected && (
-        <CheckCircle2 className={cn("absolute top-1 right-1 h-5 w-5 rounded-full", isDomino ? "text-black bg-white" : "text-primary bg-white")} />
+        <CheckCircle2 className={cn("absolute top-1 right-1 h-4 w-4 rounded-full", isDomino ? "text-black bg-white" : "text-primary bg-white")} />
       )}
     </div>
   );
@@ -99,12 +98,12 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="game-title font-headline text-secondary">
+          <DialogTitle className="text-xs">
             a deck of cards
           </DialogTitle>
-          <h1>Game Settings</h1>
+          <h1>Games</h1>
           <DialogDescription>
-            To select a new game or rules you will need to start a new game. Other settings apply instantly.
+            Settings related to gameplay/view will be updated immediately. Selecting a different game or different game rules will require you to start a new game.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -183,6 +182,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           
           <Separator />
           
+          <h1>Settings</h1>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="left-hand-mode" className="text-right">
               Layout
@@ -212,7 +212,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           
           <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Theme</Label>
-              <div className="col-span-3 flex items-center gap-4">
+              <div className="col-span-3 flex items-center gap-2">
                 <CardPreview
                   styleType="modern"
                   isSelected={settings.cardStyle === 'modern'}
