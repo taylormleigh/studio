@@ -4,7 +4,7 @@ This is a web-based classic card game suite, built with Next.js, React, and Tail
 
 ## Screenshots
 <img width="250" alt="Screenshot 2025-07-31 at 7 26 12 AM" src="https://github.com/user-attachments/assets/221885f0-b6ed-46cc-986d-9d583c001bd4" />
-<img width="250" alt="Screenshot 2025-07-31 at 7 20 08 AM" src="https://github.com/user-attachments/assets/f7124be2-4d0c-4a0f-85ed-22fa29fa65c5" />
+<br/><img width="250" alt="Screenshot 2025-07-31 at 7 20 08 AM" src="https://github.com/user-attachments/assets/f7124be2-4d0c-4a0f-85ed-22fa29fa65c5" />
 <img width="250" alt="Screenshot 2025-07-31 at 7 21 29 AM" src="https://github.com/user-attachments/assets/20b628dc-3f80-42f6-b7ff-82a1079ad26d" />
 <br/><img width="650" alt="Screenshot 2025-07-31 at 7 18 55 AM" src="https://github.com/user-attachments/assets/9dd88388-c884-42b9-9e5b-c69e07c06955" />
 <br/><img width="650"alt="Screenshot 2025-07-31 at 7 18 23 AM" src="https://github.com/user-attachments/assets/a6cc2aa4-4b4b-48d2-b77a-3b4ab9e933c8" />
