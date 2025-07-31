@@ -48,27 +48,27 @@ const CardPreview = ({
     >
       <div
         className={cn(
-          'aspect-[7/10] w-20 rounded-md border-2 border-black bg-card',
+          'aspect-[7/10] w-16 rounded-md border-2 border-black bg-card',
           isClassic ? 'font-serif' : 'font-sans'
         )}
       >
         {isClassic ? (
           <div className="relative h-full p-1" style={{ fontFamily: "'Tinos', serif" }}>
             <div className="flex flex-col items-center absolute top-1 left-1">
-              <div className="font-bold text-lg leading-none text-black">K</div>
+              <div className="font-bold text-lg leading-none text-black">Q</div>
               <span className="text-lg leading-none text-[#AE1447]">♥</span>
             </div>
           </div>
         ) : (
           <div className="relative p-1 flex flex-col justify-between h-full text-[#AE1447]">
             <div className="flex items-center">
-              <div className="text-lg font-bold leading-none">K</div>
+              <div className="text-lg font-bold leading-none">Q</div>
             </div>
             <div className="self-center">
               <span className="text-xl">♥</span>
             </div>
             <div className="flex items-center self-end rotate-180">
-              <div className="text-lg font-bold leading-none">K</div>
+              <div className="text-lg font-bold leading-none">Q</div>
             </div>
           </div>
         )}
@@ -97,19 +97,11 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
   }
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      const needsNewGame = localStorage.getItem('deck-of-cards-new-game-required') === 'true';
-      if (needsNewGame) {
-        onNewGame();
-        localStorage.removeItem('deck-of-cards-new-game-required');
-      }
-    }
     onOpenChange(isOpen);
   };
 
   const handleGameRuleChange = (newSettings: Partial<GameSettings>) => {
     setSettings(newSettings);
-    localStorage.setItem('deck-of-cards-new-game-required', 'true');
   };
 
   return (
@@ -196,7 +188,7 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
           )}
           
            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Card Style</Label>
+              <Label className="text-right pt-2">Deck</Label>
               <div className="col-span-3 flex items-center gap-4">
                 <CardPreview
                   styleType="modern"
