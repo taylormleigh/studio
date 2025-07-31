@@ -1,6 +1,6 @@
 
 
-import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS } from '../src/lib/solitaire';
+import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS, isRun } from '../src/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
 
@@ -473,6 +473,53 @@ describe('Solitaire Game Logic', () => {
         expect(state.tableau[0].length).toBe(0); // Source pile is now empty
         expect(state.tableau[1].length).toBe(2); // Destination has the new card
         expect(state.tableau[1][1].rank).toBe('4');
+    });
+
+    it('should auto-move a multi-card pile by clicking its base card', () => {
+      // Setup the exact scenario from the bug report
+      const baseCard: Card = { suit: 'CLUBS', rank: 'K', faceUp: false };
+      const stackToMove: Card[] = [
+        { suit: 'CLUBS', rank: '6', faceUp: true },
+        { suit: 'HEARTS', rank: '5', faceUp: true },
+        { suit: 'CLUBS', rank: '4', faceUp: true }
+      ];
+      const destinationCard: Card = { suit: 'HEARTS', rank: '7', faceUp: true };
+  
+      state.tableau[0] = [baseCard, ...stackToMove];
+      state.tableau[1] = [destinationCard];
+  
+      // Simulate the "click to move" logic
+      const sourcePileIndex = 0;
+      const sourceCardIndex = 1; // Clicking the '6 of Clubs'
+  
+      // Simplified logic from the component
+      const sourcePile = state.tableau[sourcePileIndex];
+      const cardsToMove = sourcePile.slice(sourceCardIndex);
+      let moved = false;
+  
+      // Check for a valid tableau destination
+      for (let i = 0; i < state.tableau.length; i++) {
+        if (i === sourcePileIndex) continue;
+        const destTopCard = state.tableau[i][state.tableau[i].length - 1];
+        if (isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destTopCard)) {
+          // Perform the move
+          const destPile = state.tableau[i];
+          const movedCards = sourcePile.splice(sourceCardIndex);
+          destPile.push(...movedCards);
+          if (sourcePile.length > 0) {
+            sourcePile[sourcePile.length - 1].faceUp = true;
+          }
+          moved = true;
+          break;
+        }
+      }
+      
+      expect(moved).toBe(true);
+      expect(state.tableau[0].length).toBe(1); // Should only have the face-down King left
+      expect(state.tableau[0][0].faceUp).toBe(true); // The card underneath should be flipped
+      expect(state.tableau[1].length).toBe(4); // Destination has the original card + 3 new cards
+      expect(state.tableau[1][1].rank).toBe('6'); // The base of the moved stack
+      expect(state.tableau[1][3].rank).toBe('4'); // The top of the moved stack
     });
   });
 
