@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -42,7 +43,7 @@ const CardPreview = ({
       className={cn(
         'relative cursor-pointer rounded-lg border-2 p-4 transition-all w-28 h-24 flex flex-col items-center justify-center gap-2',
         isSelected ? 'border-primary' : 'border-border',
-        isDomino ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
+        isDomino ? 'bg-black text-white' : 'bg-gray-100 text-black'
       )}
     >
         {isDomino ? <Moon /> : <Sun />}
