@@ -7,6 +7,7 @@ type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 
 // Helper function to set the theme and color mode via localStorage
 const applySettings = async (page: Page, theme: Theme, colorMode: ColorMode, gameType: GameType) => {
+  await page.goto('/');
   await page.evaluate(({ theme, colorMode, gameType }) => {
     const settings = {
       cardStyle: theme === 'dark' ? 'domino' : 'modern',
@@ -60,7 +61,6 @@ test.describe('App Screenshot Tests', () => {
       for (const theme of themes) {
         for (const colorMode of colorModes) {
           test(`${game}-${theme}-${colorMode}`, async ({ page }, testInfo) => {
-            await page.goto('/');
             await applySettings(page, theme, colorMode, game);
             await interactWithGame(page, game);
             await expect(page.getByTestId('game-board')).toBeVisible();
@@ -80,7 +80,6 @@ test.describe('App Screenshot Tests', () => {
       const game: GameType = 'Solitaire'; 
 
       test(`Game Dialog-${theme}`, async ({ page }, testInfo) => {
-        await page.goto('/');
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByTestId('game-title').click();
@@ -91,7 +90,6 @@ test.describe('App Screenshot Tests', () => {
       });
 
       test(`Settings Dialog-${theme}`, async ({ page }, testInfo) => {
-        await page.goto('/');
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByLabel('Settings').click();
