@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
 import { SuitIcon } from './suit-icon';
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
@@ -27,6 +27,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
     return (
       <div
         onClick={onClick}
+        data-testid={dataTestId}
         className={cn(
           baseClasses,
           'bg-muted/60 border-dashed border-muted-foreground/40'
@@ -42,6 +43,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
     return (
       <div
         onClick={onClick}
+        data-testid={dataTestId}
         className={cn(
           baseClasses,
           'cursor-pointer border-black',
@@ -62,6 +64,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       style={style}
+      data-testid={dataTestId}
       className={cn(
         baseClasses,
         'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
@@ -107,4 +110,5 @@ type CardProps = {
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   draggable?: boolean;
   style?: React.CSSProperties;
+  "data-testid"?: string;
 };
