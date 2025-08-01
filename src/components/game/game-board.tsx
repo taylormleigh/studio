@@ -15,7 +15,7 @@ import GameFooter from './game-footer';
 import VictoryDialog from './victory-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
-import { StatsDialog } from './stats-dialog';
+import { GameDialog } from './game-dialog';
 
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/use-settings';
@@ -63,7 +63,7 @@ export default function GameBoard() {
   const [isWon, setIsWon] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
@@ -627,7 +627,7 @@ export default function GameBoard() {
         onNewGame={() => {}} 
         onUndo={() => {}} 
         onSettings={() => setIsSettingsOpen(true)}
-        onStats={() => setIsStatsOpen(true)}
+        onGameMenuOpen={() => setIsGameMenuOpen(true)}
         canUndo={false}
       />
       <main className="flex-grow p-3">
@@ -670,7 +670,7 @@ export default function GameBoard() {
         onNewGame={handleNewGame} 
         onUndo={handleUndo} 
         onSettings={() => setIsSettingsOpen(true)}
-        onStats={() => setIsStatsOpen(true)}
+        onGameMenuOpen={() => setIsGameMenuOpen(true)}
         canUndo={history.length > 0}
       />
       <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
@@ -698,12 +698,12 @@ export default function GameBoard() {
       <SettingsDialog 
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
-        onNewGame={handleNewGame}
       />
 
-      <StatsDialog
-        open={isStatsOpen}
-        onOpenChange={setIsStatsOpen}
+      <GameDialog
+        open={isGameMenuOpen}
+        onOpenChange={setIsGameMenuOpen}
+        onNewGame={handleNewGame}
       />
     </div>
   );

@@ -10,14 +10,14 @@ type GameHeaderProps = {
   onNewGame: () => void;
   onUndo: () => void;
   onSettings: () => void;
-  onStats: () => void;
+  onGameMenuOpen: () => void;
   canUndo: boolean;
 };
 
 const iconSize = 26;
 const iconStrokeWidth = 1.85;
 
-export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, canUndo }: GameHeaderProps) {
+export default function GameHeader({ onNewGame, onUndo, onSettings, onGameMenuOpen, canUndo }: GameHeaderProps) {
   const { settings } = useSettings();
 
   const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
@@ -53,7 +53,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onStats, can
       </div>
 
       <div className="text-center">
-        <h1 onClick={onStats} className="game-title font-headline text-primary cursor-pointer" data-testid="game-title">
+        <h1 onClick={onGameMenuOpen} className="game-title font-headline text-primary cursor-pointer" data-testid="game-title">
           {settings.gameType}
         </h1>
       </div>
