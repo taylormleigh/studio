@@ -233,20 +233,20 @@ describe('Freecell Game Logic', () => {
   describe('Card Movement Simulation', () => {
   
     it('should correctly move a single card from tableau to an empty freecell', () => {
-        const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
-        const state: GameState = {
-            gameType: 'Freecell',
-            tableau: [
-                [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
-                [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
-                [], [], [], [], [], []
-            ],
-            foundation: [[], [], [], []],
-            freecells: [null, null, null, null],
-            moves: 0,
-            score: 0,
-        };
-      
+      const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+      const state: GameState = {
+          gameType: 'Freecell',
+          tableau: [
+              [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
+              [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
+              [], [], [], [], [], []
+          ],
+          foundation: [[], [], [], []],
+          freecells: [null, null, null, null],
+          moves: 0,
+          score: 0,
+      };
+    
       // Simulate the move
       const movedCard = state.tableau[0].pop();
       state.freecells[0] = movedCard!;
@@ -302,7 +302,7 @@ describe('Freecell Game Logic', () => {
       const destPileIndex = 1;
       const sourceCardIndex = 1; // index of the '5 of Spades'
 
-      const movableCount = getMovableCardCount(specificState, false); // Moving to non-empty
+      const movableCount = getMovableCardCount(specificState, false); // Moving to non-empty pile
       const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
       const destCard = last(specificState.tableau[destPileIndex]);
 
@@ -315,7 +315,7 @@ describe('Freecell Game Logic', () => {
       expect(specificState.tableau[sourcePileIndex].length).toBe(1);
       expect(specificState.tableau[destPileIndex].length).toBe(3);
       expect(last(specificState.tableau[destPileIndex])!.rank).toBe('4');
-  });
+    });
 
     it('should not move a stack of cards larger than the movable limit', () => {
       const cardsToMove: Card[] = [
@@ -362,7 +362,7 @@ describe('Freecell Game Logic', () => {
       // Assert that state remains unchanged because the move was invalid.
       expect(JSON.stringify(specificState.tableau[sourcePileIndex])).toEqual(originalSourcePileJSON);
       expect(JSON.stringify(specificState.tableau[destPileIndex])).toEqual(originalDestPileJSON);
-  });
+    });
 
   });
 });
