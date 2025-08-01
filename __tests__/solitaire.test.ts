@@ -174,8 +174,12 @@ describe('Solitaire Game Logic', () => {
       const destPile = state.tableau[0];
       const sourceCardIndex = 0; // Moving the whole pile
 
-      const cards = sourcePile.splice(sourceCardIndex);
-      destPile.push(...cards);
+      // Check the move is valid before performing it
+      const cards = sourcePile.slice(sourceCardIndex);
+      if (isRun(cards) && canMoveToTableau(cards[0], last(destPile))) {
+        const movedCards = sourcePile.splice(sourceCardIndex);
+        destPile.push(...movedCards);
+      }
     
       // Assertions
       expect(sourcePile.length).toBe(0); // Source pile should now be empty
@@ -449,5 +453,7 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+    
 
     
