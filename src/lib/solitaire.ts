@@ -81,8 +81,8 @@ export function createInitialState(drawCount: 1 | 3 = 1): GameState {
 
   // Flip the top card of each tableau pile face-up.
   tableau.forEach(pile => {
-    if (pile.length > 0) {
-      pile[pile.length - 1].faceUp = true;
+    if (last(pile)) {
+      last(pile)!.faceUp = true;
     }
   });
 
@@ -171,5 +171,23 @@ export function isRun(cards: Card[]): boolean {
     if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) return false;
   }
   return true;
+}
+
+/**
+ * Safely gets the first card of a pile.
+ * @param pile The pile to get the card from.
+ * @returns The first card, or undefined if the pile is empty.
+ */
+export function first(pile: Pile): Card | undefined {
+    return pile.length > 0 ? pile[0] : undefined;
+}
+
+/**
+ * Safely gets the last card of a pile.
+ * @param pile The pile to get the card from.
+ * @returns The last card, or undefined if the pile is empty.
+ */
+export function last(pile: Pile): Card | undefined {
+    return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
     
