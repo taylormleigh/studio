@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -50,6 +50,7 @@ export type HighlightedPile = {
 
 // The maximum number of moves that can be undone.
 const UNDO_LIMIT = 100;
+const MIN_SWIPE_DISTANCE = 75; // Minimum pixels for a swipe gesture
 
 export default function GameBoard() {
   const { settings } = useSettings();
@@ -66,6 +67,10 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
+
+  // State for swipe gestures
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   
   // Effect to confirm component has mounted on the client, preventing SSR issues.
   useEffect(() => {
@@ -612,6 +617,47 @@ export default function GameBoard() {
     }
   };  
 
+  // --- Swipe Gesture Handlers ---
+  const handleTouchStart = (e: TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStartX(touch.clientX);
+    setTouchStartY(touch.clientY);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    // This function is primarily here to prevent the browser's default pull-to-refresh or other swipe actions
+    // while the user might be starting a swipe on our game board.
+    if (!touchStartX || !touchStartY) {
+      return;
+    }
+    const touch = e.touches[0];
+    const diffX = touch.clientX - touchStartX;
+
+    // If swipe is mostly horizontal, prevent default browser action
+    if (Math.abs(diffX) > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (!touchStartX || !touchStartY) {
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const diffX = touch.clientX - touchStartX;
+    const diffY = touch.clientY - touchStartY;
+
+    // Check for a clear horizontal swipe to the right
+    if (Math.abs(diffX) > Math.abs(diffY) && diffX > MIN_SWIPE_DISTANCE) {
+      handleUndo();
+    }
+
+    // Reset touch start coordinates
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
   /**
    * Renders a skeleton loader while the game is initializing.
    */
@@ -656,7 +702,12 @@ export default function GameBoard() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div 
+      className="flex flex-col min-h-screen"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <GameHeader 
         onNewGame={handleNewGame} 
         onUndo={handleUndo} 
