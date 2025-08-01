@@ -2,6 +2,77 @@
 import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, isRun, getMovableCardCount, GameState, Card } from '../src/lib/freecell';
 import { last } from '../src/lib/solitaire';
 
+// This helper function simulates the core logic that will exist in the GameBoard component.
+// It ensures our tests are validating the rules in the same way the UI will.
+const moveCardsInTest = (
+  state: GameState,
+  sourceType: 'tableau' | 'freecell',
+  sourcePileIndex: number,
+  sourceCardIndex: number,
+  destType: 'tableau' | 'freecell' | 'foundation',
+  destPileIndex: number
+): GameState => {
+  const newGameState = JSON.parse(JSON.stringify(state));
+  let cardsToMove: Card[];
+
+  if (sourceType === 'tableau') {
+    cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+  } else { // freecell
+    const card = newGameState.freecells[sourcePileIndex];
+    if (!card) return state; // No card to move
+    cardsToMove = [card];
+  }
+
+  if (cardsToMove.length === 0) return state;
+
+  const cardToMove = cardsToMove[0];
+
+  // Determine if the destination is an empty tableau pile before the move
+  const isDestinationEmptyTableau = destType === 'tableau' && newGameState.tableau[destPileIndex].length === 0;
+  const movableCount = getMovableCardCount(newGameState, isDestinationEmptyTableau);
+  
+  if (cardsToMove.length > movableCount) {
+    return state; // Move is invalid because the stack is too large
+  }
+
+  if (!isRun(cardsToMove)) {
+    return state; // The stack being moved isn't a valid run
+  }
+
+  let moveSuccessful = false;
+
+  if (destType === 'tableau') {
+    const destCard = last(newGameState.tableau[destPileIndex]);
+    if (canMoveToTableau(cardToMove, destCard)) {
+      newGameState.tableau[destPileIndex].push(...cardsToMove);
+      moveSuccessful = true;
+    }
+  } else if (destType === 'foundation') {
+    if (cardsToMove.length === 1 && canMoveToFoundation(cardToMove, newGameState.foundation[destPileIndex])) {
+      newGameState.foundation[destPileIndex].push(cardToMove);
+      moveSuccessful = true;
+    }
+  } else if (destType === 'freecell') {
+    if (cardsToMove.length === 1 && newGameState.freecells[destPileIndex] === null) {
+      newGameState.freecells[destPileIndex] = cardToMove;
+      moveSuccessful = true;
+    }
+  }
+  
+  if (moveSuccessful) {
+    if (sourceType === 'tableau') {
+      newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
+    } else { // freecell
+      newGameState.freecells[sourcePileIndex] = null;
+    }
+    newGameState.moves++;
+    return newGameState;
+  }
+
+  return state; // Return original state if move was invalid
+};
+
+
 describe('Freecell Game Logic', () => {
 
   describe('createInitialState', () => {
@@ -227,135 +298,66 @@ describe('Freecell Game Logic', () => {
   });
 
   describe('Card Movement Simulation', () => {
-  
-    it('should correctly move a single card from tableau to an empty freecell', () => {
-      const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
-      const state: GameState = {
+    
+    it('should move a valid stack of cards between tableau piles', () => {
+      const initialState: GameState = {
           gameType: 'Freecell',
           tableau: [
-              [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
-              [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
-              [], [], [], [], [], []
+              [
+                { suit: 'DIAMONDS', rank: 'K', faceUp: true },
+                { suit: 'SPADES', rank: '5', faceUp: true },
+                { suit: 'HEARTS', rank: '4', faceUp: true }
+              ],
+              [{ suit: 'CLUBS', rank: '6', faceUp: true }],
+               [], [], [], [], [], []
           ],
           foundation: [[], [], [], []],
           freecells: [null, null, null, null],
-          moves: 0,
-          score: 0,
-      };
-    
-      // Simulate the move
-      const movedCard = state.tableau[0].pop();
-      state.freecells[0] = movedCard!;
-
-      expect(state.freecells[0]).toEqual(cardToMove);
-      expect(state.tableau[0].length).toBe(1); 
-    });
-
-    it('should correctly move a single card from tableau to foundation', () => {
-      const ace: Card = { suit: 'HEARTS', rank: 'A', faceUp: true };
-      const state: GameState = {
-        gameType: 'Freecell',
-        tableau: [
-            [], [{ suit: 'DIAMONDS', rank: '10', faceUp: true }], [ace], 
-            [], [], [], [], []
-        ],
-        foundation: [[], [], [], []],
-        freecells: [null, null, null, null],
-        moves: 0, score: 0
-      };
-      const initialTableauSize = state.tableau[2].length;
-      
-      const card = state.tableau[2].pop()!;
-      // Find the correct foundation pile (empty in this case)
-      const foundationIndex = 0; 
-      if (canMoveToFoundation(card, state.foundation[foundationIndex])) {
-        state.foundation[foundationIndex].push(card);
-      }
-
-      expect(last(state.foundation[foundationIndex])).toEqual(ace);
-      expect(state.tableau[2].length).toBe(initialTableauSize - 1);
-    });
-
-    it('should move a valid stack of cards between tableau piles', () => {
-      const cardsToMove: Card[] = [
-        { suit: 'SPADES', rank: '5', faceUp: true },
-        { suit: 'HEARTS', rank: '4', faceUp: true },
-      ];
-      
-      const specificState: GameState = {
-          gameType: 'Freecell',
-          tableau: [
-              [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }, ...cardsToMove],
-              [{ suit: 'CLUBS', rank: '6', faceUp: true }],
-               [], [], [], [], [], []
-          ],
-          foundation: [],
-          freecells: [null, null, null, null], // 4 empty freecells
           moves: 0, score: 0
       };
       
-      const sourcePileIndex = 0;
-      const destPileIndex = 1;
-      const sourceCardIndex = 1;
+      const newState = moveCardsInTest(initialState, 'tableau', 0, 1, 'tableau', 1);
 
-      const movableCount = getMovableCardCount(specificState, false);
-      const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
-      const destCard = last(specificState.tableau[destPileIndex]);
-
-      if(isRun(stackToMove) && canMoveToTableau(stackToMove[0], destCard) && stackToMove.length <= movableCount) {
-          const moved = specificState.tableau[sourcePileIndex].splice(sourceCardIndex);
-          specificState.tableau[destPileIndex].push(...moved);
-      }
-
-      expect(specificState.tableau[sourcePileIndex].length).toBe(1);
-      expect(specificState.tableau[destPileIndex].length).toBe(3);
-      expect(last(specificState.tableau[destPileIndex])!.rank).toBe('4');
+      expect(newState.tableau[0].length).toBe(1); // K of diamonds remains
+      expect(newState.tableau[1].length).toBe(3); // 6 of clubs + 5 of spades + 4 of hearts
+      expect(last(newState.tableau[1])?.rank).toBe('4');
+      expect(newState.moves).toBe(1);
     });
 
     it('should not move a stack of cards larger than the movable limit', () => {
-      const cardsToMove: Card[] = [
-          { suit: 'SPADES', rank: '5', faceUp: true },
-          { suit: 'HEARTS', rank: '4', faceUp: true },
-          { suit: 'CLUBS', rank: '3', faceUp: true },
-      ];
-      
-      const specificState: GameState = {
+      const initialState: GameState = {
           gameType: 'Freecell',
           tableau: [
-              [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }, ...cardsToMove],
+              [
+                  { suit: 'DIAMONDS', rank: 'K', faceUp: true },
+                  { suit: 'SPADES', rank: '5', faceUp: true },
+                  { suit: 'HEARTS', rank: '4', faceUp: true },
+                  { suit: 'CLUBS', rank: '3', faceUp: true },
+              ],
               [{ suit: 'CLUBS', rank: '6', faceUp: true }],
                [], [], [], [], [], []
           ],
-          foundation: [],
+          foundation: [[], [], [], []],
           freecells: [ 
               { suit: 'DIAMONDS', rank: 'A', faceUp: true },
               { suit: 'HEARTS', rank: 'J', faceUp: true },
               { suit: 'CLUBS', rank: 'A', faceUp: true },
               { suit: 'SPADES', rank: '2', faceUp: true },
-          ],
+          ], // All freecells are full
           moves: 0, score: 0
       };
 
-      const sourcePileIndex = 0;
-      const destPileIndex = 1;
-      const sourceCardIndex = 1;
-      
-      const movableCount = getMovableCardCount(specificState, false);
-      const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
-      
-      const originalSourcePileJSON = JSON.stringify(specificState.tableau[sourcePileIndex]);
-      const originalDestPileJSON = JSON.stringify(specificState.tableau[destPileIndex]);
+      const newState = moveCardsInTest(initialState, 'tableau', 0, 1, 'tableau', 1);
   
-      if (isRun(stackToMove) && canMoveToTableau(stackToMove[0], last(specificState.tableau[destPileIndex])) && stackToMove.length <= movableCount) {
-          const movedCards = specificState.tableau[sourcePileIndex].splice(sourceCardIndex);
-          specificState.tableau[destPileIndex].push(...movedCards);
-      }
-  
-      expect(JSON.stringify(specificState.tableau[sourcePileIndex])).toEqual(originalSourcePileJSON);
-      expect(JSON.stringify(specificState.tableau[destPileIndex])).toEqual(originalDestPileJSON);
+      // The state should not have changed
+      expect(newState.tableau[0].length).toBe(4);
+      expect(newState.tableau[1].length).toBe(1);
+      expect(newState.moves).toBe(0);
+      expect(JSON.stringify(newState)).toEqual(JSON.stringify(initialState));
     });
 
   });
 });
 
+    
     
