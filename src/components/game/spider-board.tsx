@@ -89,32 +89,30 @@ export default function SpiderBoard({
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
+                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
+
                   return (
                     <div 
                       key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                      className="absolute w-full" 
+                      className="absolute w-full"
+                      style={{
+                        transform: `translateY(${yOffset}px)`,
+                        zIndex: cardIndex
+                      }}
                     >
-                      <div className={cn(
-                        "relative w-full",
-                         card.faceUp ? "h-5 sm:h-6" : "h-3"
-                        )}
-                        style={{
-                           transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)}px)`
-                        }}
-                      >
                         <Card
                           card={card}
                           isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                           draggable={card.faceUp}
                           isStacked={card.faceUp && !isTopCard}
+                          className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                           onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={(e) => {
                               e.stopPropagation();
                               handleCardClick('tableau', pileIndex, cardIndex);
                           }}
                         />
-                      </div>
                     </div>
                   )
                 })
