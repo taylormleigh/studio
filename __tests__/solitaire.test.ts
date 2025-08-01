@@ -97,17 +97,17 @@ describe('Solitaire Game Logic', () => {
   
       // Simulate move
       const card = sourcePile.pop();
-      if (card) {
+      if (card && canMoveToTableau(card, last(destPile))) {
         destPile.push(card);
-        if (sourcePile.length > 0) {
+        if (sourcePile.length > 0 && !last(sourcePile)!.faceUp) {
           last(sourcePile)!.faceUp = true;
         }
       }
       
-      expect(state.tableau[0].length).toBe(2);
-      expect(last(state.tableau[0])!.rank).toBe('Q');
-      expect(state.tableau[1].length).toBe(1);
-      expect(last(state.tableau[1])!.faceUp).toBe(true); // Check if card underneath is flipped
+      expect(destPile.length).toBe(2);
+      expect(last(destPile)!.rank).toBe('Q');
+      expect(sourcePile.length).toBe(1);
+      expect(last(sourcePile)!.faceUp).toBe(true); // Check if card underneath is flipped
     });
 
     it('should correctly move a pile of cards from one tableau pile to another', () => {
@@ -122,16 +122,19 @@ describe('Solitaire Game Logic', () => {
     
         const sourcePile = state.tableau[1];
         const destPile = state.tableau[0];
-        const cards = sourcePile.splice(1); // Correctly splice from index 1 to the end
+        const sourceCardIndex = sourcePile.findIndex(c => c.rank === 'J');
+
+        // Simulate move
+        const cards = sourcePile.splice(sourceCardIndex);
         destPile.push(...cards);
         if(sourcePile.length > 0) {
             last(sourcePile)!.faceUp = true;
         }
 
-        expect(state.tableau[0].length).toBe(3);
-        expect(last(state.tableau[0])!.rank).toBe('10');
-        expect(state.tableau[1].length).toBe(1);
-        expect(last(state.tableau[1])!.faceUp).toBe(true);
+        expect(destPile.length).toBe(3);
+        expect(last(destPile)!.rank).toBe('10');
+        expect(sourcePile.length).toBe(1);
+        expect(last(sourcePile)!.faceUp).toBe(true);
     });
 
     it('should correctly move the last card from a tableau pile, leaving it empty', () => {
@@ -145,12 +148,12 @@ describe('Solitaire Game Logic', () => {
       const destPile = state.tableau[0];
   
       const card = sourcePile.pop();
-      if (card) {
+      if (card && canMoveToTableau(card, last(destPile))) {
         destPile.push(card);
       }
   
-      expect(state.tableau[0].length).toBe(2);
-      expect(state.tableau[1].length).toBe(0); // Source pile should be empty
+      expect(destPile.length).toBe(2);
+      expect(sourcePile.length).toBe(0); // Source pile should be empty
     });
 
     it('should allow moving the final stack of cards from one tableau pile to another', () => {
@@ -175,9 +178,9 @@ describe('Solitaire Game Logic', () => {
       destPile.push(...cards);
     
       // Assertions
-      expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
-      expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
-      expect(last(state.tableau[0])!.rank).toBe('10'); // The last card should be the 10 of spades
+      expect(sourcePile.length).toBe(0); // Source pile should now be empty
+      expect(destPile.length).toBe(3); // Destination pile should have the new cards
+      expect(last(destPile)!.rank).toBe('10'); // The last card should be the 10 of spades
     });
 
 
@@ -211,7 +214,7 @@ describe('Solitaire Game Logic', () => {
         let destPileIndex = state.foundation.findIndex(destPile => 
             canMoveToFoundation(card, destPile) &&
             // This is the key check: the destination must be empty OR match the card's suit
-            (destPile.length === 0 || last(destPile)!.suit === card.suit)
+            (destPile.length === 0 || last(destPile)?.suit === card.suit)
         );
   
         if (destPileIndex !== -1) {
