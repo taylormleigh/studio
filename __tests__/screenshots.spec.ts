@@ -27,7 +27,8 @@ const interactWithGame = async (page: Page, gameType: GameType) => {
       await page.getByTestId('stock-pile').click();
     }
     if (gameType === 'Freecell') {
-      await page.getByTestId('tableau-pile-0').locator('div').last().click();
+      // Correctly target the last card element in the pile for clicking.
+      await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
       await page.getByTestId('freecell-pile-0').click();
     }
     if (gameType === 'Spider') {
