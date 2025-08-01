@@ -204,14 +204,106 @@ export default function GameBoard() {
   /**
    * Reverts the game to the previous state from the history stack.
    */
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (history.length > 0) {
       const [lastState, ...rest] = history;
       setGameState(lastState);
       setHistory(rest);
       setSelectedCard(null);
     }
-  };
+  }, [history]);
+  
+    /**
+   * Handles drawing new cards from the stock pile.
+   */
+  const handleDraw = useCallback(() => {
+    setSelectedCard(null);
+    updateState(prev => {
+        if(!prev) return prev;
+        const newGameState = JSON.parse(JSON.stringify(prev));
+
+        // Solitaire draw logic
+        if (newGameState.gameType === 'Solitaire') {
+          if (newGameState.stock.length > 0) {
+            // Draw cards from stock to waste.
+            const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
+            const drawnCards = [];
+            for (let i = 0; i < numToDraw; i++) {
+              const card = newGameState.stock.pop()!;
+              card.faceUp = true;
+              drawnCards.push(card);
+            }
+            newGameState.waste.push(...drawnCards.reverse());
+          } else if (newGameState.waste.length > 0) {
+            // Reset stock from waste if stock is empty.
+            newGameState.stock = newGameState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
+            newGameState.waste = [];
+          }
+          newGameState.moves += 1;
+        } 
+        // Spider draw logic
+        else if (newGameState.gameType === 'Spider') {
+          if (newGameState.stock.length > 0) {
+            // Cannot deal with an empty tableau pile.
+            const hasEmptyPile = newGameState.tableau.some((pile: CardType[]) => pile.length === 0);
+            if (hasEmptyPile) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid Move",
+                    description: "You cannot deal new cards while there is an empty tableau pile.",
+                });
+                return prev;
+            }
+            // Deal one card to each tableau pile.
+            const dealCount = newGameState.tableau.length;
+            if(newGameState.stock.length >= dealCount) {
+              for(let i = 0; i < dealCount; i++) {
+                const card = newGameState.stock.pop()!;
+                card.faceUp = true;
+                newGameState.tableau[i].push(card);
+              }
+              newGameState.moves++;
+            }
+          }
+        }
+        return newGameState;
+    });
+  }, [updateState, toast]);
+
+    // Effect to add and remove keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Check for modifier keys (Cmd on Mac, Ctrl on others)
+            const isModKey = e.metaKey || e.ctrlKey;
+
+            if (isModKey && e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                handleNewGame();
+            } else if (isModKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                setIsSettingsOpen(true);
+            } else if (!isModKey) {
+                switch (e.key) {
+                    case 'Enter':
+                        handleDraw();
+                        break;
+                    case 'Backspace':
+                    case 'Delete':
+                        handleUndo();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleNewGame, handleUndo, handleDraw]);
+
 
   /**
    * Handles the logic for moving cards between different piles and areas.
@@ -241,7 +333,7 @@ export default function GameBoard() {
                 cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
             } else { // 'tableau'
                 const sourcePile = newGameState.tableau[sourcePileIndex];
-                if (sourcePile.length === 0 || !sourcePile[sourceCardIndex]?.faceUp) {
+                if (!sourcePile[sourceCardIndex]?.faceUp) {
                   return prev; // Cannot move from an empty pile or a face-down card.
                 }
                 cardsToMove = sourcePile.slice(sourceCardIndex);
@@ -393,63 +485,6 @@ export default function GameBoard() {
         // If no logic matches, return the previous state.
         return prev;
      }, true);
-  }, [updateState, toast]);
-  
-  /**
-   * Handles drawing new cards from the stock pile.
-   */
-  const handleDraw = useCallback(() => {
-    setSelectedCard(null);
-    updateState(prev => {
-        if(!prev) return prev;
-        const newGameState = JSON.parse(JSON.stringify(prev));
-
-        // Solitaire draw logic
-        if (newGameState.gameType === 'Solitaire') {
-          if (newGameState.stock.length > 0) {
-            // Draw cards from stock to waste.
-            const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
-            const drawnCards = [];
-            for (let i = 0; i < numToDraw; i++) {
-              const card = newGameState.stock.pop()!;
-              card.faceUp = true;
-              drawnCards.push(card);
-            }
-            newGameState.waste.push(...drawnCards.reverse());
-          } else if (newGameState.waste.length > 0) {
-            // Reset stock from waste if stock is empty.
-            newGameState.stock = newGameState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
-            newGameState.waste = [];
-          }
-          newGameState.moves += 1;
-        } 
-        // Spider draw logic
-        else if (newGameState.gameType === 'Spider') {
-          if (newGameState.stock.length > 0) {
-            // Cannot deal with an empty tableau pile.
-            const hasEmptyPile = newGameState.tableau.some((pile: CardType[]) => pile.length === 0);
-            if (hasEmptyPile) {
-                toast({
-                    variant: "destructive",
-                    title: "Invalid Move",
-                    description: "You cannot deal new cards while there is an empty tableau pile.",
-                });
-                return prev;
-            }
-            // Deal one card to each tableau pile.
-            const dealCount = newGameState.tableau.length;
-            if(newGameState.stock.length >= dealCount) {
-              for(let i = 0; i < dealCount; i++) {
-                const card = newGameState.stock.pop()!;
-                card.faceUp = true;
-                newGameState.tableau[i].push(card);
-              }
-              newGameState.moves++;
-            }
-          }
-        }
-        return newGameState;
-    });
   }, [updateState, toast]);
     
   /**
@@ -691,5 +726,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-    
