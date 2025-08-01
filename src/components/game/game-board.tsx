@@ -290,6 +290,7 @@ export default function GameBoard() {
                         break;
                     case 'Backspace':
                     case 'Delete':
+                    case 'ArrowLeft':
                         handleUndo();
                         break;
                     default:
