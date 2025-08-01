@@ -110,8 +110,7 @@ export function isRun(cards: Card[]): boolean {
  */
 export function getMovableCardCount(state: GameState): number {
   const emptyFreecells = state.freecells.filter(c => c === null).length;
-  const emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
   
-  // The formula for movable cards: (1 + number of empty freecells) * 2^(number of empty tableau piles).
-  return (1 + emptyFreecells) * Math.pow(2, emptyTableauPiles);
+  // The formula for movable cards: (1 + number of empty freecells)
+  return (1 + emptyFreecells);
 };
