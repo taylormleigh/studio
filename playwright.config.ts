@@ -26,16 +26,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
     {
-      name: 'Tablet',
+      name: 'tablet',
       use: { ...devices['iPad (gen 7)'] }
     },
     {
-      name: 'Mobile Chrome',
+      name: 'mobile',
       use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 13'] },
     },
   ],
   webServer: {

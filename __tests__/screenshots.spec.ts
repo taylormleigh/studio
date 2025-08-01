@@ -1,5 +1,5 @@
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, TestInfo } from '@playwright/test';
 
 type Theme = 'light' | 'dark';
 type ColorMode = 'color' | 'greyscale';
@@ -37,6 +37,17 @@ const interactWithGame = async (page: Page, gameType: GameType) => {
     await page.waitForTimeout(500); // wait for moves to complete
 };
 
+const getDeviceName = (testInfo: TestInfo) => {
+    switch (testInfo.project.name) {
+        case 'tablet':
+            return 'tablet';
+        case 'mobile':
+            return 'mobile';
+        default:
+            return 'browser';
+    }
+}
+
 const games: GameType[] = ['Solitaire', 'Freecell', 'Spider'];
 const themes: Theme[] = ['light', 'dark'];
 const colorModes: ColorMode[] = ['color', 'greyscale'];
@@ -48,14 +59,14 @@ test.describe('App Screenshot Tests', () => {
     test.describe(`${game} Game`, () => {
       for (const theme of themes) {
         for (const colorMode of colorModes) {
-          const testTitlePrefix = `${game}-${theme}-${colorMode}`;
-
-          test(`${testTitlePrefix}: Main Game Screen`, async ({ page }) => {
+          test(`${game}-${theme}-${colorMode}`, async ({ page }, testInfo) => {
             await page.goto('/');
             await applySettings(page, theme, colorMode, game);
             await interactWithGame(page, game);
             await expect(page.getByTestId('game-board')).toBeVisible();
-            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-main.png`, fullPage: true });
+            const device = getDeviceName(testInfo);
+            const view = game.toLowerCase();
+            await page.screenshot({ path: `test-results/${device}-${view}-${theme}-${colorMode}.png`, fullPage: true });
           });
         }
       }
@@ -65,36 +76,66 @@ test.describe('App Screenshot Tests', () => {
   // Capture dialogs only once per theme
   test.describe('Dialogs', () => {
     for (const theme of themes) {
-      const colorMode: ColorMode = 'color'; // Use a single color mode for dialogs
-      const game: GameType = 'Solitaire'; // Use a single game type for dialogs
-      const testTitlePrefix = `dialog-${theme}`;
+      const colorMode: ColorMode = 'color'; 
+      const game: GameType = 'Solitaire'; 
 
-      test(`${testTitlePrefix}: Game Dialog`, async ({ page }) => {
+      test(`Game Dialog-${theme}`, async ({ page }, testInfo) => {
         await page.goto('/');
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByTestId('game-title').click();
         await expect(page.getByRole('dialog')).toBeVisible();
         await page.waitForTimeout(500); // Allow dialog animation to complete
-        await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-game.png`, fullPage: true });
+        const device = getDeviceName(testInfo);
+        await page.screenshot({ path: `test-results/${device}-gamedialog-${theme}-${colorMode}.png`, fullPage: true });
       });
 
-      test(`${testTitlePrefix}: Settings Dialog`, async ({ page }) => {
+      test(`Settings Dialog-${theme}`, async ({ page }, testInfo) => {
         await page.goto('/');
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByLabel('Settings').click();
         await expect(page.getByRole('dialog')).toBeVisible();
         await page.waitForTimeout(500); // Allow dialog animation to complete
-        await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-settings.png`, fullPage: true });
+        const device = getDeviceName(testInfo);
+        await page.screenshot({ path: `test-results/${device}-settingsdialog-${theme}-${colorMode}.png`, fullPage: true });
       });
     }
   });
 
 
-  test('Victory Dialog Screen (Solitaire)', async ({ page }) => {
-    // This test is complex to automate reliably, so we'll skip it for now.
-    // Winning a game would require implementing game-solving logic.
-    test.skip(true, 'Victory screen test is skipped for now.');
+  test('Victory Dialog Screen', async ({ page }, testInfo) => {
+    await page.goto('/');
+    // Force a winnable state for Solitaire
+    await page.evaluate(() => {
+        const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
+        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
+        const winningState = {
+            gameType: 'Solitaire',
+            tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
+            foundation: [
+                ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
+                ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+            ],
+            stock: [],
+            waste: [],
+            drawCount: 1,
+            score: 100,
+            moves: 50,
+        };
+        localStorage.setItem('deck-of-cards-debug-state', JSON.stringify(winningState));
+    });
+
+    await page.reload();
+    await expect(page.getByTestId('tableau-piles')).toBeVisible();
+    await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+    await page.getByTestId('foundation-pile-3').click();
+
+    await expect(page.getByTestId('victory-dialog')).toBeVisible();
+    await page.waitForTimeout(1000); // allow confetti to animate
+    const device = getDeviceName(testInfo);
+    await page.screenshot({ path: `test-results/${device}-winningdialog-light-color.png`, fullPage: true });
   });
 });

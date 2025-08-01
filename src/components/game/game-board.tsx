@@ -190,12 +190,31 @@ export default function GameBoard() {
    */
   const handleNewGame = useCallback(() => {
     let newState: GameState;
-    if (settings.gameType === 'Solitaire') {
-      newState = createSolitaireInitialState(settings.solitaireDrawCount);
-    } else if (settings.gameType === 'Freecell') { 
-      newState = createFreecellInitialState();
-    } else { // Spider
-      newState = createSpiderInitialState(settings.spiderSuits);
+    // Check for a debug state in localStorage for testing purposes.
+    const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
+    if (debugStateJSON) {
+        try {
+            newState = JSON.parse(debugStateJSON);
+            localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
+        } catch (e) {
+            console.error("Failed to parse debug state:", e);
+            // Fallback to normal initialization
+            if (settings.gameType === 'Solitaire') {
+              newState = createSolitaireInitialState(settings.solitaireDrawCount);
+            } else if (settings.gameType === 'Freecell') { 
+              newState = createFreecellInitialState();
+            } else { // Spider
+              newState = createSpiderInitialState(settings.spiderSuits);
+            }
+        }
+    } else {
+        if (settings.gameType === 'Solitaire') {
+          newState = createSolitaireInitialState(settings.solitaireDrawCount);
+        } else if (settings.gameType === 'Freecell') { 
+          newState = createFreecellInitialState();
+        } else { // Spider
+          newState = createSpiderInitialState(settings.spiderSuits);
+        }
     }
 
     setGameState(newState);
@@ -501,7 +520,6 @@ export default function GameBoard() {
    * @param cardIndex The card index of the clicked card.
    */
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
-    setSelectedCard(null); // Always clear selection at the start of a click.
     if (!gameState) return;
   
     const sourceCardInfo = { type: sourceType, pileIndex, cardIndex };
@@ -517,18 +535,18 @@ export default function GameBoard() {
           newGameState.moves++;
           return newGameState;
         }, true);
+        setSelectedCard(null); // Clear selection after flipping
         return; 
       }
     }
   
     // --- Move Logic (handles both auto-move and second click of a selection) ---
     if (selectedCard) {
-      // If clicking the same card again, deselect it.
       if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-        setSelectedCard(null);
+        setSelectedCard(null); // Deselect if clicking the same card again.
       } else {
-        // This is the second click, so attempt to move the `selectedCard` to the new location.
         moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as any, pileIndex);
+        setSelectedCard(null); // Clear selection after attempting a move.
       }
       return; 
     }
@@ -543,6 +561,7 @@ export default function GameBoard() {
   
     // Only proceed if a valid, face-up card was clicked.
     if (!clickedCard || !(clickedCard as CardType).faceUp) {
+      setSelectedCard(null); // Ensure no selection is kept
       return;
     }
   
@@ -597,9 +616,11 @@ export default function GameBoard() {
       };
 
       tryAutoMove();
+      setSelectedCard(null); // Always clear selection after an auto-move attempt.
       return;
     }
   
+    // If not auto-moving, just set the card as selected.
     setSelectedCard(sourceCardInfo);
   };
   
