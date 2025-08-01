@@ -111,14 +111,14 @@ test.describe('App Screenshot Tests', () => {
     test('Solitaire Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
                 foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
                     ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
                 ],
                 stock: [],
@@ -143,15 +143,15 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
                 tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
                 foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
                     ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                    ranks.slice(0, 13).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
                 ],
                 freecells: [null, null, null, null],
                 moves: 51,
@@ -174,21 +174,29 @@ test.describe('App Screenshot Tests', () => {
         await page.goto('/');
         await page.evaluate(() => {
             const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-            const suits = ['SPADES', 'HEARTS'];
+            const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
+            
+            // Create 7 completed sets (7 * 13 = 91 cards)
             const completedFoundation = Array.from({length: 7}, (_, i) => 
-                ranks.map(rank => ({ suit: suits[i % 2], rank, faceUp: true }))
-            )
+                ranks.map(rank => ({ suit: suits[i % 4], rank, faceUp: true })).reverse()
+            );
+
+            // Create the final set on the tableau, one move away from completion
+            const finalSetRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q']; // Ace to Queen
+            const AlmostCompletePile = finalSetRanks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })).reverse();
+            const KingToComplete = { suit: 'SPADES', rank: 'K', faceUp: true };
+
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Spider',
                 tableau: [
-                    ranks.slice(0, 12).reverse().map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    [{ suit: 'SPADES', rank: 'K', faceUp: true }],
+                    AlmostCompletePile,       // Pile with A-Q of Spades
+                    [KingToComplete],         // Pile with K of Spades
                     [], [], [], [], [], [], [], []
                 ],
                 foundation: completedFoundation,
-                stock: [],
+                stock: [], // No cards left in stock
                 completedSets: 7,
-                suitCount: 2,
+                suitCount: 4, // Test with 4 suits for complexity
                 moves: 99,
                 score: 400,
             }));
@@ -196,6 +204,8 @@ test.describe('App Screenshot Tests', () => {
 
         await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
+
+        // Move the Ace from the almost complete pile onto the King
         await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').first().click();
         await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
 
