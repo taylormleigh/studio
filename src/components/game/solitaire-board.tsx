@@ -142,33 +142,27 @@ export default function SolitaireBoard({
                   const isTopCard = cardIndex === pile.length - 1;
                   const isSelected = selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex;
                   const draggable = card.faceUp && isSolitaireRun(pile.slice(cardIndex));
+                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0)
                   
                   return (
                     <div 
                       key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                      className="absolute w-full" 
+                      className="absolute w-full"
+                      style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
                     >
-                      <div className={cn(
-                        "relative w-full",
-                         card.faceUp ? "h-5 sm:h-6" : "h-3"
-                        )}
-                        style={{
-                           transform: `translateY(${pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0)}px)`
+                      <Card
+                        card={card}
+                        isSelected={isSelected}
+                        isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
+                        draggable={draggable}
+                        isStacked={card.faceUp && !isTopCard}
+                        className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
+                        onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCardClick('tableau', pileIndex, cardIndex);
                         }}
-                      >
-                        <Card
-                          card={card}
-                          isSelected={isSelected}
-                          isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                          draggable={draggable}
-                          isStacked={card.faceUp && !isTopCard}
-                          onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleCardClick('tableau', pileIndex, cardIndex);
-                          }}
-                        />
-                      </div>
+                      />
                     </div>
                   )
                 })
