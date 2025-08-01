@@ -5,11 +5,11 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 const Confetti = () => {
   const confettiCount = 50;
@@ -38,23 +38,69 @@ interface VictoryDialogProps {
     moves: number;
     time: number;
     bestScore?: number;
+    bestTime?: number;
 }
 
-export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, bestScore }: VictoryDialogProps) {
+export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, bestScore, bestTime }: VictoryDialogProps) {
     if (!isOpen) return null;
 
-    const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);
+    const formatTime = (seconds: number) => {
+        if (seconds === Infinity || isNaN(seconds) || seconds === null) return "N/A";
+        const date = new Date(seconds * 1000);
+        const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+        const secs = date.getUTCSeconds().toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+    };
+
+    const isNewBestScore = bestScore !== undefined && score > bestScore;
+    const isNewBestTime = bestTime !== undefined && time < bestTime;
 
     return (
         <AlertDialog open={isOpen}>
             <AlertDialogContent data-testid="victory-dialog">
                 <Confetti />
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Congratulations! You Won!</AlertDialogTitle>
-                    <AlertDialogDescription className='space-y-2'>
-                        <div>Your final score is {score} in {moves} moves. Time: {formatTime(time)}.</div>
-                        {(bestScore ?? 0) > 0 && <div>Your best score is {bestScore}.</div>}
-                    </AlertDialogDescription>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Game Over</TableHead>
+                                <TableHead className="text-right">Result</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell>Time</TableCell>
+                                <TableCell className="text-right">{formatTime(time)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Moves</TableCell>
+                                <TableCell className="text-right">{moves}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Score</TableCell>
+                                <TableCell className="text-right">{score}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                    <Separator className="my-2" />
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Personal Best</TableHead>
+                                <TableHead className="text-right">Value</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                             <TableRow>
+                                <TableCell>High Score</TableCell>
+                                <TableCell className="text-right">{bestScore !== -Infinity ? bestScore : "N/A"}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Lowest Time</TableCell>
+                                <TableCell className="text-right">{formatTime(bestTime ?? Infinity)}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogAction onClick={onNewGame}>Play Again</AlertDialogAction>

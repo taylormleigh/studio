@@ -666,6 +666,7 @@ export default function GameBoard() {
         moves={gameState.moves}
         time={time}
         bestScore={stats[gameState.gameType]?.bestScore}
+        bestTime={stats[gameState.gameType]?.bestTime}
       />
 
       <SettingsDialog 
