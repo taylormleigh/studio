@@ -161,17 +161,18 @@ describe('Freecell Game Logic', () => {
         expect(getMovableCardCount(state)).toBe(4);
     });
 
-    it('should allow moving 5 cards with 4 empty freecells', () => {
+    it('should allow moving 5 cards with 4 empty freecells and no empty tableau pile', () => {
         state.freecells = [null, null, null, null];
+        //no empty tableau piles
+        for (let i = 1; i < 8; i++) {
+          state.tableau[i] = [{ suit: 'HEARTS', rank: '2', faceUp: true }];
+        }
         expect(getMovableCardCount(state)).toBe(5);
     });
 
     it('should allow moving 10 cards with 4 empty freecells and 1 empty tableau pile', () => {
         state.freecells = [null, null, null, null];
         state.tableau[0] = []; // One empty tableau pile
-        for (let i = 1; i < 8; i++) {
-          state.tableau[i] = [{ suit: 'HEARTS', rank: '2', faceUp: true }];
-        }
         // (1 + 4 empty freecells) * 2^(1 empty tableau pile) = 10
         expect(getMovableCardCount(state)).toBe(10);
     });
