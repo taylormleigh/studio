@@ -245,19 +245,19 @@ describe('Freecell Game Logic', () => {
   describe('Card Movement Simulation', () => {
   
     it('should correctly move a single card from tableau to an empty freecell', () => {
-      const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
-      const state: GameState = {
-        gameType: 'Freecell',
-        tableau: [
-            [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
-            [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
-            [], [], [], [], [], []
-        ],
-        foundation: [[], [], [], []],
-        freecells: [null, null, null, null],
-        moves: 0,
-        score: 0,
-      };
+        const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+        const state: GameState = {
+            gameType: 'Freecell',
+            tableau: [
+                [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
+                [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
+                [], [], [], [], [], []
+            ],
+            foundation: [[], [], [], []],
+            freecells: [null, null, null, null],
+            moves: 0,
+            score: 0,
+        };
       
       // Simulate the move
       const movedCard = state.tableau[0].pop();
@@ -312,10 +312,10 @@ describe('Freecell Game Logic', () => {
         
         const sourcePileIndex = 0;
         const destPileIndex = 1;
-        const sourceCardIndex = 1;
+        const sourceCardIndex = 1; // index of the '5 of Spades'
 
         const movableCount = getMovableCardCount(specificState, false);
-        expect(movableCount).toBe(5);
+        expect(movableCount).toBe(5); // (1+4) * 2^0 = 5
         const destCard = last(specificState.tableau[destPileIndex]);
 
         if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard) && cardsToMove.length <= movableCount) {
@@ -360,8 +360,8 @@ describe('Freecell Game Logic', () => {
         expect(movableCount).toBe(1); // Only 1 card can be moved
         expect(cardsToMove.length).toBe(3); // Attempting to move 3 cards
         
-        const originalSourcePile = JSON.parse(JSON.stringify(specificState.tableau[sourcePileIndex]));
-        const originalDestPile = JSON.parse(JSON.stringify(specificState.tableau[destPileIndex]));
+        const originalSourcePileJSON = JSON.stringify(specificState.tableau[sourcePileIndex]);
+        const originalDestPileJSON = JSON.stringify(specificState.tableau[destPileIndex]);
     
         // This condition should be false, so the move doesn't happen
         if (isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], last(specificState.tableau[destPileIndex])) && cardsToMove.length <= movableCount) {
@@ -370,8 +370,8 @@ describe('Freecell Game Logic', () => {
         }
     
         // Assert that state remains unchanged
-        expect(specificState.tableau[sourcePileIndex]).toEqual(originalSourcePile);
-        expect(specificState.tableau[destPileIndex]).toEqual(originalDestPile);
+        expect(JSON.stringify(specificState.tableau[sourcePileIndex])).toEqual(originalSourcePileJSON);
+        expect(JSON.stringify(specificState.tableau[destPileIndex])).toEqual(originalDestPileJSON);
     });
 
   });
