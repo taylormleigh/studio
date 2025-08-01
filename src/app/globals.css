@@ -77,8 +77,9 @@ html, body, .font-body, .font-headline {
 
 .game-title {
   font-family: var(--title-font);
-  font-size: 2rem;
+  font-size: 2.2rem;
   line-height: 1rem;
+  letter-spacing: 0.1rem;
   font-weight: 900;
 }
 
@@ -105,8 +106,8 @@ html, body, .font-body, .font-headline {
 
 @media (min-width: 620px) {
   .game-title {
-      font-size: 3rem;
-      line-height: 2rem;
+      font-size: 3.5rem;
+      line-height: 1.3rem;
   }
 }
 
