@@ -11,7 +11,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "screenshot": "playwright test --spec=__tests__/screenshots.spec.ts"
+    "screenshot": "playwright test"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",

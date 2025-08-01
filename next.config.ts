@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  devIndicators: {
+    allowedDevOrigins: ['*.cloudworkstations.dev'],
+  },
 };
 
 const withPWAConfig = withPWA({
