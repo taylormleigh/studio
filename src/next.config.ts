@@ -25,10 +25,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withPWAConfig = withPWA({
+const pwaConfig = {
   dest: 'public',
   register: true,
   skipWaiting: true,
-});
+};
+
+// Ensure PWA is only enabled for production builds
+const withPWAConfig = withPWA(pwaConfig);
 
 export default process.env.NODE_ENV === 'development' ? nextConfig : withPWAConfig(nextConfig);
