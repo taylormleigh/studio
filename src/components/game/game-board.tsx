@@ -123,7 +123,7 @@ export default function GameBoard() {
     if (isClient) {
       handleNewGame();
     }
-  }, [isClient, handleNewGame]);
+  }, [isClient, handleNewGame, settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
 
   // Effect to automatically clear the highlighted pile after a short delay.
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function GameBoard() {
     }
     
     // If the game is won, update the application state accordingly.
-    if (gameWon) {
+    if (gameWon && !isWon) {
         setIsRunning(false);
         setIsWon(true);
         updateStats({
@@ -178,7 +178,7 @@ export default function GameBoard() {
         return { ...state, score: finalScore };
     }
     return state;
-  }, [time, updateStats]);
+  }, [time, updateStats, isWon]);
 
   /**
    * Main function to update the game state.
@@ -187,44 +187,39 @@ export default function GameBoard() {
    * @param newState The new state or a function that returns the new state.
    * @param saveHistory Whether to save the previous state to the undo history.
    */
-  const updateState = useCallback((newState: GameState | ((prevState: GameState) => GameState), saveHistory = true) => {
+  const updateState = useCallback((newStateFn: (prevState: GameState) => GameState, saveHistory = true) => {
     setGameState(prev => {
         if (!prev) return null;
         
-        // Save the current state to history before updating.
         if (saveHistory) {
             setHistory(h => [prev, ...h].slice(0, UNDO_LIMIT));
         }
 
-        const nextStateRaw = typeof newState === 'function' ? newState(prev) : newState;
+        let nextState = newStateFn(prev);
 
         // Spider-specific logic: Check for completed sets after every move.
-        if (nextStateRaw.gameType === 'Spider') {
+        if (nextState.gameType === 'Spider') {
             let setsCompletedThisMove = 0;
-            (nextStateRaw as SpiderGameState).tableau.forEach((pile, index) => {
+            (nextState as SpiderGameState).tableau.forEach((pile, index) => {
                 const result = checkForSpiderCompletedSet(pile);
                 if(result.setsCompleted > 0 && result.completedSet) {
-                    // A set was completed. Move it to the foundation.
-                    (nextStateRaw as SpiderGameState).foundation.push(result.completedSet);
-                    (nextStateRaw as SpiderGameState).tableau[index] = result.updatedPile;
+                    (nextState as SpiderGameState).foundation.push(result.completedSet);
+                    (nextState as SpiderGameState).tableau[index] = result.updatedPile;
                     setsCompletedThisMove++;
-                    // Flip the new top card of the pile if it's face-down.
-                    if ((nextStateRaw as SpiderGameState).tableau[index].length > 0 && !(last((nextStateRaw as SpiderGameState).tableau[index])!.faceUp)) {
-                        last((nextStateRaw as SpiderGameState).tableau[index])!.faceUp = true;
+                    if ((nextState as SpiderGameState).tableau[index].length > 0 && !(last((nextState as SpiderGameState).tableau[index])!.faceUp)) {
+                        last((nextState as SpiderGameState).tableau[index])!.faceUp = true;
                     }
                 }
             });
             if (setsCompletedThisMove > 0) {
-                (nextStateRaw as SpiderGameState).completedSets += setsCompletedThisMove;
-                (nextStateRaw as SpiderGameState).score += (setsCompletedThisMove * 100);
+                (nextState as SpiderGameState).completedSets += setsCompletedThisMove;
+                (nextState as SpiderGameState).score += (setsCompletedThisMove * 100);
             }
         }
         
-        // After any state update, check if the game has been won.
-        const finalState = checkWinCondition(nextStateRaw);
-        return finalState;
+        return checkWinCondition(nextState);
     });
-  }, [checkWinCondition]);
+}, [checkWinCondition]);
 
   /**
    * Reverts the game to the previous state from the history stack.
@@ -244,7 +239,6 @@ export default function GameBoard() {
   const handleDraw = useCallback(() => {
     setSelectedCard(null);
     updateState(prev => {
-        if(!prev) return prev;
         const newGameState = JSON.parse(JSON.stringify(prev));
 
         // Solitaire draw logic
@@ -314,37 +308,34 @@ export default function GameBoard() {
     sourceCardIndex: number,
     destType: 'tableau' | 'foundation' | 'freecell',
     destPileIndex: number,
-  ) => {
+  ): boolean => {
     let moveMade = false;
      updateState(prev => {
-        if (!prev) return prev;
-        const newGameState = JSON.parse(JSON.stringify(prev));
+        if (!prev) {
+            moveMade = false;
+            return prev;
+        }
         
-        // --- Solitaire Move Logic ---
+        let newGameState = JSON.parse(JSON.stringify(prev));
+        let moveSuccessful = false;
+        
         if (newGameState.gameType === 'Solitaire' && (destType === 'tableau' || destType === 'foundation')) {
             let cardsToMove: CardType[];
-            
-            // Determine which card(s) are being moved.
             if (sourceType === 'waste') {
-                if (newGameState.waste.length === 0) return prev;
+                if (newGameState.waste.length === 0) { moveMade = false; return prev; }
                 cardsToMove = [newGameState.waste[newGameState.waste.length - 1]];
             } else if (sourceType === 'foundation') {
-                if (newGameState.foundation[sourcePileIndex].length === 0) return prev;
+                if (newGameState.foundation[sourcePileIndex].length === 0) { moveMade = false; return prev; }
                 cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
             } else { // 'tableau'
                 const sourcePile = newGameState.tableau[sourcePileIndex];
-                if (sourcePile.length === 0 || !sourcePile[sourceCardIndex]?.faceUp) {
-                  return prev; // Cannot move from an empty pile or a face-down card.
-                }
+                if (sourcePile.length === 0 || !sourcePile[sourceCardIndex]?.faceUp) { moveMade = false; return prev; }
                 cardsToMove = sourcePile.slice(sourceCardIndex);
             }
 
-            if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) return prev;
+            if (cardsToMove.length === 0 || !cardsToMove[0].faceUp) { moveMade = false; return prev; }
 
-            let moveSuccessful = false;
             const cardToMove = cardsToMove[0];
-
-            // Check if the move is valid based on the destination type.
             if (destType === 'tableau') {
                 const destPile = newGameState.tableau[destPileIndex];
                 const topDestCard = last(destPile);
@@ -353,7 +344,7 @@ export default function GameBoard() {
                     moveSuccessful = true;
                 }
             } else if (destType === 'foundation') {
-                if (cardsToMove.length === 1) { // Only single cards can move to foundation.
+                if (cardsToMove.length === 1) {
                     const destPile = newGameState.foundation[destPileIndex];
                     if (canMoveSolitaireToFoundation(cardToMove, destPile)) {
                         destPile.push(cardToMove);
@@ -363,61 +354,45 @@ export default function GameBoard() {
             }
 
             if (moveSuccessful) {
-                // Remove card(s) from the source pile.
-                if (sourceType === 'waste') {
-                    newGameState.waste.pop();
-                } else if (sourceType === 'foundation') {
-                    newGameState.foundation[sourcePileIndex].pop();
-                } else { // 'tableau'
+                if (sourceType === 'waste') newGameState.waste.pop();
+                else if (sourceType === 'foundation') newGameState.foundation[sourcePileIndex].pop();
+                else {
                     const sourcePile = newGameState.tableau[sourcePileIndex];
                     sourcePile.splice(sourceCardIndex);
-                    // Flip the new top card if it's face-down.
                     if (sourcePile.length > 0 && !last(sourcePile)!.faceUp) {
                         last(sourcePile)!.faceUp = true;
                     }
                 }
                 newGameState.moves++;
                 setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-                moveMade = true;
-                return newGameState;
             }
-            return prev; // Return original state if move was invalid.
         }
-
-        // --- Freecell Move Logic ---
-        if (newGameState.gameType === 'Freecell') {
+        else if (newGameState.gameType === 'Freecell') {
           let cardsToMove: CardType[];
-
-          // Determine the cards to move from the source.
-          if (sourceType === 'tableau') {
-            cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
-          } else if (sourceType === 'freecell') {
+          if (sourceType === 'tableau') cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
+          else if (sourceType === 'freecell') {
             const card = newGameState.freecells[sourcePileIndex];
-            if(!card) return prev;
+            if(!card) { moveMade = false; return prev; }
             cardsToMove = [card];
-          } else { // Cannot move from foundation
-            return prev;
-          }
+          } else { moveMade = false; return prev; }
 
-          if (cardsToMove.length === 0) return prev;
+          if (cardsToMove.length === 0) { moveMade = false; return prev; }
           const cardToMove = cardsToMove[0];
 
-          // Check if the stack to move is a valid run.
           if (!isFreecellRun(cardsToMove)) {
             toast({ variant: "destructive", title: "Invalid Move", description: "You can only move cards that are in sequence (descending rank, alternating colors)." });
+            moveMade = false;
             return prev;
           }
 
-          // Check if the number of cards being moved is allowed.
           const isDestinationEmpty = destType === 'tableau' && newGameState.tableau[destPileIndex].length === 0;
           const movableCount = getMovableCardCount(newGameState, isDestinationEmpty);
           if(cardsToMove.length > movableCount) {
             toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cardsToMove.length} cards. Only ${movableCount} are movable.` });
+            moveMade = false;
             return prev;
           }
 
-          let moveSuccessful = false;
-          // Check if the move is valid based on the destination type.
           if (destType === 'tableau') {
             const destPile = newGameState.tableau[destPileIndex];
             if (canMoveFreecellToTableau(cardToMove, last(destPile))) {
@@ -425,7 +400,7 @@ export default function GameBoard() {
               moveSuccessful = true;
             }
           } else if (destType === 'foundation') {
-            if(cardsToMove.length === 1) { // Only single cards to foundation.
+            if(cardsToMove.length === 1) {
                 const destPile = newGameState.foundation[destPileIndex];
                 if(canMoveFreecellToFoundation(cardToMove, destPile)) {
                     destPile.push(cardToMove);
@@ -440,50 +415,31 @@ export default function GameBoard() {
           }
 
           if(moveSuccessful) {
-             // Remove card(s) from the source.
-             if (sourceType === 'tableau') {
-                newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
-              } else { // 'freecell'
-                newGameState.freecells[sourcePileIndex] = null;
-              }
-            newGameState.moves++;
-            setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-            moveMade = true;
-            return newGameState;
+             if (sourceType === 'tableau') newGameState.tableau[sourcePileIndex].splice(sourceCardIndex);
+             else newGameState.freecells[sourcePileIndex] = null;
+             newGameState.moves++;
+             setHighlightedPile({ type: destType, pileIndex: destPileIndex });
           }
-          return prev;
         }
-
-        // --- Spider Move Logic ---
-        if (newGameState.gameType === 'Spider' && sourceType === 'tableau' && destType === 'tableau') {
+        else if (newGameState.gameType === 'Spider' && sourceType === 'tableau' && destType === 'tableau') {
           const sourcePile = newGameState.tableau[sourcePileIndex];
           const cardsToMove = sourcePile.slice(sourceCardIndex);
-
-          if (cardsToMove.length === 0) return prev;
-
+          if (cardsToMove.length === 0) { moveMade = false; return prev; }
           const destPile = newGameState.tableau[destPileIndex];
           const destTopCard = last(destPile);
-          
           if (canMoveSpiderToTableau(cardsToMove, destTopCard)) {
-            // Perform the move.
             sourcePile.splice(sourceCardIndex);
             destPile.push(...cardsToMove);
-
-            // Flip the new top card if it's face-down.
-            if (sourcePile.length > 0 && !last(sourcePile)!.faceUp) {
-              last(sourcePile)!.faceUp = true;
-            }
-
+            if (sourcePile.length > 0 && !last(sourcePile)!.faceUp) last(sourcePile)!.faceUp = true;
             newGameState.moves++;
-            newGameState.score--; // Spider score decreases with moves.
+            newGameState.score--;
             setHighlightedPile({ type: destType, pileIndex: destPileIndex });
-            moveMade = true;
-            return newGameState;
+            moveSuccessful = true;
           }
         }
         
-        // If no logic matches, return the previous state.
-        return prev;
+        moveMade = moveSuccessful;
+        return moveSuccessful ? newGameState : prev;
      }, true);
      return moveMade;
   }, [updateState, toast]);
@@ -535,7 +491,7 @@ export default function GameBoard() {
           newGameState.tableau[pileIndex][cardIndex].faceUp = true;
           newGameState.moves++;
           return newGameState;
-        }, true);
+        });
         setSelectedCard(null); // Clear selection after flipping
         return; 
       }

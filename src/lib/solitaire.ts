@@ -135,9 +135,22 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
 
 
 /**
- * Re-exports the canMoveToFoundation logic from Freecell as it's identical.
+ * Checks if a card can be legally moved to a foundation pile.
+ * @param cardToMove The card being moved.
+ * @param foundationPile The destination foundation pile.
+ * @returns True if the move is valid, false otherwise.
  */
-export const canMoveToFoundation = canMoveToFoundationFreecell;
+export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
+  const topCard = last(foundationPile);
+  // An Ace can be moved to an empty foundation pile.
+  if (!topCard) {
+    return cardToMove.rank === 'A';
+  }
+  // Subsequent cards must be of the same suit and one rank higher.
+  const suitsMatch = cardToMove.suit === topCard.suit;
+  const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
+  return suitsMatch && ranksCorrect;
+}
 
 
 /**
