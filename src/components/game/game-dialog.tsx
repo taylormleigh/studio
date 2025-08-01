@@ -14,10 +14,10 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '../ui/separator';
+import { StatisticsTable } from './statistics-table';
 
 interface GameDialogProps {
   open: boolean;
@@ -50,13 +50,6 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
   }
 
   const selectedGameStats = stats[tempSettings.gameType] || emptyStats;
-
-  const formatTime = (seconds: number) => {
-    if (seconds === Infinity || isNaN(seconds)) return "N/A";
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,26 +129,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
 
         <Separator />
         
-        {/* Statistics Table */}
-        <div className="mt-4">
-            <h3 className="font-semibold mb-2">{tempSettings.gameType} Statistics</h3>
-            <Table>
-                <TableBody>
-                    <TableRow>
-                        <TableCell>Wins</TableCell>
-                        <TableCell className="text-right">{selectedGameStats.wins}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Best Score</TableCell>
-                        <TableCell className="text-right">{selectedGameStats.bestScore === -Infinity ? "N/A" : selectedGameStats.bestScore}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell>Best Time</TableCell>
-                        <TableCell className="text-right">{formatTime(selectedGameStats.bestTime)}</TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </div>
+        <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
 
         <DialogFooter className="sm:justify-between mt-4">
           <DialogClose asChild>
