@@ -1,5 +1,7 @@
 
 
+import { canMoveToFoundation as canMoveToFoundationFreecell } from './freecell';
+
 export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
 
@@ -133,21 +135,10 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
 
 
 /**
- * Checks if a card can be legally moved to a foundation pile.
- * @param cardToMove The card being moved.
- * @param topCard The top card of the destination foundation pile, or undefined if it's empty.
- * @returns True if the move is valid, false otherwise.
+ * Re-exports the canMoveToFoundation logic from Freecell as it's identical.
  */
-export function canMoveToFoundation(cardToMove: Card, topCard: Card | undefined): boolean {
-    // Can only move an Ace to an empty foundation pile.
-    if (!topCard) {
-        return cardToMove.rank === 'A';
-    }
-    // Subsequent cards must be of the same suit and the next rank up.
-    const suitsMatch = cardToMove.suit === topCard.suit;
-    const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
-    return suitsMatch && ranksCorrect;
-}
+export const canMoveToFoundation = canMoveToFoundationFreecell;
+
 
 /**
  * Checks if the game has been won (all cards are in the foundation piles).

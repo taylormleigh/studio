@@ -264,8 +264,7 @@ export default function GameBoard() {
             } else if (destType === 'foundation') {
                 if (cardsToMove.length === 1) { // Only single cards can move to foundation.
                     const destPile = newGameState.foundation[destPileIndex];
-                    const topDestCard = last(destPile);
-                    if (canMoveSolitaireToFoundation(cardToMove, topDestCard)) {
+                    if (canMoveSolitaireToFoundation(cardToMove, destPile)) {
                         destPile.push(cardToMove);
                         moveSuccessful = true;
                     }
@@ -526,7 +525,7 @@ export default function GameBoard() {
             if (!cardToMove) return false;
             // 1. Try to move to foundation
             for (let i = 0; i < gs.foundation.length; i++) {
-                if (canMoveSolitaireToFoundation(cardToMove, last(gs.foundation[i]))) {
+                if (canMoveSolitaireToFoundation(cardToMove, gs.foundation[i])) {
                     moveCards('waste', 0, gs.waste.length - 1, 'foundation', i);
                     return true;
                 }
@@ -549,7 +548,7 @@ export default function GameBoard() {
             if (cardIndex === sourcePile.length - 1) { 
                 // 1. Try to move to foundation
                 for (let i = 0; i < gs.foundation.length; i++) {
-                    if (canMoveSolitaireToFoundation(clickedCard, last(gs.foundation[i]))) {
+                    if (canMoveSolitaireToFoundation(clickedCard, gs.foundation[i])) {
                         moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
                         return true;
                     }

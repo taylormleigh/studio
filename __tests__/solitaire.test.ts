@@ -50,30 +50,30 @@ describe('Solitaire Game Logic', () => {
   describe('canMoveToFoundation', () => {
     it('should allow moving an Ace to an empty foundation pile', () => {
       const ace: Card = { suit: 'HEARTS', rank: 'A', faceUp: true };
-      expect(canMoveToFoundation(ace, undefined)).toBe(true);
+      expect(canMoveToFoundation(ace, [])).toBe(true);
     });
 
     it('should not allow moving a non-Ace to an empty foundation pile', () => {
       const two: Card = { suit: 'HEARTS', rank: '2', faceUp: true };
-      expect(canMoveToFoundation(two, undefined)).toBe(false);
+      expect(canMoveToFoundation(two, [])).toBe(false);
     });
 
     it('should allow moving a card of the same suit and one rank higher', () => {
       const twoOfHearts: Card = { suit: 'HEARTS', rank: '2', faceUp: true };
       const aceOfHearts: Card = { suit: 'HEARTS', rank: 'A', faceUp: true };
-      expect(canMoveToFoundation(twoOfHearts, aceOfHearts)).toBe(true);
+      expect(canMoveToFoundation(twoOfHearts, [aceOfHearts])).toBe(true);
     });
 
     it('should not allow moving a card of a different suit', () => {
       const twoOfSpades: Card = { suit: 'SPADES', rank: '2', faceUp: true };
       const aceOfHearts: Card = { suit: 'HEARTS', rank: 'A', faceUp: true };
-      expect(canMoveToFoundation(twoOfSpades, aceOfHearts)).toBe(false);
+      expect(canMoveToFoundation(twoOfSpades, [aceOfHearts])).toBe(false);
     });
 
     it('should not allow moving a card of a non-sequential rank', () => {
       const threeOfHearts: Card = { suit: 'HEARTS', rank: '3', faceUp: true };
       const aceOfHearts: Card = { suit: 'HEARTS', rank: 'A', faceUp: true };
-      expect(canMoveToFoundation(threeOfHearts, aceOfHearts)).toBe(false);
+      expect(canMoveToFoundation(threeOfHearts, [aceOfHearts])).toBe(false);
     });
   });
 
@@ -209,7 +209,7 @@ describe('Solitaire Game Logic', () => {
         const card = last(sourcePile)!;
         
         let destPileIndex = state.foundation.findIndex(destPile => 
-            canMoveToFoundation(card, last(destPile)) &&
+            canMoveToFoundation(card, destPile) &&
             // This is the key check: the destination must be empty OR match the card's suit
             (destPile.length === 0 || last(destPile)!.suit === card.suit)
         );
@@ -236,7 +236,7 @@ describe('Solitaire Game Logic', () => {
       const card = last(sourcePile)!;
       
       const destPileIndex = state.foundation.findIndex(destPile => 
-        canMoveToFoundation(card, last(destPile)) &&
+        canMoveToFoundation(card, destPile) &&
         (destPile.length === 0 || last(destPile)!.suit === card.suit)
       );
 
@@ -268,7 +268,7 @@ describe('Solitaire Game Logic', () => {
         const card = last(sourcePile)!;
         
         const foundationDestIndex = state.foundation.findIndex(destPile => 
-            canMoveToFoundation(card, last(destPile)) &&
+            canMoveToFoundation(card, destPile) &&
             (destPile.length === 0 || last(destPile)!.suit === card.suit)
         );
 
