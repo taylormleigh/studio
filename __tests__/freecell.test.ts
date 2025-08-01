@@ -172,12 +172,15 @@ describe('Freecell Game Logic', () => {
     
     it('should allow moving 10 cards with 4 empty freecells and 1 empty tableau', () => {
         state.freecells = [null, null, null, null];
+        // Ensure all other piles are NOT empty before setting one to empty
+        state.tableau = state.tableau.map((p, i) => i !== 0 ? [{ suit: 'HEARTS', rank: '2', faceUp: true }] : []);
         state.tableau[0] = []; // One empty tableau pile
         expect(getMovableCardCount(state)).toBe(10);
     });
 
     it('should allow moving 20 cards with 4 empty freecells and 2 empty tableaus', () => {
         state.freecells = [null, null, null, null];
+        state.tableau = state.tableau.map(p => [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
         state.tableau[0] = [];
         state.tableau[1] = [];
         expect(getMovableCardCount(state)).toBe(20);
@@ -185,6 +188,7 @@ describe('Freecell Game Logic', () => {
 
     it('should calculate correctly with a mix of empty cells and piles', () => {
       state.freecells = [null, null, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }]; // 2 empty cells
+      state.tableau = state.tableau.map(p => [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
       state.tableau[0] = [];
       state.tableau[1] = []; // 2 empty piles
       // (1 + 2) * 2^2 = 3 * 4 = 12
@@ -200,9 +204,15 @@ describe('Freecell Game Logic', () => {
     });
   
     it('should correctly move a single card from tableau to an empty freecell', () => {
+      // Setup: ensure tableau pile 0 has a card
+      if (state.tableau[0].length === 0) {
+        state.tableau[0].push({ suit: 'HEARTS', rank: 'K', faceUp: true });
+      }
       const cardToMove = last(state.tableau[0])!;
-      state.freecells[0] = cardToMove;
+      
+      // Simulate move
       state.tableau[0].pop();
+      state.freecells[0] = cardToMove;
 
       expect(state.freecells[0]).toEqual(cardToMove);
       expect(state.tableau[0].length).toBe(6);
@@ -225,24 +235,28 @@ describe('Freecell Game Logic', () => {
 
     it('should move a valid stack of cards between tableau piles', () => {
         // Setup a valid stack to move
-        state.tableau[0] = [
+        const cardsToMove: Card[] = [
           { suit: 'SPADES', rank: '5', faceUp: true },
           { suit: 'HEARTS', rank: '4', faceUp: true },
+        ];
+        state.tableau[0] = [
+            ...state.tableau[0],
+            ...cardsToMove
         ];
         // Setup a valid destination
         state.tableau[1] = [{ suit: 'CLUBS', rank: '6', faceUp: true }];
         // Ensure enough movable card capacity
         state.freecells = [null, null, null, null]; // Allows moving up to 5 cards
 
-        const cardsToMove = state.tableau[0];
+        const sourceCardIndex = state.tableau[0].length - cardsToMove.length;
         const destCard = last(state.tableau[1]);
 
         if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard) && cardsToMove.length <= getMovableCardCount(state)) {
-            const moved = state.tableau[0].splice(0);
+            const moved = state.tableau[0].splice(sourceCardIndex);
             state.tableau[1].push(...moved);
         }
 
-        expect(state.tableau[0].length).toBe(0);
+        expect(state.tableau[0].length).toBe(7); // It started with 7
         expect(state.tableau[1].length).toBe(3);
         expect(last(state.tableau[1])!.rank).toBe('4');
     });
@@ -261,6 +275,8 @@ describe('Freecell Game Logic', () => {
       state.freecells[1] = { suit: 'DIAMONDS', rank: 'Q', faceUp: true };
       state.freecells[2] = { suit: 'DIAMONDS', rank: 'J', faceUp: true };
       state.freecells[3] = { suit: 'DIAMONDS', rank: '10', faceUp: true };
+      // Ensure no empty tableau piles
+      state.tableau = state.tableau.map(p => p.length > 0 ? p : [{suit: 'SPADES', rank: 'A', faceUp: true}])
 
       const movableCount = getMovableCardCount(state);
       const stackSize = state.tableau[0].length;
