@@ -4,7 +4,7 @@ import type { Suit } from '@/lib/solitaire';
 
 export const SuitIcon = ({ suit, className }: { suit: Suit, className?: string }) => {
     const isRed = suit === 'HEARTS' || suit === 'DIAMONDS';
-    const colorClass = isRed ? 'text-[#dc2626]' : 'text-card-foreground';
+    const colorClass = isRed ? 'text-[#ff5555]' : 'text-[#000000]';
   
     const icons = {
       SPADES: '♠',

@@ -53,7 +53,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   }
 
   const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
-  const suitColorClass = isRed ? 'text-[#dc2626]' : 'text-card-foreground';
+  const suitColorClass = isRed ? 'text-[#ff5555]' : 'text-[#000000]';
 
   return (
     <div
