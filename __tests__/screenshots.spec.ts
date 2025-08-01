@@ -84,7 +84,7 @@ test.describe('App Screenshot Tests', () => {
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByTestId('game-title').click();
-        await expect(page.getByRole('dialog')).toBeVisible();
+        await expect(page.getByTestId('game-dialog')).toBeVisible();
         await page.waitForTimeout(500); // Allow dialog animation to complete
         const device = getDeviceName(testInfo);
         await page.screenshot({ path: `test-results/${device}-gamedialog-${theme}-${colorMode}.png`, fullPage: true });
@@ -95,7 +95,7 @@ test.describe('App Screenshot Tests', () => {
         await applySettings(page, theme, colorMode, game);
         await interactWithGame(page, game);
         await page.getByLabel('Settings').click();
-        await expect(page.getByRole('dialog')).toBeVisible();
+        await expect(page.getByTestId('settings-dialog')).toBeVisible();
         await page.waitForTimeout(500); // Allow dialog animation to complete
         const device = getDeviceName(testInfo);
         await page.screenshot({ path: `test-results/${device}-settingsdialog-${theme}-${colorMode}.png`, fullPage: true });
@@ -128,7 +128,6 @@ test.describe('App Screenshot Tests', () => {
                 moves: 50,
             }));
         });
-
         await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
         await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
@@ -146,7 +145,7 @@ test.describe('App Screenshot Tests', () => {
             const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
-                tableau: [[], [], [], [{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], []],
+                tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
                 foundation: [
                     ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
                     ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
@@ -161,7 +160,7 @@ test.describe('App Screenshot Tests', () => {
         
         await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
-        await page.getByTestId('tableau-pile-3').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
         await page.getByTestId('foundation-pile-2').click();
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();

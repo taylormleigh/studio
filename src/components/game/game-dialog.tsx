@@ -53,7 +53,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]" data-testid="game-dialog">
         <DialogHeader>
             <DialogTitle className="text-xs">
               a deck of cards
