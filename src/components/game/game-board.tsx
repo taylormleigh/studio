@@ -285,6 +285,7 @@ export default function GameBoard() {
             } else if (!isModKey) {
                 switch (e.key) {
                     case 'Enter':
+                    case 'ArrowRight':
                         handleDraw();
                         break;
                     case 'Backspace':
@@ -333,7 +334,7 @@ export default function GameBoard() {
                 cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
             } else { // 'tableau'
                 const sourcePile = newGameState.tableau[sourcePileIndex];
-                if (!sourcePile[sourceCardIndex]?.faceUp) {
+                if (sourcePile.length === 0 || !sourcePile[sourceCardIndex]?.faceUp) {
                   return prev; // Cannot move from an empty pile or a face-down card.
                 }
                 cardsToMove = sourcePile.slice(sourceCardIndex);
