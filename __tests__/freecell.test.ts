@@ -141,14 +141,27 @@ describe('Freecell Game Logic', () => {
             { suit: 'CLUBS', rank: 'A', faceUp: true },
             { suit: 'SPADES', rank: 'A', faceUp: true },
         ];
-        state.tableau = state.tableau.map(p => p.length > 0 ? p : [{ suit: 'HEARTS', rank: '2', faceUp: true }]); // Ensure no empty tableau
+        // Ensure no empty tableau piles for this specific test
+        state.tableau = state.tableau.map(p => p.length > 0 ? p : [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
         expect(getMovableCardCount(state)).toBe(1);
     });
 
     it('should allow moving 2 cards with 1 empty freecell', () => {
-        state.freecells[0] = null;
+        state.freecells = [null, { suit: 'DIAMONDS', rank: 'A', faceUp: true }, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }];
         state.tableau = state.tableau.map(p => p.length > 0 ? p : [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
         expect(getMovableCardCount(state)).toBe(2);
+    });
+    
+    it('should allow moving 3 cards with 2 empty freecells', () => {
+        state.freecells = [null, null, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }];
+        state.tableau = state.tableau.map(p => p.length > 0 ? p : [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
+        expect(getMovableCardCount(state)).toBe(3);
+    });
+
+    it('should allow moving 4 cards with 3 empty freecells', () => {
+        state.freecells = [null, null, null, { suit: 'SPADES', rank: 'A', faceUp: true }];
+        state.tableau = state.tableau.map(p => p.length > 0 ? p : [{ suit: 'HEARTS', rank: '2', faceUp: true }]);
+        expect(getMovableCardCount(state)).toBe(4);
     });
 
     it('should allow moving 5 cards with 4 empty freecells', () => {
@@ -168,6 +181,14 @@ describe('Freecell Game Logic', () => {
         state.tableau[0] = [];
         state.tableau[1] = [];
         expect(getMovableCardCount(state)).toBe(20);
+    });
+
+    it('should calculate correctly with a mix of empty cells and piles', () => {
+      state.freecells = [null, null, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }]; // 2 empty cells
+      state.tableau[0] = [];
+      state.tableau[1] = []; // 2 empty piles
+      // (1 + 2) * 2^2 = 3 * 4 = 12
+      expect(getMovableCardCount(state)).toBe(12);
     });
   });
 
@@ -216,7 +237,7 @@ describe('Freecell Game Logic', () => {
         const cardsToMove = state.tableau[0];
         const destCard = last(state.tableau[1]);
 
-        if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard)) {
+        if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard) && cardsToMove.length <= getMovableCardCount(state)) {
             const moved = state.tableau[0].splice(0);
             state.tableau[1].push(...moved);
         }
@@ -258,3 +279,5 @@ describe('Freecell Game Logic', () => {
 
   });
 });
+
+    
