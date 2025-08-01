@@ -226,10 +226,10 @@ export default function GameBoard() {
   ) => {
      updateState(prev => {
         if (!prev) return prev;
-
+        const newGameState = JSON.parse(JSON.stringify(prev));
+        
         // --- Solitaire Move Logic ---
-        if (prev.gameType === 'Solitaire' && (destType === 'tableau' || destType === 'foundation')) {
-            const newGameState = JSON.parse(JSON.stringify(prev)) as SolitaireGameState;
+        if (newGameState.gameType === 'Solitaire' && (destType === 'tableau' || destType === 'foundation')) {
             let cardsToMove: CardType[];
             
             // Determine which card(s) are being moved.
@@ -294,39 +294,42 @@ export default function GameBoard() {
         }
 
         // --- Freecell Move Logic ---
-        if (prev.gameType === 'Freecell') {
-          const newGameState = JSON.parse(JSON.stringify(prev)) as FreecellGameState;
-          let cardToMove: CardType;
+        if (newGameState.gameType === 'Freecell') {
           let cardsToMove: CardType[];
 
-          // Check if the number of cards being moved is allowed.
-          const movableCount = getMovableCardCount(newGameState);
-          const movingCount = sourceType === 'tableau' ? newGameState.tableau[sourcePileIndex].length - sourceCardIndex : 1;
-          if(movingCount > movableCount) {
-            toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${movingCount} cards, only ${movableCount} are movable.` });
-            return prev;
-          }
-
-          // Determine which card(s) are being moved.
+          // Determine the cards to move from the source.
           if (sourceType === 'tableau') {
             cardsToMove = newGameState.tableau[sourcePileIndex].slice(sourceCardIndex);
-            cardToMove = cardsToMove[0];
           } else if (sourceType === 'freecell') {
             const card = newGameState.freecells[sourcePileIndex];
             if(!card) return prev;
-            cardToMove = card;
             cardsToMove = [card];
-          } else {
+          } else { // Cannot move from foundation
             return prev;
           }
-          if(!cardToMove) return prev;
+
+          if (cardsToMove.length === 0) return prev;
+          const cardToMove = cardsToMove[0];
+
+          // Check if the stack to move is a valid run.
+          if (!isFreecellRun(cardsToMove)) {
+            toast({ variant: "destructive", title: "Invalid Move", description: "You can only move cards that are in sequence (descending rank, alternating colors)." });
+            return prev;
+          }
+
+          // Check if the number of cards being moved is allowed.
+          const isDestinationEmpty = destType === 'tableau' && newGameState.tableau[destPileIndex].length === 0;
+          const movableCount = getMovableCardCount(newGameState, isDestinationEmpty);
+          if(cardsToMove.length > movableCount) {
+            toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cardsToMove.length} cards. Only ${movableCount} are movable.` });
+            return prev;
+          }
 
           let moveSuccessful = false;
           // Check if the move is valid based on the destination type.
           if (destType === 'tableau') {
             const destPile = newGameState.tableau[destPileIndex];
-            const destTopCard = last(destPile);
-            if (canMoveFreecellToTableau(cardToMove, destTopCard)) {
+            if (canMoveFreecellToTableau(cardToMove, last(destPile))) {
               destPile.push(...cardsToMove);
               moveSuccessful = true;
             }
@@ -361,8 +364,7 @@ export default function GameBoard() {
         }
 
         // --- Spider Move Logic ---
-        if (prev.gameType === 'Spider' && sourceType === 'tableau' && destType === 'tableau') {
-          const newGameState = JSON.parse(JSON.stringify(prev)) as SpiderGameState;
+        if (newGameState.gameType === 'Spider' && sourceType === 'tableau' && destType === 'tableau') {
           const sourcePile = newGameState.tableau[sourcePileIndex];
           const cardsToMove = sourcePile.slice(sourceCardIndex);
 
@@ -504,8 +506,12 @@ export default function GameBoard() {
   
     // If a card is already selected, this click is an attempt to move it.
     if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as any, pileIndex);
-      setSelectedCard(null); // Clear selection after the move attempt.
+      // If clicking the same card/pile again, deselect it.
+      if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
+          setSelectedCard(null);
+      } else {
+        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as any, pileIndex);
+      }
       return;
     }
   
@@ -513,15 +519,13 @@ export default function GameBoard() {
     if (settings.autoMove) {
       let cardsToMove: CardType[] | undefined;
       let cardToMove: CardType | undefined;
-      let sourcePile;
       
       // Determine the card(s) to be auto-moved based on source
       if (sourceType === 'waste' && gameState.gameType === 'Solitaire') {
-          sourcePile = (gameState as SolitaireGameState).waste;
-          cardToMove = last(sourcePile);
+          cardToMove = last((gameState as SolitaireGameState).waste);
           if (cardToMove) cardsToMove = [cardToMove];
       } else if (sourceType === 'tableau') {
-          sourcePile = gameState.tableau[pileIndex];
+          const sourcePile = gameState.tableau[pileIndex];
           cardToMove = sourcePile?.[cardIndex];
           if (cardToMove?.faceUp) {
             cardsToMove = sourcePile.slice(cardIndex);
@@ -532,55 +536,50 @@ export default function GameBoard() {
       }
 
       if (cardsToMove && cardToMove && cardsToMove.length > 0) {
-        const canMoveToFoundation = gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell'
-          ? canMoveSolitaireToFoundation // Solitaire and Freecell share foundation logic
-          : () => false;
-
-        const canMoveToTableau = gameState.gameType === 'Solitaire'
-          ? canMoveSolitaireToTableau
-          : gameState.gameType === 'Freecell'
-          ? canMoveFreecellToTableau
-          : gameState.gameType === 'Spider'
-          ? (c: CardType, d: CardType | undefined) => canMoveSpiderToTableau([c], d)
-          : () => false;
-        
-        const isRun = gameState.gameType === 'Solitaire'
-          ? isSolitaireRun
-          : gameState.gameType === 'Freecell'
-          ? isFreecellRun
-          : () => true; // Spider run is checked in its canMove
-          
-        // Auto-move Priority 1: Foundation
-        if (cardsToMove.length === 1) { // Only single cards can go to foundation
-          for (let i = 0; i < gameState.foundation.length; i++) {
-            if (canMoveToFoundation(cardToMove, gameState.foundation[i])) {
-              moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
-              return;
+        // Shared foundation move check for Solitaire and Freecell
+        if (cardsToMove.length === 1 && (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell')) {
+            for (let i = 0; i < gameState.foundation.length; i++) {
+                if (canMoveSolitaireToFoundation(cardToMove, gameState.foundation[i])) {
+                    moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
+                    return;
+                }
             }
-          }
         }
         
-        // Auto-move Priority 2: Tableau
-        if (sourceType !== 'foundation' && isRun(cardsToMove)) {
-            for (let i = 0; i < gameState.tableau.length; i++) {
-                if (sourceType === 'tableau' && i === pileIndex) continue;
-                if (canMoveToTableau(cardToMove, last(gameState.tableau[i]))) {
-                    moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
-                    return;
+        // Auto-move to Tableau
+        if (sourceType !== 'foundation') { // Can't auto-move from foundation
+            const isRunCheck = gameState.gameType === 'Solitaire' ? isSolitaireRun : isFreecellRun;
+            const canMoveToTableauCheck = gameState.gameType === 'Solitaire'
+              ? canMoveSolitaireToTableau
+              : gameState.gameType === 'Freecell'
+              ? canMoveFreecellToTableau
+              : (c: CardType[], d: CardType | undefined) => canMoveSpiderToTableau(c, d);
+
+            if (isRunCheck(cardsToMove as CardType[])) {
+                 for (let i = 0; i < gameState.tableau.length; i++) {
+                    if (sourceType === 'tableau' && i === pileIndex) continue;
+                    
+                    const canMoveArgs: any = gameState.gameType === 'Spider' 
+                      ? [cardsToMove, last(gameState.tableau[i])]
+                      : [cardToMove, last(gameState.tableau[i])];
+
+                    if ((canMoveToTableauCheck as Function)(...canMoveArgs)) {
+                        moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
+                        return;
+                    }
                 }
             }
         }
       }
     }
     
-    // Default manual selection (if no auto-move occurred or is disabled)
-    const clickedCard = (sourceType === 'waste' && gameState.gameType === 'Solitaire')
-      ? last((gameState as SolitaireGameState).waste)
-      : (sourceType === 'tableau')
-      ? gameState.tableau[pileIndex]?.[cardIndex]
-      : (sourceType === 'freecell' && gameState.gameType === 'Freecell')
-      ? (gameState as FreecellGameState).freecells[pileIndex]
-      : undefined;
+    // If no auto-move was made, or if auto-move is disabled, set the selection.
+    const clickedCard = 
+        (sourceType === 'waste' && gameState.gameType === 'Solitaire') ? last((gameState as SolitaireGameState).waste) :
+        (sourceType === 'tableau') ? gameState.tableau[pileIndex]?.[cardIndex] :
+        (sourceType === 'foundation' && (gameState.gameType === 'Solitaire')) ? last(gameState.foundation[pileIndex]) :
+        (sourceType === 'freecell' && gameState.gameType === 'Freecell') ? (gameState as FreecellGameState).freecells[pileIndex] :
+        undefined;
 
     if (clickedCard && (clickedCard as CardType).faceUp) {
       setSelectedCard({ type: sourceType, pileIndex, cardIndex });
@@ -630,7 +629,6 @@ export default function GameBoard() {
     handleDragStart,
     handleDrop,
     handleDraw,
-    moveCards,
   };
 
   return (
@@ -643,7 +641,7 @@ export default function GameBoard() {
         canUndo={history.length > 0}
       />
       <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
-        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
+        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} moveCards={moveCards} />}
         {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>

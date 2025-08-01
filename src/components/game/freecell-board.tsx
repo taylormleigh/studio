@@ -1,10 +1,11 @@
 
 "use client";
 
-import { DragEvent } from 'react';
-import { GameState as FreecellGameState, getMovableCardCount } from '@/lib/freecell';
+import { DragEvent, useMemo } from 'react';
+import type { GameState as FreecellGameState } from '@/lib/freecell';
+import { getMovableCardCount, isRun } from '@/lib/freecell';
 import { Card } from './card';
-import { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 
 interface FreecellBoardProps {
@@ -14,44 +15,66 @@ interface FreecellBoardProps {
   handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
-  moveCards: (sourceType: 'tableau' | 'freecell' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'freecell' | 'foundation', destPileIndex: number) => void;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, moveCards 
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
   const handleFreecellClick = (pileIndex: number) => {
-    if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'freecell', pileIndex);
-    } else if (gameState.freecells[pileIndex]) {
       handleCardClick('freecell', pileIndex, 0);
-    }
   };
 
   const handleFoundationClick = (pileIndex: number) => {
-    if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'foundation', pileIndex);
-    } else if (gameState.foundation[pileIndex].length > 0) {
-      handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
-    }
+    handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
   };
 
-  const handleTableauClick = (pileIndex: number) => {
-    if (selectedCard) {
-      if (selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex) {
-        // Deselect if clicking the same pile
-      } else {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-      }
-    }
+  const handleTableauClick = (pileIndex: number, cardIndex: number) => {
+      handleCardClick('tableau', pileIndex, cardIndex);
   };
   
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
+
+  const DraggableCard = ({pile, pileIndex, cardIndex}: {pile: any[], pileIndex: number, cardIndex: number}) => {
+    const card = pile[cardIndex];
+    const isTopCard = cardIndex === pile.length - 1;
+    
+    // Determine how many cards can be moved from this position.
+    const stackToTest = pile.slice(cardIndex);
+    const isValidRun = isRun(stackToTest);
+    const maxMovable = getMovableCardCount(gameState, false);
+    
+    // A stack is draggable if it's a valid run and its length is within the movable limit.
+    const isDraggable = isValidRun && stackToTest.length <= maxMovable;
+    
+    return (
+        <div 
+          key={`${card.suit}-${card.rank}-${cardIndex}`} 
+          className="absolute w-full"
+          style={{
+            transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 22 : 24)}px)`,
+            zIndex: cardIndex
+          }}
+        >
+            <Card
+              card={card}
+              isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
+              isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
+              draggable={isDraggable}
+              isStacked={!isTopCard}
+              onDragStart={(e) => isDraggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+              onClick={(e) => {
+                  e.stopPropagation();
+                  handleTableauClick(pileIndex, cardIndex);
+              }}
+            />
+        </div>
+    )
+  }
 
   const FreecellPiles = () => (
     <div className="col-span-4 grid grid-cols-4 gap-x-0">
@@ -91,8 +114,7 @@ export default function FreecellBoard({
             card={pile[pile.length - 1]} 
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
-            draggable={pile.length > 0}
-            onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+            draggable={false} // Cannot drag from foundation
           />
         </div>
       ))}
@@ -104,13 +126,13 @@ export default function FreecellBoard({
        <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
           {settings.leftHandMode ? (
             <>
-              <FreecellPiles />
               <FoundationPiles />
+              <FreecellPiles />
             </>
           ) : (
             <>
-              <FoundationPiles />
               <FreecellPiles />
+              <FoundationPiles />
             </>
           )}
       </div>
@@ -122,45 +144,18 @@ export default function FreecellBoard({
             className="relative"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-            onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+            onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >
-            <div className="absolute top-0 left-0 w-full h-full">
-              {pile.length === 0 ? (
+            {pile.length === 0 ? (
                 <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
-                pile.map((card, cardIndex) => {
-                  const isTopCard = cardIndex === pile.length - 1;
-                  const movableCards = getMovableCardCount(gameState);
-                  const canDrag = pile.length - cardIndex <= movableCards;
-
-                  return(
-                    <div 
-                      key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                      className="absolute w-full"
-                    >
-                       <div className="relative w-full h-5 sm:h-6"
-                          style={{
-                            transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 22 : 24)}px)`
-                          }}
-                       >
-                        <Card
-                          card={card}
-                          isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
-                          isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                          draggable={canDrag}
-                          isStacked={!isTopCard}
-                          onDragStart={(e) => canDrag && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleCardClick('tableau', pileIndex, cardIndex);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+                <div className="relative w-full h-full">
+                 {pile.map((_, cardIndex) => (
+                    <DraggableCard key={cardIndex} pile={pile} pileIndex={pileIndex} cardIndex={cardIndex} />
+                 ))}
+                </div>
+              )
+            }
           </div>
         ))}
       </div>

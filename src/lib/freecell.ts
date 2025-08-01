@@ -110,12 +110,13 @@ export function isRun(cards: Card[]): boolean {
  * @param isDestinationEmpty If true, the destination tableau pile is empty, which reduces the multiplier.
  * @returns The maximum number of cards that can be moved in a single stack.
  */
-export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean = false): number {
+export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean): number {
     const emptyFreecells = state.freecells.filter(c => c === null).length;
     let emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
 
     // If moving to an empty tableau pile, that destination pile doesn't contribute
     // to the number of empty piles that multiply the movable count.
+    // The pile you are moving TO is not counted as an empty space.
     if (isDestinationEmpty && emptyTableauPiles > 0) {
         emptyTableauPiles--;
     }
