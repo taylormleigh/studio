@@ -29,13 +29,13 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 - **Progressive Web App (PWA):** Installable on your mobile device for a native-like experience.
 
 ## Style Guide
-###Title Font: Lazarus Oz Syndfri
+### Title Font: Lazarus Oz Syndfri
 A playful, handwritten-style font for the main game title, giving the app a unique and friendly personality.
 
-## Body Font: Google Sans Code
+### Body Font: Google Sans Code
 A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
 
-## Icons: [Lucida](https://lucide.dev/)
+### Icons: [Lucida](https://lucide.dev/)
 Specific icons atypical to UI conventions used because damnit I need at least a *little* bit of whimsy in an app
 
 ## Screenshots
