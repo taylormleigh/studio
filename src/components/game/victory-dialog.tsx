@@ -44,8 +44,8 @@ interface VictoryDialogProps {
 export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, bestScore, bestTime }: VictoryDialogProps) {
     if (!isOpen) return null;
 
-    const formatTime = (seconds: number) => {
-        if (seconds === Infinity || isNaN(seconds) || seconds === null) return "N/A";
+    const formatTime = (seconds?: number) => {
+        if (seconds === undefined || seconds === Infinity || isNaN(seconds)) return "N/A";
         const date = new Date(seconds * 1000);
         const minutes = date.getUTCMinutes().toString().padStart(2, '0');
         const secs = date.getUTCSeconds().toString().padStart(2, '0');
@@ -97,7 +97,7 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                             </TableRow>
                             <TableRow>
                                 <TableCell>Lowest Time</TableCell>
-                                <TableCell className="text-right">{formatTime(bestTime ?? Infinity)}</TableCell>
+                                <TableCell className="text-right">{formatTime(bestTime)}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>

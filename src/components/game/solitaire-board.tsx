@@ -30,14 +30,8 @@ export default function SolitaireBoard({
     }
   };
   
-  const handleTableauClick = (pileIndex: number) => {
-    if (selectedCard) {
-      if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex) {
-        // Deselect if clicking same pile
-      } else {
-        moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'tableau', pileIndex);
-      }
-    }
+  const handleTableauClick = (pileIndex: number, cardIndex: number) => {
+    handleCardClick('tableau', pileIndex, cardIndex);
   };
 
   const handleDragOver = (e: DragEvent) => {
@@ -135,11 +129,11 @@ export default function SolitaireBoard({
             className="relative"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-            onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+            onClick={() => handleTableauClick(pileIndex, 0)}
           >
             <div className="absolute top-0 left-0 w-full h-full">
               {pile.length === 0 ? (
-                <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
+                <Card data-testid={`tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
