@@ -1,4 +1,3 @@
-<br/><img width="100%" alt="Screenshot 2025-07-31 at 7 56 07 AM" src="https://github.com/user-attachments/assets/7074ac43-b4ea-4079-8673-af9fd8d4e7af" />
 
 ### a deck of cards
 ## simple, ad free, offline-friendly game for mobile and browser
@@ -12,9 +11,7 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
   - [Bugs](#bugs)
   - [Future Features](#future-features)
 
-<p align="center">
-    <img src="public/favicon.svg" width="64" height="64" alt="appicon" />
-</p>
+<br/><img width="100%" alt="Screenshot 2025-07-31 at 7 56 07 AM" src="https://github.com/user-attachments/assets/7074ac43-b4ea-4079-8673-af9fd8d4e7af" />
 
 <br/>
 ## Screenshots
@@ -57,3 +54,8 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 - [ ] Implement an extended Undo feature to revert more than 15 moves.
 - [ ] Implement a "reset" button (doesn't start a new game; restarts the current game)
 - [ ] PWA
+
+<br/>
+<p align="center">
+    <img src="public/favicon.svg" width="64" height="64" alt="appicon" />
+</p>
