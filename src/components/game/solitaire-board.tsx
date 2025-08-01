@@ -2,7 +2,7 @@
 "use client";
 
 import { DragEvent } from 'react';
-import { GameState as SolitaireGameState, isRun as isSolitaireRun } from '@/lib/solitaire';
+import { GameState as SolitaireGameState, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
@@ -55,7 +55,7 @@ export default function SolitaireBoard({
           <div data-testid="waste-pile">
             {gameState.waste.length > 0 ? (
               <Card 
-                card={gameState.waste[gameState.waste.length - 1]} 
+                card={last(gameState.waste)} 
                 isSelected={selectedCard?.type === 'waste'}
                 draggable={true}
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
@@ -69,7 +69,7 @@ export default function SolitaireBoard({
           <div data-testid="waste-pile">
             {gameState.waste.length > 0 ? (
               <Card 
-                card={gameState.waste[gameState.waste.length - 1]} 
+                card={last(gameState.waste)} 
                 isSelected={selectedCard?.type === 'waste'}
                 draggable={true}
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
@@ -97,7 +97,7 @@ export default function SolitaireBoard({
           onClick={() => handleFoundationClick(i)}
         >
           <Card 
-            card={pile.length > 0 ? pile[pile.length - 1] : undefined}
+            card={last(pile)}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             draggable={pile.length > 0}
             onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
