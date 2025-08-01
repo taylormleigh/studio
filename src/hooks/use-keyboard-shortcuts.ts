@@ -21,6 +21,9 @@ export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onOpenSettings
             } else if (isModKey && e.key.toLowerCase() === 's') {
                 e.preventDefault();
                 onOpenSettings();
+            } else if (isModKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                onUndo();
             } else if (!isModKey) {
                 switch (e.key) {
                     case 'Enter':
