@@ -5,8 +5,7 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 
 - [Core Features](#core-features)
 - [Screenshots](#screenshots)
-  - [Browser](#browser)
-  - [Mobile](#mobile)
+- [Style Guide](#style-guide)
 - [To-Do List](#to-do-list)
   - [Bugs](#bugs)
   - [Future Features](#future-features)
@@ -38,6 +37,13 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 <img height="400" alt="Screenshot 2025-07-31 at 8 00 21 AM" src="https://github.com/user-attachments/assets/75770426-735e-43b0-82ea-ffeff07334aa" />
 <br/><img height="400" alt="Screenshot 2025-07-31 at 8 00 03 AM" src="https://github.com/user-attachments/assets/9a8ae30d-9e09-4dc9-9eee-645a8cdfff0d" />
 <img height="400" alt="Screenshot 2025-07-31 at 8 00 46 AM" src="https://github.com/user-attachments/assets/5ff00e92-13fa-447f-afc9-8a1c70262d3e" />
+
+<br/>
+
+## Style Guide
+The application's visual identity is defined by its typography, which is designed to be clean, readable, and have a unique character.
+- **Title Font:** The main game titles are rendered using **`PresentationFont`** (specifically, *Lazarus Oz Syndfri*), a stylized font that adds a touch of personality and uniqueness to the game's header.
+- **Body Font:** The primary font for all other text, including card ranks, buttons, and descriptions, is **`Google Sans Code`**. This monospaced font was chosen for its excellent readability and modern, clean aesthetic, which aligns with the app's minimalist design.
 
 <br/>
 # To-Do List
