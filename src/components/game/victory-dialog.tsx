@@ -93,7 +93,7 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                         <TableBody>
                              <TableRow>
                                 <TableCell>High Score</TableCell>
-                                <TableCell className="text-right">{bestScore !== -Infinity ? bestScore : "N/A"}</TableCell>
+                                <TableCell className="text-right">{bestScore === undefined || bestScore === -Infinity ? "N/A" : bestScore}</TableCell>
                             </TableRow>
                             <TableRow>
                                 <TableCell>Lowest Time</TableCell>
