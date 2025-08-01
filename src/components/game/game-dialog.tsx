@@ -15,10 +15,9 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '../ui/separator';
 
 interface GameDialogProps {
   open: boolean;
@@ -38,19 +37,11 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
   const [tempSettings, setTempSettings] = useState(settings);
 
   // When the dialog opens, sync temp state with global state.
-  // Also, when the global settings change (e.g. from the settings dialog),
-  // reflect that change here.
   useEffect(() => {
-    setTempSettings(settings);
-  }, [settings, open]);
-
-
-  const handleOpenChange = (isOpen: boolean) => {
-    onOpenChange(isOpen);
-    if (isOpen) {
-      setTempSettings(settings); // Reset temp settings when dialog opens
+    if (open) {
+      setTempSettings(settings);
     }
-  };
+  }, [open, settings]);
 
   const handleNewGameClick = () => {
     setSettings(tempSettings); // Apply settings
@@ -58,7 +49,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
     onOpenChange(false); // Close dialog
   }
 
-  const gameStats = stats[tempSettings.gameType] || emptyStats;
+  const selectedGameStats = stats[tempSettings.gameType] || emptyStats;
 
   const formatTime = (seconds: number) => {
     if (seconds === Infinity || isNaN(seconds)) return "N/A";
@@ -67,134 +58,106 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const StatsTab = () => (
-    <>
-      <DialogHeader>
-          <DialogTitle>{tempSettings.gameType} Statistics</DialogTitle>
-          <DialogDescription>
-            Your performance for the selected game type.
-          </DialogDescription>
-      </DialogHeader>
-      <div className="mt-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Statistic</TableHead>
-              <TableHead className="text-right">Value</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell>Wins</TableCell>
-              <TableCell className="text-right">{gameStats.wins}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Best Score</TableCell>
-              <TableCell className="text-right">{gameStats.bestScore === -Infinity ? "N/A" : gameStats.bestScore}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Best Time</TableCell>
-              <TableCell className="text-right">{formatTime(gameStats.bestTime)}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    </>
-  );
-
-  const OptionsTab = () => (
-     <div className="grid gap-6 py-4">
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-            <DialogTitle>Game Options</DialogTitle>
+            <DialogTitle>Games</DialogTitle>
             <DialogDescription>
-                Selecting a different game or changing the rules will start a new game.
+                Select a game to see statistics or change the rules for a new game.
             </DialogDescription>
         </DialogHeader>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="game-type" className="text-right">
-              Game
-            </Label>
-            <Select
-              value={tempSettings.gameType}
-              onValueChange={(value) => setTempSettings(s => ({...s, gameType: value as GameType}))}
+
+        <div className="grid gap-4 py-4">
+            {/* Game Selection */}
+            <RadioGroup
+                value={tempSettings.gameType}
+                onValueChange={(value) => setTempSettings(s => ({...s, gameType: value as GameType}))}
+                className="grid grid-cols-3 gap-2"
             >
-              <SelectTrigger id="game-type" className="col-span-3">
-                <SelectValue placeholder="Select a game" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Solitaire">Solitaire</SelectItem>
-                <SelectItem value="Freecell">Freecell</SelectItem>
-                <SelectItem value="Spider">Spider</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                <Label htmlFor="solitaire" className={`flex flex-col items-center justify-center rounded-md border-2 p-3 cursor-pointer ${tempSettings.gameType === 'Solitaire' ? 'border-primary' : ''}`}>
+                    <RadioGroupItem value="Solitaire" id="solitaire" className="sr-only" />
+                    Solitaire
+                </Label>
+                 <Label htmlFor="freecell" className={`flex flex-col items-center justify-center rounded-md border-2 p-3 cursor-pointer ${tempSettings.gameType === 'Freecell' ? 'border-primary' : ''}`}>
+                    <RadioGroupItem value="Freecell" id="freecell" className="sr-only" />
+                    Freecell
+                </Label>
+                 <Label htmlFor="spider" className={`flex flex-col items-center justify-center rounded-md border-2 p-3 cursor-pointer ${tempSettings.gameType === 'Spider' ? 'border-primary' : ''}`}>
+                    <RadioGroupItem value="Spider" id="spider" className="sr-only" />
+                    Spider
+                </Label>
+            </RadioGroup>
 
-          {tempSettings.gameType === 'Solitaire' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="draw-count" className="text-right">
-                Draw
-              </Label>
-              <RadioGroup
-                id="draw-count"
-                value={String(tempSettings.solitaireDrawCount)}
-                onValueChange={(value) => setTempSettings(s => ({...s, solitaireDrawCount: Number(value) as SolitaireDrawType}))}
-                className="col-span-3 flex items-center gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1" id="draw-1" />
-                  <Label htmlFor="draw-1">one</Label>
+            {/* Conditional Game Options */}
+            {tempSettings.gameType === 'Solitaire' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Draw</Label>
+                    <RadioGroup
+                        value={String(tempSettings.solitaireDrawCount)}
+                        onValueChange={(value) => setTempSettings(s => ({...s, solitaireDrawCount: Number(value) as SolitaireDrawType}))}
+                        className="col-span-3 flex items-center gap-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1" id="draw-1" />
+                            <Label htmlFor="draw-1">One</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="3" id="draw-3" disabled />
+                            <Label htmlFor="draw-3" className="text-muted-foreground">Three</Label>
+                        </div>
+                    </RadioGroup>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="3" id="draw-3" disabled />
-                  <Label htmlFor="draw-3" className="text-muted-foreground">three</Label>
+            )}
+            {tempSettings.gameType === 'Spider' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Suits</Label>
+                    <RadioGroup
+                        value={String(tempSettings.spiderSuits)}
+                        onValueChange={(value) => setTempSettings(s => ({...s, spiderSuits: Number(value) as SpiderSuitCount}))}
+                        className="col-span-3 flex items-center gap-4"
+                    >
+                         <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1" id="suits-1" />
+                            <Label htmlFor="suits-1">One</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="2" id="suits-2" />
+                            <Label htmlFor="suits-2">Two</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="4" id="suits-4" />
+                            <Label htmlFor="suits-4">Four</Label>
+                        </div>
+                    </RadioGroup>
                 </div>
-              </RadioGroup>
-            </div>
-          )}
-
-          {tempSettings.gameType === 'Spider' && (
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="spider-suits" className="text-right">Suits</Label>
-                <RadioGroup
-                  id="spider-suits"
-                  value={String(tempSettings.spiderSuits)}
-                  onValueChange={(value) => setTempSettings(s => ({...s, spiderSuits: Number(value) as SpiderSuitCount}))}
-                  className="col-span-3 flex items-center gap-4"
-                >
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="1" id="suits-1" />
-                        <Label htmlFor="suits-1">one</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="2" id="suits-2" />
-                        <Label htmlFor="suits-2">two</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="4" id="suits-4" />
-                        <Label htmlFor="suits-4">four</Label>
-                    </div>
-                </RadioGroup>
-             </div>
-          )}
+            )}
         </div>
-  );
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <Tabs defaultValue="stats" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="stats">Stats</TabsTrigger>
-                <TabsTrigger value="options">Options</TabsTrigger>
-            </TabsList>
-            <TabsContent value="stats">
-                <StatsTab />
-            </TabsContent>
-            <TabsContent value="options">
-                <OptionsTab />
-            </TabsContent>
-        </Tabs>
-        <DialogFooter className="sm:justify-between">
+        <Separator />
+        
+        {/* Statistics Table */}
+        <div className="mt-4">
+            <h3 className="font-semibold mb-2">{tempSettings.gameType} Statistics</h3>
+            <Table>
+                <TableBody>
+                    <TableRow>
+                        <TableCell>Wins</TableCell>
+                        <TableCell className="text-right">{selectedGameStats.wins}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell>Best Score</TableCell>
+                        <TableCell className="text-right">{selectedGameStats.bestScore === -Infinity ? "N/A" : selectedGameStats.bestScore}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell>Best Time</TableCell>
+                        <TableCell className="text-right">{formatTime(selectedGameStats.bestTime)}</TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </div>
+
+        <DialogFooter className="sm:justify-between mt-4">
           <DialogClose asChild>
             <Button variant="outline">Close</Button>
           </DialogClose>
