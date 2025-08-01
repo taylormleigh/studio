@@ -46,9 +46,10 @@ test.describe('App Screenshot Tests', () => {
     test.describe(`${game} Game`, () => {
       for (const theme of themes) {
         for (const colorMode of colorModes) {
-          const testTitlePrefix = `${game} - ${theme} - ${colorMode}`;
+          const testTitlePrefix = `${game}-${theme}-${colorMode}`;
 
           test(`${testTitlePrefix}: Main Game Screen`, async ({ page }) => {
+            await page.goto('/');
             await applySettings(page, theme, colorMode, game);
             await interactWithGame(page, game);
             await expect(page.getByTestId('game-board')).toBeVisible();
@@ -56,6 +57,7 @@ test.describe('App Screenshot Tests', () => {
           });
 
           test(`${testTitlePrefix}: Game Dialog`, async ({ page }) => {
+            await page.goto('/');
             await applySettings(page, theme, colorMode, game);
             await interactWithGame(page, game);
             await page.getByTestId('game-title').click();
@@ -65,6 +67,7 @@ test.describe('App Screenshot Tests', () => {
           });
 
           test(`${testTitlePrefix}: Settings Dialog`, async ({ page }) => {
+            await page.goto('/');
             await applySettings(page, theme, colorMode, game);
             await interactWithGame(page, game);
             await page.getByLabel('Settings').click();
