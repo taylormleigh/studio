@@ -6,7 +6,8 @@ test.describe('App Screenshot Tests', () => {
     await page.goto('/');
     // Wait for the game to be initialized before taking a screenshot
     await expect(page.getByTestId('tableau-piles')).toBeVisible();
-    await page.screenshot({ path: `test-results/screenshot-main-${page.viewport()?.width}x${page.viewport()?.height}.png`, fullPage: true });
+    const viewport = page.viewportSize();
+    await page.screenshot({ path: `test-results/screenshot-main-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
   });
 
   test('Game Dialog Screen', async ({ page }) => {
@@ -19,7 +20,8 @@ test.describe('App Screenshot Tests', () => {
     // Wait for the dialog to be visible
     await expect(page.getByRole('dialog')).toBeVisible();
     
-    await page.screenshot({ path: `test-results/screenshot-game-dialog-${page.viewport()?.width}x${page.viewport()?.height}.png`, fullPage: true });
+    const viewport = page.viewportSize();
+    await page.screenshot({ path: `test-results/screenshot-game-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
   });
 
   test('Settings Dialog Screen', async ({ page }) => {
@@ -32,7 +34,8 @@ test.describe('App Screenshot Tests', () => {
     // Wait for the dialog to be visible
     await expect(page.getByRole('dialog')).toBeVisible();
     
-    await page.screenshot({ path: `test-results/screenshot-settings-dialog-${page.viewport()?.width}x${page.viewport()?.height}.png`, fullPage: true });
+    const viewport = page.viewportSize();
+    await page.screenshot({ path: `test-results/screenshot-settings-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
   });
 
   test('Victory Dialog Screen', async ({ page, browserName }) => {
