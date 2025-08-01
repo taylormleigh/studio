@@ -86,27 +86,27 @@ export default function GameBoard() {
     const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
     if (debugStateJSON) {
         try {
-            newState = JSON.parse(debugStateJSON);
-            localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
+            const parsedDebugState = JSON.parse(debugStateJSON);
+            // Only use debug state if it matches the current game type setting
+            if (parsedDebugState.gameType === settings.gameType) {
+              newState = parsedDebugState;
+              localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
+            } else {
+              // If game types mismatch, ignore debug state and initialize normally
+              if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+              else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+              else newState = createSpiderInitialState(settings.spiderSuits);
+            }
         } catch (e) {
             console.error("Failed to parse debug state:", e);
-            // Fallback to normal initialization
-            if (settings.gameType === 'Solitaire') {
-              newState = createSolitaireInitialState(settings.solitaireDrawCount);
-            } else if (settings.gameType === 'Freecell') { 
-              newState = createFreecellInitialState();
-            } else { // Spider
-              newState = createSpiderInitialState(settings.spiderSuits);
-            }
+            if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+            else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+            else newState = createSpiderInitialState(settings.spiderSuits);
         }
     } else {
-        if (settings.gameType === 'Solitaire') {
-          newState = createSolitaireInitialState(settings.solitaireDrawCount);
-        } else if (settings.gameType === 'Freecell') { 
-          newState = createFreecellInitialState();
-        } else { // Spider
-          newState = createSpiderInitialState(settings.spiderSuits);
-        }
+        if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+        else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+        else newState = createSpiderInitialState(settings.spiderSuits);
     }
 
     setGameState(newState);

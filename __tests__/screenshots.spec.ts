@@ -181,15 +181,15 @@ test.describe('App Screenshot Tests', () => {
             );
 
             // Create the final set on the tableau, one move away from completion
-            const finalSetRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q']; // Ace to Queen
-            const AlmostCompletePile = finalSetRanks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })).reverse();
-            const KingToComplete = { suit: 'SPADES', rank: 'K', faceUp: true };
+            const finalSetRanks = ['K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']; 
+            const AlmostCompletePile = finalSetRanks.map(rank => ({ suit: 'SPADES', rank, faceUp: true }));
+            const AceToComplete = { suit: 'SPADES', rank: 'A', faceUp: true };
 
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Spider',
                 tableau: [
-                    AlmostCompletePile,       // Pile with A-Q of Spades
-                    [KingToComplete],         // Pile with K of Spades
+                    AlmostCompletePile,       // Pile with K-2 of Spades
+                    [AceToComplete],         // Pile with A of Spades
                     [], [], [], [], [], [], [], []
                 ],
                 foundation: completedFoundation,
@@ -205,8 +205,8 @@ test.describe('App Screenshot Tests', () => {
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
 
         // Move the Ace from the almost complete pile onto the King
-        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').first().click();
         await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000);
