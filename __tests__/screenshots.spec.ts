@@ -1,11 +1,12 @@
 
 import { test, expect, Page, TestInfo } from '@playwright/test';
 
-type Theme = 'light' | 'dark';
-type ColorMode = 'color' | 'greyscale';
-type GameType = 'Solitaire' | 'Freecell' | 'Spider';
+// type Theme = 'light' | 'dark';
+// type ColorMode = 'color' | 'greyscale';
+// type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 
 // Helper function to set the theme and color mode via localStorage
+const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const applySettings = async (page: Page, theme: Theme, colorMode: ColorMode, gameType: GameType) => {
   await page.evaluate(({ theme, colorMode, gameType }) => {
     const settings = {
@@ -107,7 +108,6 @@ test.describe('App Screenshot Tests', () => {
   test.describe('Victory Screens', () => {
     const theme: Theme = 'light';
     const colorMode: ColorMode = 'color';
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
     test('Solitaire Victory', async ({ page }, testInfo) => {
         await page.goto('/');
@@ -326,7 +326,6 @@ test.describe('App Screenshot Tests', () => {
     test('Solitaire Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
@@ -357,7 +356,6 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
                 tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
@@ -387,7 +385,6 @@ test.describe('App Screenshot Tests', () => {
     test('Spider Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
             
             // Create 7 completed sets (7 * 13 = 91 cards)
