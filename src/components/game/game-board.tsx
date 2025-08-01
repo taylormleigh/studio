@@ -20,6 +20,7 @@ import { StatsDialog } from './stats-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
 
 type GameState = SolitaireGameState | FreecellGameState | SpiderGameState;
@@ -270,42 +271,12 @@ export default function GameBoard() {
     });
   }, [updateState, toast]);
 
-    // Effect to add and remove keyboard shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Check for modifier keys (Cmd on Mac, Ctrl on others)
-            const isModKey = e.metaKey || e.ctrlKey;
-
-            if (isModKey && e.key.toLowerCase() === 'n') {
-                e.preventDefault();
-                handleNewGame();
-            } else if (isModKey && e.key.toLowerCase() === 's') {
-                e.preventDefault();
-                setIsSettingsOpen(true);
-            } else if (!isModKey) {
-                switch (e.key) {
-                    case 'Enter':
-                    case 'ArrowRight':
-                        handleDraw();
-                        break;
-                    case 'Backspace':
-                    case 'Delete':
-                    case 'ArrowLeft':
-                        handleUndo();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [handleNewGame, handleUndo, handleDraw]);
-
+  useKeyboardShortcuts({
+    onNewGame: handleNewGame,
+    onUndo: handleUndo,
+    onDraw: handleDraw,
+    onOpenSettings: () => setIsSettingsOpen(true)
+  });
 
   /**
    * Handles the logic for moving cards between different piles and areas.
