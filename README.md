@@ -5,7 +5,6 @@
 Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 <br/>A deck of cards is a web-based classic card game suite built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic that is specifically optimized for e-ink displays. Google Firebase used to develop. No trackers, no database, no ads, just a deck of cards to play games with on your phone.
 
-##
 - [Core Features](#core-features)
 - [Screenshots](#screenshots)
 - [Style Guide](#style-guide)
