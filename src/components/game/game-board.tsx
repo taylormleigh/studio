@@ -75,12 +75,55 @@ export default function GameBoard() {
     setIsClient(true);
   }, []);
   
+  
+  /**
+   * Starts a new game based on the current settings.
+   * Resets all game-related state variables.
+   */
+  const handleNewGame = useCallback(() => {
+    let newState: GameState;
+    // Check for a debug state in localStorage for testing purposes.
+    const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
+    if (debugStateJSON) {
+        try {
+            newState = JSON.parse(debugStateJSON);
+            localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
+        } catch (e) {
+            console.error("Failed to parse debug state:", e);
+            // Fallback to normal initialization
+            if (settings.gameType === 'Solitaire') {
+              newState = createSolitaireInitialState(settings.solitaireDrawCount);
+            } else if (settings.gameType === 'Freecell') { 
+              newState = createFreecellInitialState();
+            } else { // Spider
+              newState = createSpiderInitialState(settings.spiderSuits);
+            }
+        }
+    } else {
+        if (settings.gameType === 'Solitaire') {
+          newState = createSolitaireInitialState(settings.solitaireDrawCount);
+        } else if (settings.gameType === 'Freecell') { 
+          newState = createFreecellInitialState();
+        } else { // Spider
+          newState = createSpiderInitialState(settings.spiderSuits);
+        }
+    }
+
+    setGameState(newState);
+    setHistory([]);
+    setTime(0);
+    setIsRunning(true);
+    setIsWon(false);
+    setSelectedCard(null);
+  }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
+  
+  
   // Effect to initialize a new game once the client has mounted, and when settings change.
   useEffect(() => {
     if (isClient) {
       handleNewGame();
     }
-  }, [isClient, settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
+  }, [isClient, handleNewGame]);
 
   // Effect to automatically clear the highlighted pile after a short delay.
   useEffect(() => {
@@ -182,47 +225,6 @@ export default function GameBoard() {
         return finalState;
     });
   }, [checkWinCondition]);
-
-  /**
-   * Starts a new game based on the current settings.
-   * Resets all game-related state variables.
-   */
-  const handleNewGame = useCallback(() => {
-    let newState: GameState;
-    // Check for a debug state in localStorage for testing purposes.
-    const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
-    if (debugStateJSON) {
-        try {
-            newState = JSON.parse(debugStateJSON);
-            localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
-        } catch (e) {
-            console.error("Failed to parse debug state:", e);
-            // Fallback to normal initialization
-            if (settings.gameType === 'Solitaire') {
-              newState = createSolitaireInitialState(settings.solitaireDrawCount);
-            } else if (settings.gameType === 'Freecell') { 
-              newState = createFreecellInitialState();
-            } else { // Spider
-              newState = createSpiderInitialState(settings.spiderSuits);
-            }
-        }
-    } else {
-        if (settings.gameType === 'Solitaire') {
-          newState = createSolitaireInitialState(settings.solitaireDrawCount);
-        } else if (settings.gameType === 'Freecell') { 
-          newState = createFreecellInitialState();
-        } else { // Spider
-          newState = createSpiderInitialState(settings.spiderSuits);
-        }
-    }
-
-    setGameState(newState);
-    setHistory([]);
-    setTime(0);
-    setIsRunning(true);
-    setIsWon(false);
-    setSelectedCard(null);
-  }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
 
   /**
    * Reverts the game to the previous state from the history stack.
