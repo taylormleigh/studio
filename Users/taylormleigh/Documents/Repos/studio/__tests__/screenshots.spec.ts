@@ -107,11 +107,11 @@ test.describe('App Screenshot Tests', () => {
   test.describe('Victory Screens', () => {
     const theme: Theme = 'light';
     const colorMode: ColorMode = 'color';
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
     test('Solitaire Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
@@ -142,6 +142,7 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
                 tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
@@ -171,6 +172,7 @@ test.describe('App Screenshot Tests', () => {
     test('Spider Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
             
             // Create 7 completed sets (7 * 13 = 91 cards)
