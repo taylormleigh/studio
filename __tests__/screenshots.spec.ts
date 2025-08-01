@@ -116,9 +116,9 @@ test.describe('App Screenshot Tests', () => {
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
                 foundation: [
-                    ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
-                    ranks.slice(0, 13).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
                     ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
                 ],
                 stock: [],
@@ -147,10 +147,10 @@ test.describe('App Screenshot Tests', () => {
                 gameType: 'Freecell',
                 tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
                 foundation: [
-                    ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
                     ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
-                    ranks.slice(0, 13).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
                 ],
                 freecells: [null, null, null, null],
                 moves: 51,
@@ -177,7 +177,7 @@ test.describe('App Screenshot Tests', () => {
             
             // Create 7 completed sets (7 * 13 = 91 cards)
             const completedFoundation = Array.from({length: 7}, (_, i) => 
-                ranks.map(rank => ({ suit: suits[i % 4], rank, faceUp: true })).reverse()
+                ranks.map(rank => ({ suit: suits[i % 4], rank, faceUp: true }))
             );
 
             // Create the final set on the tableau, one move away from completion
