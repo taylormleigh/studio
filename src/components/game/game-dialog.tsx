@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStats, GameStats } from '@/hooks/use-stats';
 import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,14 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
   const { stats } = useStats();
   const { settings, setSettings } = useSettings();
   const [tempSettings, setTempSettings] = useState(settings);
+
+  // When the dialog opens, sync temp state with global state.
+  // Also, when the global settings change (e.g. from the settings dialog),
+  // reflect that change here.
+  useEffect(() => {
+    setTempSettings(settings);
+  }, [settings, open]);
+
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);

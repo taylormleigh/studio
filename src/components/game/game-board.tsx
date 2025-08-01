@@ -74,13 +74,13 @@ export default function GameBoard() {
     setIsClient(true);
   }, []);
   
-  // Effect to initialize a new game once the client has mounted.
+  // Effect to initialize a new game once the client has mounted, and when settings change.
   useEffect(() => {
     if (isClient) {
       handleNewGame();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient]);
+  }, [isClient, settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
 
   // Effect to automatically clear the highlighted pile after a short delay.
   useEffect(() => {
