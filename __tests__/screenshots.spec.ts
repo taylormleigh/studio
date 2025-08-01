@@ -188,7 +188,7 @@ test.describe('App Screenshot Tests', () => {
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Spider',
                 tableau: [
-                    AlmostCompletePile,       // Pile with K-2 of Spades
+                    AlmostCompletePile,      // Pile with K-2 of Spades
                     [AceToComplete],         // Pile with A of Spades
                     [], [], [], [], [], [], [], []
                 ],
