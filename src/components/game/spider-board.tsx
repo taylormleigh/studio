@@ -36,7 +36,7 @@ export default function SpiderBoard({
 
   const StockPile = () => (
     <div onClick={handleDraw} className="cursor-pointer" data-testid="stock-pile">
-      <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} />
+      <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
     </div>
   );
 
@@ -44,7 +44,10 @@ export default function SpiderBoard({
     <div className="col-span-8 grid grid-cols-8 gap-x-0" data-testid="foundation-piles">
      {Array.from({ length: 8 }).map((_, i) => (
        <div key={`foundation-${i}`} data-testid={`foundation-pile-${i}`}>
-         <Card card={gameState.foundation[i] ? gameState.foundation[i][gameState.foundation[i].length -1] : undefined} />
+         <Card 
+            card={gameState.foundation[i] ? gameState.foundation[i][gameState.foundation[i].length -1] : undefined}
+            data-testid={gameState.foundation[i] ? `card-${gameState.foundation[i][0].suit}-K` : `card-foundation-empty-${i}`}
+          />
        </div>
      ))}
    </div>
@@ -79,7 +82,7 @@ export default function SpiderBoard({
           >
             <div className="absolute top-0 left-0 w-full h-full">
               {pile.length === 0 ? (
-                <Card data-testid={`tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
+                <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;

@@ -90,7 +90,7 @@ export default function FreecellBoard({
         >
           <Card 
             card={card || undefined} 
-            data-testid={card ? `card-${card.suit}-${card.rank}` : `freecell-empty-${i}`}
+            data-testid={card ? `card-${card.suit}-${card.rank}` : `card-freecell-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
             draggable={!!card}
@@ -114,7 +114,7 @@ export default function FreecellBoard({
         >
           <Card 
             card={pile[pile.length - 1]} 
-            data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `foundation-empty-${i}`}
+            data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
             draggable={false} // Cannot drag from foundation
@@ -150,7 +150,7 @@ export default function FreecellBoard({
             onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >
             {pile.length === 0 ? (
-                <Card data-testid={`tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
+                <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 <div className="relative w-full h-full">
                  {pile.map((_, cardIndex) => (
