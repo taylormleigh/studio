@@ -123,7 +123,7 @@ export default function GameBoard() {
     if (isClient) {
       handleNewGame();
     }
-  }, [isClient, handleNewGame, settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
+  }, [isClient, handleNewGame]);
 
   // Effect to automatically clear the highlighted pile after a short delay.
   useEffect(() => {

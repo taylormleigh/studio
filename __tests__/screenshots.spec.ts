@@ -146,7 +146,7 @@ test.describe('App Screenshot Tests', () => {
             const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
-                tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
+                tableau: [[], [], [], [{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], []],
                 foundation: [
                     ranks.slice(0, 13).map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
                     ranks.slice(0, 13).map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
@@ -161,7 +161,7 @@ test.describe('App Screenshot Tests', () => {
         
         await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
-        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('tableau-pile-3').locator('[data-testid^="card-"]').last().click();
         await page.getByTestId('foundation-pile-2').click();
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
