@@ -26,6 +26,7 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
     - **Swipe Gestures:** On touch devices, swipe right to undo your last move.
 - **Game Statistics:** Tracks wins, best scores, and best times for each game.
 - **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser for your next visit. This app functions fully offline.
+- **Progressive Web App (PWA):** Installable on your mobile device for a native-like experience.
 
 ## Screenshots
 ### Browser
@@ -44,6 +45,10 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 <img width="200" src="https://github.com/user-attachments/assets/92b03e0b-f80d-45a9-8c3a-f45804aa5d8b" />
 
 
+## Style Guide
+- **Title Font:** "PresentationFont" - A playful, handwritten-style font for the main game title, giving the app a unique and friendly personality.
+- **Body Font:** "Google Sans Code" - A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
+
 ## Future Features
 ### More card games
 - [ ] Three-card draw for Solitaire.
@@ -61,5 +66,4 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 - [X] ~~Dark mode and light mode~~
 - [X] ~~Color mode and greyscale mode~~
 ### Other
-- [ ] PWA
-
+- [X] ~~PWA~~

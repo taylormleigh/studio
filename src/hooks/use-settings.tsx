@@ -43,10 +43,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const storedSettings = localStorage.getItem('deck-of-cards-settings');
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      
+      let initialSettings = {...defaultSettings};
+      if (isMobile) {
+        initialSettings.autoMove = true;
+      }
+      
       if (storedSettings) {
         const parsedSettings = JSON.parse(storedSettings);
-        setSettingsState(prev => ({...defaultSettings, ...parsedSettings}));
+        setSettingsState({...initialSettings, ...parsedSettings});
+      } else {
+        setSettingsState(initialSettings);
       }
+
     } catch (error) {
       console.error("Could not load settings from localStorage", error);
     }
