@@ -1,5 +1,5 @@
 
-import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck, getCardColor } from './solitaire';
+import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck, getCardColor, last } from './solitaire';
 
 export type { Card, Suit, Rank };
 
@@ -66,7 +66,7 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
  * @returns True if the move is valid, false otherwise.
  */
 export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
-  const topCard = foundationPile[foundationPile.length - 1];
+  const topCard = last(foundationPile);
   // An Ace can be moved to an empty foundation pile.
   if (!topCard) {
     return cardToMove.rank === 'A';
@@ -114,3 +114,5 @@ export function getMovableCardCount(state: GameState): number {
   // The formula for movable cards: (1 + number of empty freecells) * 2^(number of empty tableau piles).
   return (1 + emptyFreecells) * Math.pow(2, emptyTableauPiles);
 };
+
+    

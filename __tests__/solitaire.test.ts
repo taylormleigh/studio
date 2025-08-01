@@ -205,7 +205,7 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from waste to foundation via click (auto-move)', () => {
         const cardToMove: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
         state.waste = [cardToMove];
-        const spadeFoundationIndex = SUITS.indexOf('SPADES');
+        const spadeFoundationIndex = SUITS.findIndex(s => s === 'SPADES');
         state.foundation[spadeFoundationIndex] = [];
         
         const sourcePile = state.waste;
@@ -232,7 +232,7 @@ describe('Solitaire Game Logic', () => {
     it('should correctly move a card from tableau to foundation via click (auto-move)', () => {
       const aceOfSpades: Card = { suit: 'SPADES', rank: 'A', faceUp: true };
       state.tableau[0] = [aceOfSpades];
-      const spadeFoundationIndex = SUITS.indexOf('SPADES');
+      const spadeFoundationIndex = SUITS.findIndex(s => s === 'SPADES');
       state.foundation[spadeFoundationIndex] = [];
       
       const sourcePile = state.tableau[0];
@@ -264,7 +264,7 @@ describe('Solitaire Game Logic', () => {
         // A valid tableau destination for the Ace (if it were a King) - this setup is just to have a pile
         state.tableau[1] = [twoOfHearts];
         // Empty foundation for spades
-        const spadeFoundationIndex = SUITS.indexOf('SPADES');
+        const spadeFoundationIndex = SUITS.findIndex(s => s === 'SPADES');
         state.foundation[spadeFoundationIndex] = [];
       
         const sourcePile = state.tableau[0];
@@ -449,3 +449,5 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
+
+    
