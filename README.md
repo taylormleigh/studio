@@ -28,6 +28,16 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 - **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser for your next visit. This app functions fully offline.
 - **Progressive Web App (PWA):** Installable on your mobile device for a native-like experience.
 
+## Style Guide
+###Title Font: Lazarus Oz Syndfri
+A playful, handwritten-style font for the main game title, giving the app a unique and friendly personality.
+
+## Body Font: Google Sans Code
+A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
+
+## Icons: [Lucida](https://lucide.dev/)
+Specific icons atypical to UI conventions used because damnit I need at least a *little* bit of whimsy in an app
+
 ## Screenshots
 ### Browser
 <br/><img width="600" src="https://github.com/user-attachments/assets/cd7b260e-6b0b-43d1-af3b-98c175093d30" />
@@ -43,11 +53,6 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 <br/><img width="200" src="https://github.com/user-attachments/assets/8ee2511b-32ae-4ca2-b9d7-93846e626951" />
 <img width="200" src="https://github.com/user-attachments/assets/78e83afc-b6cb-4fd9-9391-1dfb6286abca" />
 <img width="200" src="https://github.com/user-attachments/assets/92b03e0b-f80d-45a9-8c3a-f45804aa5d8b" />
-
-
-## Style Guide
-- **Title Font:** "PresentationFont" - A playful, handwritten-style font for the main game title, giving the app a unique and friendly personality.
-- **Body Font:** "Google Sans Code" - A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
 
 ## Future Features
 ### More card games
