@@ -111,7 +111,6 @@ test.describe('App Screenshot Tests', () => {
 
     // Force a winnable state for Solitaire
     await page.evaluate(() => {
-        const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
         const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
         const winningState = {
             gameType: 'Solitaire',

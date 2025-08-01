@@ -80,7 +80,6 @@ export default function GameBoard() {
     if (isClient) {
       handleNewGame();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient, settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
 
   // Effect to automatically clear the highlighted pile after a short delay.
