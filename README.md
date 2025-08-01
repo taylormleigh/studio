@@ -1,6 +1,4 @@
-<p align="center">
-    <img src="public/favicon.svg" width="64" height="64" alt="appicon" />
-</p>
+<img src="public/favicon.svg" width="64" height="64" alt="appicon" />
 
 ### *a deck of cards*
 ## clean and simple card games for mobile and browser 
