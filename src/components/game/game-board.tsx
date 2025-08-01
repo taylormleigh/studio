@@ -517,56 +517,48 @@ export default function GameBoard() {
   
     // --- Centralized Auto-move logic for "Click to move" mode ---
     if (settings.autoMove) {
-      // --- Solitaire Auto-move ---
-      if (gameState.gameType === 'Solitaire') {
-        const cardToMove = sourceType === 'waste' ? last(gameState.waste) : gameState.tableau[pileIndex]?.[cardIndex];
+      if (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') {
+        const isSolitaire = gameState.gameType === 'Solitaire';
+        const isFreecell = gameState.gameType === 'Freecell';
+        
+        const g = gameState as SolitaireGameState | FreecellGameState;
+
+        const cardToMove = 
+          sourceType === 'waste' ? last((g as SolitaireGameState).waste) :
+          sourceType === 'freecell' ? (g as FreecellGameState).freecells[pileIndex] :
+          g.tableau[pileIndex]?.[cardIndex];
+
         if (cardToMove?.faceUp) {
-          // 1. Try to move to foundation
-          for (let i = 0; i < gameState.foundation.length; i++) {
-            if (canMoveSolitaireToFoundation(cardToMove, gameState.foundation[i])) {
+          // 1. Try to move to foundation (highest priority for single cards)
+          for (let i = 0; i < g.foundation.length; i++) {
+            const canMoveFn = isSolitaire ? canMoveSolitaireToFoundation : canMoveFreecellToFoundation;
+            if (canMoveFn(cardToMove, g.foundation[i])) {
               moveCards(sourceType, pileIndex, cardIndex, 'foundation', i);
               return;
             }
           }
+          
           // 2. Try to move to another tableau pile
-          const cardsToMove = sourceType === 'tableau' ? gameState.tableau[pileIndex].slice(cardIndex) : [cardToMove];
-          if (isSolitaireRun(cardsToMove)) {
-            for (let i = 0; i < gameState.tableau.length; i++) {
+          const cardsToMove = sourceType === 'tableau' ? g.tableau[pileIndex].slice(cardIndex) : [cardToMove];
+          const isRunFn = isSolitaire ? isSolitaireRun : isFreecellRun;
+          const canMoveToTableauFn = isSolitaire ? canMoveSolitaireToTableau : canMoveFreecellToTableau;
+
+          if (isRunFn(cardsToMove)) {
+            for (let i = 0; i < g.tableau.length; i++) {
               if (sourceType === 'tableau' && i === pileIndex) continue;
-              if (canMoveSolitaireToTableau(cardToMove, last(gameState.tableau[i]))) {
+              if (canMoveToTableauFn(cardToMove, last(g.tableau[i]))) {
                 moveCards(sourceType, pileIndex, cardIndex, 'tableau', i);
                 return;
               }
             }
           }
-        }
-      }
-      // --- Freecell Auto-move ---
-      else if (gameState.gameType === 'Freecell') {
-        const cardToMove = sourceType === 'freecell' ? gameState.freecells[pileIndex] : last(gameState.tableau[pileIndex]);
-        if (cardToMove) {
-          // 1. Try to move to foundation (highest priority)
-          for (let i = 0; i < gameState.foundation.length; i++) {
-            if (canMoveFreecellToFoundation(cardToMove, gameState.foundation[i])) {
-              moveCards(sourceType, pileIndex, gameState.tableau[pileIndex].length - 1, 'foundation', i);
-              return;
-            }
-          }
-           // 2. Try to move to an empty freecell (if from tableau)
-           if (sourceType === 'tableau') {
-            const emptyFreecellIndex = gameState.freecells.findIndex(cell => cell === null);
+
+          // 3. Try to move to an empty freecell (Freecell only, from tableau)
+          if (isFreecell && sourceType === 'tableau' && cardsToMove.length === 1) {
+            const emptyFreecellIndex = (g as FreecellGameState).freecells.findIndex(cell => cell === null);
             if (emptyFreecellIndex !== -1) {
-              moveCards(sourceType, pileIndex, gameState.tableau[pileIndex].length - 1, 'freecell', emptyFreecellIndex);
+              moveCards(sourceType, pileIndex, cardIndex, 'freecell', emptyFreecellIndex);
               return;
-            }
-          }
-          // 3. Try to move to another tableau pile
-          for (let i = 0; i < gameState.tableau.length; i++) {
-            if (sourceType === 'tableau' && i === pileIndex) continue;
-            if (canMoveFreecellToTableau(cardToMove, last(gameState.tableau[i]))) {
-                // For Freecell, auto-move only moves single cards
-                moveCards(sourceType, pileIndex, gameState.tableau[pileIndex].length - 1, 'tableau', i);
-                return;
             }
           }
         }
