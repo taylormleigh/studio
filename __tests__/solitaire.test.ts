@@ -1,6 +1,6 @@
 
 
-import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS, isRun, last, first } from '../src/lib/solitaire';
+import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS, isRun, last, first } from '@/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
 
@@ -457,3 +457,4 @@ describe('Solitaire Game Logic', () => {
     
 
     
+
