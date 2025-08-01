@@ -2,12 +2,13 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 
@@ -52,14 +53,11 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
         return `${minutes}:${secs}`;
     };
 
-    const isNewBestScore = bestScore !== undefined && score > bestScore;
-    const isNewBestTime = bestTime !== undefined && time < bestTime;
-
     return (
-        <AlertDialog open={isOpen}>
-            <AlertDialogContent data-testid="victory-dialog">
+        <Dialog open={isOpen} >
+            <DialogContent data-testid="victory-dialog">
                 <Confetti />
-                <AlertDialogHeader>
+                <DialogHeader>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -78,7 +76,7 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                             </TableRow>
                             <TableRow>
                                 <TableCell>Score</TableCell>
-                                <TableCell className="text-right">{score}</TableCell>
+                                <TableCell className="text-right">{score === -Infinity ? "N/A" : score}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -101,11 +99,11 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                             </TableRow>
                         </TableBody>
                     </Table>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogAction onClick={onNewGame}>Play Again</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-      </AlertDialog>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button onClick={onNewGame}>Play Again</Button>
+                </DialogFooter>
+            </DialogContent>
+      </Dialog>
     );
 }
