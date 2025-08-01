@@ -25,6 +25,8 @@ export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onOpenSettings
                 switch (e.key) {
                     case 'Enter':
                     case 'ArrowRight':
+                    case ' ':
+                    case 'Spacebar':
                         onDraw();
                         break;
                     case 'Backspace':
