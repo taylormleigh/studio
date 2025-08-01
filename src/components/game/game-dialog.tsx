@@ -55,11 +55,14 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-            <DialogTitle>Games</DialogTitle>
-            <DialogDescription>
-                Select a game to see statistics or change the rules for a new game.
+            <DialogTitle className="text-xs">
+              a deck of cards
+            </DialogTitle>
+            <h1>Games</h1>
+            <DialogDescription className="text-xs">
+              Select a game to see statistics or change the rules for a new game.
             </DialogDescription>
-        </DialogHeader>
+         </DialogHeader>
 
         <div className="grid gap-4 py-4">
             {/* Game Selection */}
@@ -81,6 +84,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
                     Spider
                 </Label>
             </RadioGroup>
+            <Button onClick={handleNewGameClick}>New Game</Button>
 
             {/* Conditional Game Options */}
             {tempSettings.gameType === 'Solitaire' && (
@@ -131,12 +135,6 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
         
         <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
 
-        <DialogFooter className="sm:justify-between mt-4">
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
-          <Button onClick={handleNewGameClick}>New Game</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

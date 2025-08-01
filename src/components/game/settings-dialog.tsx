@@ -28,7 +28,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
+        {/* <DialogHeader>
             <DialogTitle className="text-xs">
               a deck of cards
             </DialogTitle>
@@ -36,7 +36,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <DialogDescription className="text-xs">
               Settings related to gameplay and appearance. Changes are applied immediately.
             </DialogDescription>
-         </DialogHeader>
+         </DialogHeader> */}
          
           <div className="grid gap-6 py-4">
             <div className="grid grid-cols-4 items-center gap-4">

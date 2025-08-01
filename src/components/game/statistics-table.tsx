@@ -20,7 +20,6 @@ export function StatisticsTable({ stats, gameType }: StatisticsTableProps) {
 
   return (
     <div className="mt-4">
-      <h3 className="font-semibold mb-2">{gameType} Statistics</h3>
       <Table>
         <TableBody>
           <TableRow>
@@ -28,7 +27,7 @@ export function StatisticsTable({ stats, gameType }: StatisticsTableProps) {
             <TableCell className="text-right">{stats.wins}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Best Score</TableCell>
+            <TableCell>High Score</TableCell>
             <TableCell className="text-right">{stats.bestScore === -Infinity ? "N/A" : stats.bestScore}</TableCell>
           </TableRow>
           <TableRow>
