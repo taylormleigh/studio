@@ -212,11 +212,15 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               >
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="color" id="color-mode-color" />
-                      <Label htmlFor="color-mode-color">Color</Label>
+                      <Label htmlFor="color-mode-color">
+                        Color
+                      </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="greyscale" id="color-mode-greyscale" />
-                      <Label htmlFor="color-mode-greyscale">Greyscale</Label>
+                      <Label htmlFor="color-mode-greyscale">
+                        Greyscale
+                      </Label>
                   </div>
               </RadioGroup>
           </div>
