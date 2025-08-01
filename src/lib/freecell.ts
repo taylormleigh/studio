@@ -103,15 +103,25 @@ export function isRun(cards: Card[]): boolean {
 
 
 /**
- * Calculates how many cards can be moved at once based on the number of empty
- * freecells and empty tableau piles. This is a core rule of Freecell.
+ * Calculates how many cards can be moved at once.
  * @param state The current game state.
+ * @param isDestinationEmpty Whether the destination tableau pile is empty. If moving to a
+ * freecell or foundation, this should be false.
  * @returns The maximum number of cards that can be moved in a single stack.
  */
-export function getMovableCardCount(state: GameState): number {
+export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean): number {
   const emptyFreecells = state.freecells.filter(c => c === null).length;
-  const emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
+  // If the destination is an empty tableau pile, it doesn't count towards the multiplier.
+  const emptyTableauPiles = state.tableau.filter(p => p.length === 0).length - (isDestinationEmpty ? 1 : 0);
   
+  const baseMovable = 1 + emptyFreecells;
+
+  if (emptyTableauPiles <= 0) {
+    return baseMovable;
+  }
+
   // The formula for movable cards: (1 + number of empty freecells) * 2^(number of empty tableau piles).
-  return (1 + emptyFreecells) * (2 ** emptyTableauPiles);
+  return baseMovable * (2 ** emptyTableauPiles);
 };
+
+    
