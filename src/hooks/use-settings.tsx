@@ -7,6 +7,7 @@ export type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
 export type CardStyle = 'modern' | 'domino';
+export type ColorMode = 'color' | 'greyscale';
 
 export interface GameSettings {
   gameType: GameType;
@@ -15,6 +16,7 @@ export interface GameSettings {
   leftHandMode: boolean;
   autoMove: boolean;
   cardStyle: CardStyle;
+  colorMode: ColorMode;
 }
 
 const defaultSettings: GameSettings = {
@@ -24,6 +26,7 @@ const defaultSettings: GameSettings = {
   leftHandMode: true,
   autoMove: true,
   cardStyle: 'modern',
+  colorMode: 'color',
 };
 
 interface SettingsContextType {
@@ -49,13 +52,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   
-  // Effect to apply/remove dark class and save to localStorage
+  // Effect to apply/remove classes and save to localStorage
   useEffect(() => {
     // Apply dark mode class
     if (settings.cardStyle === 'domino') {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');
+    }
+
+    // Apply greyscale class
+    if (settings.colorMode === 'greyscale') {
+      document.documentElement.classList.add('grayscale');
+    } else {
+      document.documentElement.classList.remove('grayscale');
     }
     
     // Save settings to localStorage

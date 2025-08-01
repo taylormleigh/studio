@@ -203,6 +203,24 @@ export function SettingsDialog({ open, onOpenChange, onNewGame }: SettingsDialog
               </div>
           </div>
 
+          <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Color</Label>
+              <RadioGroup
+                value={settings.colorMode}
+                onValueChange={(value) => setSettings({ colorMode: value as 'color' | 'greyscale' })}
+                className="col-span-3 flex items-center gap-4"
+              >
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="color" id="color-mode-color" />
+                      <Label htmlFor="color-mode-color">Color</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="greyscale" id="color-mode-greyscale" />
+                      <Label htmlFor="color-mode-greyscale">Greyscale</Label>
+                  </div>
+              </RadioGroup>
+          </div>
+
         </div>
           <Button variant="outline" onClick={handleClose}>Close</Button>
         
