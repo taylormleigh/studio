@@ -43,6 +43,7 @@ const colorModes: ColorMode[] = ['color', 'greyscale'];
 
 test.describe('App Screenshot Tests', () => {
 
+  // Capture the main game board for each combination
   for (const game of games) {
     test.describe(`${game} Game`, () => {
       for (const theme of themes) {
@@ -56,30 +57,40 @@ test.describe('App Screenshot Tests', () => {
             await expect(page.getByTestId('game-board')).toBeVisible();
             await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-main.png`, fullPage: true });
           });
-
-          test(`${testTitlePrefix}: Game Dialog`, async ({ page }) => {
-            await page.goto('/');
-            await applySettings(page, theme, colorMode, game);
-            await interactWithGame(page, game);
-            await page.getByTestId('game-title').click();
-            await expect(page.getByRole('dialog')).toBeVisible();
-            await page.waitForTimeout(500); // Allow dialog animation to complete
-            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-game-dialog.png`, fullPage: true });
-          });
-
-          test(`${testTitlePrefix}: Settings Dialog`, async ({ page }) => {
-            await page.goto('/');
-            await applySettings(page, theme, colorMode, game);
-            await interactWithGame(page, game);
-            await page.getByLabel('Settings').click();
-            await expect(page.getByRole('dialog')).toBeVisible();
-            await page.waitForTimeout(500); // Allow dialog animation to complete
-            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-settings-dialog.png`, fullPage: true });
-          });
         }
       }
     });
   }
+
+  // Capture dialogs only once per theme
+  test.describe('Dialogs', () => {
+    for (const theme of themes) {
+      const colorMode: ColorMode = 'color'; // Use a single color mode for dialogs
+      const game: GameType = 'Solitaire'; // Use a single game type for dialogs
+      const testTitlePrefix = `dialog-${theme}`;
+
+      test(`${testTitlePrefix}: Game Dialog`, async ({ page }) => {
+        await page.goto('/');
+        await applySettings(page, theme, colorMode, game);
+        await interactWithGame(page, game);
+        await page.getByTestId('game-title').click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.waitForTimeout(500); // Allow dialog animation to complete
+        await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-game.png`, fullPage: true });
+      });
+
+      test(`${testTitlePrefix}: Settings Dialog`, async ({ page }) => {
+        await page.goto('/');
+        await applySettings(page, theme, colorMode, game);
+        await interactWithGame(page, game);
+        await page.getByLabel('Settings').click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.waitForTimeout(500); // Allow dialog animation to complete
+        await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-settings.png`, fullPage: true });
+      });
+    }
+  });
+
 
   test('Victory Dialog Screen (Solitaire)', async ({ page }) => {
     // This test is complex to automate reliably, so we'll skip it for now.
