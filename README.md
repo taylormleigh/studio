@@ -15,18 +15,22 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 - **Multiple Game Modes:** Play classic Klondike Solitaire, Freecell, and Spider.
 - **Customizable Rules:**
     - Spider: Play with 1, 2, or 4 suits for varying difficulty.
-    - Solitaire: Play one card or three card draw
-- **Modern & Responsive UI:** A clean, high-contrast interface that works on all screen sizes, from mobile to desktop. Has a dark mode and a light mode.
-- **Drag & Drop and Click-to-Move:** Move cards by dragging them or if "Click to move" mode is turned on in settings the card will automatically move to a valid destination.
-- **Game Statistics:** Tracks wins, best scores, and best times for each game by clicking on the game title.
-- **Undo Functionality:** Undo your last move if you make a mistake (up to 15 most recent moves)
-- **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser.
+    - Solitaire: Play one card or three card draw.
+- **Modern & Responsive UI:** A clean, high-contrast interface that works on all screen sizes, from mobile to desktop. Includes a light and dark theme.
+- **Intuitive Controls:**
+    - **Drag & Drop:** Move cards by dragging them to valid piles.
+    - **Click to Move:** Enable this mode in settings to automatically move cards to a valid destination with a single click.
+    - **Keyboard Shortcuts:** Use `Enter` to draw, `Ctrl/Cmd+Z` to undo, `Ctrl/Cmd+N` for a new game, and more.
+    - **Swipe Gestures:** On touch devices, swipe right to undo your last move.
+- **Game Statistics:** Tracks wins, best scores, and best times for each game.
+- **Undo Functionality:** Undo up to 100 of your most recent moves.
+- **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser for your next visit.
 
 ## Screenshots
 ### Browser
 <img height="550" alt="Screenshot 2025-07-31 at 7 54 29 AM" src="https://github.com/user-attachments/assets/cc905f48-7622-49eb-9116-0393d84f13a7" />
 <br/><img height="550" alt="Screenshot 2025-07-31 at 7 54 46 AM" src="https://github.com/user-attachments/assets/2ffef036-4a88-4323-970a-64e96373d86f" />
-<br/><img height="550" alt="Screenshot 2025-07-31 at 7 55 28 AM" src="https://github.com/user-attachments/assets/4bce35f7-6b79-49ee-a541-6f620963ef4d" />
+<br/><img height="55_0" alt="Screenshot 2025-07-31 at 7 55 28 AM" src="https://github.com/user-attachments/assets/4bce35f7-6b79-49ee-a541-6f620963ef4d" />
 
 ### Mobile
 <img height="400" alt="Screenshot 2025-07-31 at 8 06 11 AM" src="https://github.com/user-attachments/assets/6c8181a0-bd7c-4cf8-a4d9-ece99c934369" />
