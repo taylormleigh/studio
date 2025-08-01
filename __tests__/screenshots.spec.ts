@@ -5,8 +5,6 @@ type Theme = 'light' | 'dark';
 type ColorMode = 'color' | 'greyscale';
 type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 
-const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
 // Helper function to set the theme and color mode via localStorage
 const applySettings = async (page: Page, theme: Theme, colorMode: ColorMode, gameType: GameType) => {
   await page.evaluate(({ theme, colorMode, gameType }) => {
@@ -113,14 +111,15 @@ test.describe('App Screenshot Tests', () => {
     test('Solitaire Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+          const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
                 foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
-                    ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank: rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'CLUBS', rank: rank, faceUp: true })),
+                    ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true })),
                 ],
                 stock: [],
                 waste: [],
@@ -143,14 +142,15 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+          const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
                 tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
                 foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
-                    ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank: rank, faceUp: true })),
+                    ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank: rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true })),
                 ],
                 freecells: [null, null, null, null],
                 moves: 51,
@@ -172,11 +172,12 @@ test.describe('App Screenshot Tests', () => {
     test('Spider Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
             
             // Create 7 completed sets (7 * 13 = 91 cards)
             const completedFoundation = Array.from({length: 7}, (_, i) => 
-                ranks.map(rank => ({ suit: suits[i % 4], rank, faceUp: true }))
+                ranks.map(rank => ({ suit: suits[i % 4], rank: rank, faceUp: true }))
             );
 
             // Create the final set on the tableau, one move away from completion
