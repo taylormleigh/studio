@@ -106,6 +106,9 @@ test.describe('App Screenshot Tests', () => {
 
   test('Victory Dialog Screen', async ({ page }, testInfo) => {
     await page.goto('/');
+    const theme: Theme = 'light';
+    const colorMode: ColorMode = 'color';
+
     // Force a winnable state for Solitaire
     await page.evaluate(() => {
         const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
@@ -136,6 +139,6 @@ test.describe('App Screenshot Tests', () => {
     await expect(page.getByTestId('victory-dialog')).toBeVisible();
     await page.waitForTimeout(1000); // allow confetti to animate
     const device = getDeviceName(testInfo);
-    await page.screenshot({ path: `test-results/${device}-winningdialog-light-color.png`, fullPage: true });
+    await page.screenshot({ path: `test-results/${device}-winningdialog-${theme}-${colorMode}.png`, fullPage: true });
   });
 });
