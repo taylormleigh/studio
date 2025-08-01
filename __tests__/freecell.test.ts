@@ -148,7 +148,6 @@ describe('Freecell Game Logic', () => {
             moves: 0,
             score: 0,
         };
-        // (1 + 0 empty freecells) * 2^0 = 1
         expect(getMovableCardCount(state, false)).toBe(1);
     });
 
@@ -160,7 +159,6 @@ describe('Freecell Game Logic', () => {
           freecells: [null, { suit: 'DIAMONDS', rank: 'A', faceUp: true }, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }],
           moves: 0, score: 0
         };
-        // (1 + 1 empty freecell) * 2^0 = 2
         expect(getMovableCardCount(state, false)).toBe(2);
     });
     
@@ -172,7 +170,6 @@ describe('Freecell Game Logic', () => {
           freecells: [null, null, null, { suit: 'SPADES', rank: 'A', faceUp: true }],
           moves: 0, score: 0
         };
-        // (1 + 3 empty freecells) * 2^0 = 4
         expect(getMovableCardCount(state, false)).toBe(4);
     });
 
@@ -184,7 +181,6 @@ describe('Freecell Game Logic', () => {
           freecells: [null, null, null, null],
           moves: 0, score: 0
         };
-        // (1 + 4 empty freecells) * 2^0 = 5
         expect(getMovableCardCount(state, false)).toBe(5);
     });
 
@@ -302,6 +298,7 @@ describe('Freecell Game Logic', () => {
       const destPileIndex = 1;
       const sourceCardIndex = 1; // index of the '5 of Spades'
 
+      // We can move up to 5 cards since we have 4 empty freecells
       const movableCount = getMovableCardCount(specificState, false); // Moving to non-empty pile
       const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
       const destCard = last(specificState.tableau[destPileIndex]);
