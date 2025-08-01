@@ -17,8 +17,9 @@ test.describe('App Screenshot Tests', () => {
     // Click the game title to open the dialog
     await page.getByTestId('game-title').click();
     
-    // Wait for the dialog to be visible
+    // Wait for the dialog to be visible and animations to settle.
     await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(500); // Add a pause for animations
     
     const viewport = page.viewportSize();
     await page.screenshot({ path: `test-results/screenshot-game-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
@@ -31,8 +32,9 @@ test.describe('App Screenshot Tests', () => {
     // Click the settings button to open the dialog
     await page.getByLabel('Settings').click();
     
-    // Wait for the dialog to be visible
+    // Wait for the dialog to be visible and animations to settle.
     await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(500); // Add a pause for animations
     
     const viewport = page.viewportSize();
     await page.screenshot({ path: `test-results/screenshot-settings-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
