@@ -215,8 +215,6 @@ export default function GameBoard() {
       setSelectedCard(null);
     }
   }, [history]);
-
-  const swipeHandlers = useSwipeGestures({ onSwipeRight: handleUndo });
   
     /**
    * Handles drawing new cards from the stock pile.
@@ -597,14 +595,18 @@ export default function GameBoard() {
         }
         return false;
       };
-  
+      
+      // If auto-move was attempted (successfully or not), the interaction is done.
+      // Do not fall through to selecting the card.
       if (tryAutoMove()) {
-        setSelectedCard(null); // Clear selection after a successful auto-move
-        return;
+        setSelectedCard(null); // Ensure selection is cleared on successful auto-move.
+      } else {
+        setSelectedCard(null); // Also clear selection if auto-move fails to find a valid move.
       }
+      return; // End the click handler here for auto-move.
     }
   
-    // If not auto-moving, or if auto-move fails, just select the card.
+    // If not auto-moving, just select the card.
     setSelectedCard(sourceCardInfo);
   };
   
@@ -654,7 +656,6 @@ export default function GameBoard() {
   return (
     <div 
       className="flex flex-col min-h-screen"
-      {...swipeHandlers}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
