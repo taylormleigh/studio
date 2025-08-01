@@ -133,7 +133,8 @@ describe('Freecell Game Logic', () => {
     beforeEach(() => {
         state = createInitialState();
         // Clear tableau for predictable setup in each test
-        state.tableau = state.tableau.map(() => []);
+        state.tableau = Array.from({ length: 8 }, () => []);
+        state.freecells = [null, null, null, null];
     });
 
     it('should allow moving 1 card with all freecells full', () => {
@@ -161,19 +162,14 @@ describe('Freecell Game Logic', () => {
         expect(getMovableCardCount(state)).toBe(4);
     });
 
-    it('should allow moving 5 cards with 4 empty freecells and no empty tableau pile', () => {
+    it('should allow moving 5 cards with 4 empty freecells', () => {
         state.freecells = [null, null, null, null];
-        //no empty tableau piles
-        for (let i = 1; i < 8; i++) {
-          state.tableau[i] = [{ suit: 'HEARTS', rank: '2', faceUp: true }];
-        }
         expect(getMovableCardCount(state)).toBe(5);
     });
 
     it('should allow moving 10 cards with 4 empty freecells and 1 empty tableau pile', () => {
         state.freecells = [null, null, null, null];
         state.tableau[0] = []; // One empty tableau pile
-        // (1 + 4 empty freecells) * 2^(1 empty tableau pile) = 10
         expect(getMovableCardCount(state)).toBe(10);
     });
 
@@ -181,10 +177,6 @@ describe('Freecell Game Logic', () => {
         state.freecells = [null, null, null, null];
         state.tableau[0] = [];
         state.tableau[1] = [];
-        for (let i = 2; i < 8; i++) {
-          state.tableau[i] = [{ suit: 'HEARTS', rank: '2', faceUp: true }];
-        }
-        // (1 + 4 empty freecells) * 2^(2 empty tableau piles) = 20
         expect(getMovableCardCount(state)).toBe(20);
     });
 
@@ -192,9 +184,6 @@ describe('Freecell Game Logic', () => {
       state.freecells = [null, null, { suit: 'CLUBS', rank: 'A', faceUp: true }, { suit: 'SPADES', rank: 'A', faceUp: true }]; // 2 empty cells
       state.tableau[0] = [];
       state.tableau[1] = []; // 2 empty piles
-      for (let i = 2; i < 8; i++) {
-        state.tableau[i] = [{ suit: 'HEARTS', rank: '2', faceUp: true }];
-      }
       // (1 + 2 empty freecells) * 2^(2 empty tableau piles) = 3 * 4 = 12
       expect(getMovableCardCount(state)).toBe(12);
     });
@@ -209,9 +198,10 @@ describe('Freecell Game Logic', () => {
   
     it('should correctly move a single card from tableau to an empty freecell', () => {
       const cardToMove = last(state.tableau[0])!;
-      state.tableau[0].pop();
       
-      state.freecells[0] = cardToMove;
+      // Simulate the move
+      const movedCard = state.tableau[0].pop();
+      state.freecells[0] = movedCard!;
 
       expect(state.freecells[0]).toEqual(cardToMove);
       expect(state.tableau[0].length).toBe(6); // Was 7
@@ -250,8 +240,8 @@ describe('Freecell Game Logic', () => {
         
         state.freecells = [null, null, null, null]; // 4 empty freecells
         
-        const movableCount = getMovableCardCount(state);
-        const sourceCardIndex = state.tableau[sourcePileIndex].length - cardsToMove.length;
+        const movableCount = getMovableCardCount(state); // = 5
+        const sourceCardIndex = state.tableau[sourcePileIndex].length - cardsToMove.length; // = 1
         const destCard = last(state.tableau[destPileIndex]);
 
         if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard) && cardsToMove.length <= movableCount) {
@@ -281,17 +271,18 @@ describe('Freecell Game Logic', () => {
         { suit: 'DIAMONDS', rank: 'Q', faceUp: true },
         { suit: 'DIAMONDS', rank: 'J', faceUp: true },
         { suit: 'DIAMONDS', rank: '10', faceUp: true }
-      ];
+      ]; // 0 empty freecells
+      state.tableau[2] = []; // 1 empty pile, but let's assume it's not the destination
       
       const movableCount = getMovableCardCount(state);
-      expect(movableCount).toBe(1); // With 0 empty freecells and 0 empty tableau, can only move 1 card.
+      expect(movableCount).toBe(2); // (1 + 0) * 2^1 = 2
       
       const originalSourcePile = JSON.parse(JSON.stringify(state.tableau[sourcePileIndex]));
       const originalDestPile = JSON.parse(JSON.stringify(state.tableau[destPileIndex]));
 
-      const stackSize = cardsToMove.length;
+      const stackSize = cardsToMove.length; // = 3
       if (isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], last(state.tableau[destPileIndex])) && stackSize <= movableCount) {
-         // This block should not be executed because stackSize (3) > movableCount (1)
+         // This block should not be executed because stackSize (3) > movableCount (2)
          const sourceCardIndex = state.tableau[sourcePileIndex].length - stackSize;
          const movedCards = state.tableau[sourcePileIndex].splice(sourceCardIndex);
          state.tableau[destPileIndex].push(...movedCards);
