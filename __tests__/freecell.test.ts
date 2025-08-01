@@ -209,7 +209,7 @@ describe('Freecell Game Logic', () => {
             moves: 0, score: 0
         };
         // Moving to a non-empty pile: (1 + 4 empty freecells) * 2^(2 empty tableau piles) = 5 * 4 = 20
-        expect(getMovableCardCount(state)).toBe(20);
+        expect(getMovableCardCount(state, false)).toBe(20);
     });
     
     it('should correctly multiply for moving to an EMPTY pile with 3 total empty tableau piles', () => {
@@ -235,7 +235,7 @@ describe('Freecell Game Logic', () => {
       };
 
       // Moving to a non-empty pile: (1 + 2 empty freecells) * 2^(2 empty tableau piles) = 3 * 4 = 12
-      expect(getMovableCardCount(state)).toBe(12);
+      expect(getMovableCardCount(state, false)).toBe(12);
 
       // Moving to an empty pile: (1 + 2 empty freecells) * 2^(2-1 empty tableau piles) = 3 * 2 = 6
       expect(getMovableCardCount(state, true)).toBe(6);
@@ -245,11 +245,11 @@ describe('Freecell Game Logic', () => {
   describe('Card Movement Simulation', () => {
   
     it('should correctly move a single card from tableau to an empty freecell', () => {
-      // Use a predictable, non-random state for movement tests
+      const cardToMove: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
       const state: GameState = {
         gameType: 'Freecell',
         tableau: [
-            [{ suit: 'HEARTS', rank: 'K', faceUp: true }, { suit: 'CLUBS', rank: 'Q', faceUp: true }],
+            [{ suit: 'HEARTS', rank: 'K', faceUp: true }, cardToMove],
             [{ suit: 'DIAMONDS', rank: '10', faceUp: true }],
             [], [], [], [], [], []
         ],
@@ -258,7 +258,6 @@ describe('Freecell Game Logic', () => {
         moves: 0,
         score: 0,
       };
-      const cardToMove = last(state.tableau[0])!;
       
       // Simulate the move
       const movedCard = state.tableau[0].pop();
@@ -299,7 +298,6 @@ describe('Freecell Game Logic', () => {
           { suit: 'HEARTS', rank: '4', faceUp: true },
         ];
         
-        // Setup specific state for this test
         const specificState: GameState = {
             gameType: 'Freecell',
             tableau: [
@@ -314,10 +312,10 @@ describe('Freecell Game Logic', () => {
         
         const sourcePileIndex = 0;
         const destPileIndex = 1;
+        const sourceCardIndex = 1;
 
-        const movableCount = getMovableCardCount(specificState); // moving to non-empty pile, 0 empty tableau
+        const movableCount = getMovableCardCount(specificState, false);
         expect(movableCount).toBe(5);
-        const sourceCardIndex = specificState.tableau[sourcePileIndex].length - cardsToMove.length;
         const destCard = last(specificState.tableau[destPileIndex]);
 
         if(isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], destCard) && cardsToMove.length <= movableCount) {
@@ -336,9 +334,7 @@ describe('Freecell Game Logic', () => {
             { suit: 'HEARTS', rank: '4', faceUp: true },
             { suit: 'CLUBS', rank: '3', faceUp: true },
         ];
-        const sourcePileIndex = 0;
-        const destPileIndex = 1;
-    
+        
         const specificState: GameState = {
             gameType: 'Freecell',
             tableau: [
@@ -347,16 +343,20 @@ describe('Freecell Game Logic', () => {
                  [], [], [], [], [], []
             ],
             foundation: [],
-            freecells: [ // No empty freecells
-                { suit: 'DIAMONDS', rank: 'K', faceUp: true },
+            freecells: [ 
+                { suit: 'DIAMONDS', rank: 'A', faceUp: true },
                 { suit: 'HEARTS', rank: 'J', faceUp: true },
                 { suit: 'CLUBS', rank: 'A', faceUp: true },
                 { suit: 'SPADES', rank: '2', faceUp: true },
             ],
             moves: 0, score: 0
         };
+
+        const sourcePileIndex = 0;
+        const destPileIndex = 1;
+        const sourceCardIndex = 1;
         
-        const movableCount = getMovableCardCount(specificState); // moving to non-empty
+        const movableCount = getMovableCardCount(specificState, false); // moving to non-empty
         expect(movableCount).toBe(1); // Only 1 card can be moved
         expect(cardsToMove.length).toBe(3); // Attempting to move 3 cards
         
@@ -365,7 +365,6 @@ describe('Freecell Game Logic', () => {
     
         // This condition should be false, so the move doesn't happen
         if (isRun(cardsToMove) && canMoveToTableau(cardsToMove[0], last(specificState.tableau[destPileIndex])) && cardsToMove.length <= movableCount) {
-            const sourceCardIndex = specificState.tableau[sourcePileIndex].length - cardsToMove.length;
             const movedCards = specificState.tableau[sourcePileIndex].splice(sourceCardIndex);
             specificState.tableau[destPileIndex].push(...movedCards);
         }
@@ -377,5 +376,3 @@ describe('Freecell Game Logic', () => {
 
   });
 });
-
-    

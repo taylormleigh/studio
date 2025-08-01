@@ -122,5 +122,3 @@ export function getMovableCardCount(state: GameState, isDestinationEmpty: boolea
     
     return (1 + emptyFreecells) * (2 ** emptyTableauPiles);
 };
-
-    
