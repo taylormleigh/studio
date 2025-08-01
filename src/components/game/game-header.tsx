@@ -14,22 +14,22 @@ type GameHeaderProps = {
   canUndo: boolean;
 };
 
-const iconSize = 26;
+const iconSize = 32;
 const iconStrokeWidth = 1.85;
 
 export default function GameHeader({ onNewGame, onUndo, onSettings, onGameMenuOpen, canUndo }: GameHeaderProps) {
   const { settings } = useSettings();
 
   const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
-  const buttonClasses = "flex-col h-auto p-2 lg:w-20";
+  const buttonClasses = "flex-col h-auto p-3 lg:w-20";
 
   const MainButtons = () => (
     <>
-      <Button variant="ghost" size="icon" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
+      <Button variant="ghost" onClick={onSettings} aria-label="Settings" className={buttonClasses}>
         <Sparkles size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden lg:block text-xs font-medium">settings</span>
       </Button>
-      <Button variant="ghost" size="icon" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
+      <Button variant="ghost" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
         <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden lg:block text-xs font-medium">new</span>
       </Button>
@@ -37,7 +37,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onGameMenuOp
   );
 
   const UndoButton = () => (
-    <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
+    <Button variant="ghost" onClick={onUndo} disabled={!canUndo} aria-label="Undo" className={buttonClasses}>
       <MousePointer size={iconSize} strokeWidth={iconStrokeWidth} />
       <span className="hidden lg:block text-xs font-medium">undo</span>
     </Button>
@@ -53,7 +53,7 @@ export default function GameHeader({ onNewGame, onUndo, onSettings, onGameMenuOp
       </div>
 
       <div className="text-center">
-        <h1 onClick={onGameMenuOpen} className="game-title font-headline text-primary cursor-pointer" data-testid="game-title">
+        <h1 id="game-title" onClick={onGameMenuOpen} className="font-headline text-primary cursor-pointer" data-testid="game-title">
           {settings.gameType}
         </h1>
       </div>
