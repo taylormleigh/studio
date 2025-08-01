@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
 import { SuitIcon } from './suit-icon';
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId = 'card-default' }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
