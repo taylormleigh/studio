@@ -54,6 +54,7 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 - [ ] Add a "Hint" feature to suggest a possible move.
 - [ ] Implement an extended Undo feature to revert more than 15 moves.
 - [ ] Implement a "reset" button (doesn't start a new game; restarts the current game)
+- [ ] Add custom card color options in settings.
 - [ ] PWA
 
 <br/>
