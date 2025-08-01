@@ -3,17 +3,25 @@
 ## simple, ad free, offline-friendly game for mobile and browser
 A deck of cards is a web-based classic card game suite, built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic optimized for e-ink displays. Used Google Firebase to develop. No trackers, no database, no ads, just a deck of cards to play games with on your phone.
 
+- [Core Features](#core-features)
 - [Screenshots](#screenshots)
   - [Browser](#browser)
   - [Mobile](#mobile)
-- [Core Features](#core-features)
 - [To-Do List](#to-do-list)
   - [Bugs](#bugs)
   - [Future Features](#future-features)
 
-<br/><img width="100%" alt="Screenshot 2025-07-31 at 7 56 07 AM" src="https://github.com/user-attachments/assets/7074ac43-b4ea-4079-8673-af9fd8d4e7af" />
+## Core Features
+- **Multiple Game Modes:** Play classic Klondike Solitaire, Freecell, and Spider.
+- **Customizable Rules:**
+    - Spider: Play with 1, 2, or 4 suits for varying difficulty.
+    - Solitaire: Play one card or three card draw
+- **Modern & Responsive UI:** A clean, high-contrast interface that works on all screen sizes, from mobile to desktop. Has a dark mode and a light mode.
+- **Drag & Drop and Click-to-Move:** Move cards by dragging them or if "Click to move" mode is turned on in settings the card will automatically move to a valid destination.
+- **Game Statistics:** Tracks wins, best scores, and best times for each game by clicking on the game title.
+- **Undo Functionality:** Undo your last move if you make a mistake (up to 15 most recent moves)
+- **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser.
 
-<br/>
 ## Screenshots
 ### Browser
 <img height="550" alt="Screenshot 2025-07-31 at 7 54 29 AM" src="https://github.com/user-attachments/assets/cc905f48-7622-49eb-9116-0393d84f13a7" />
@@ -28,33 +36,28 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 <img height="400" alt="Screenshot 2025-07-31 at 8 00 46 AM" src="https://github.com/user-attachments/assets/5ff00e92-13fa-447f-afc9-8a1c70262d3e" />
 
 <br/>
-## Core Features
-
-- **Multiple Game Modes:** Play classic Klondike Solitaire, Freecell, and Spider.
-- **Customizable Rules:**
-    - Spider: Play with 1, 2, or 4 suits for varying difficulty.
-    - Solitaire: Play one card or three card draw
-- **Modern & Responsive UI:** A clean, high-contrast interface that works on all screen sizes, from mobile to desktop. Has a dark mode and a light mode.
-- **Drag & Drop and Click-to-Move:** Move cards by dragging them or if "Click to move" mode is turned on in settings the card will automatically move to a valid destination.
-- **Game Statistics:** Tracks wins, best scores, and best times for each game by clicking on the game title.
-- **Undo Functionality:** Undo your last move if you make a mistake (up to 15 most recent moves)
-- **Persistent Settings:** Your preferred game type, scores, and settings are saved locally in your browser.
-
-<br/>
-## To-Do List
-### Bugs
+# To-Do List
+## Bugs
 - [ ] **Cannot Move Last Stack:** When a stack of cards is the last item in a tableau pile (i.e., there are no face-down cards underneath), it cannot be moved to another pile.
 - [ ] **Freecell Test Suite:** The simulation helper for moving cards in `freecell.test.ts` has a minor flaw related to calculating movable card counts when moving to an empty pile, causing some tests to fail. The core game logic is correct, but the test simulation needs to be fixed.
 
-### Future Features
-- [ ] Implement three-card draw for Solitaire.
-- [ ] Implement Freecell
-- [ ] Implement Spider (1, 2, and 4 suite)
-- [ ] Implement Pyramid game mode.
-- [ ] Add a "Hint" feature to suggest a possible move.
-- [ ] Implement an extended Undo feature to revert more than 15 moves.
+## Future Features
+### More card games
+- [ ] Three-card draw for Solitaire.
+- [X] ~~Freecell~~
+- [ ] Spider
+  - [ ] 1 suite
+  - [ ] 2 suite
+  - [ ] 4 suite
+- [ ] Pyramid
+### Gameplay options
+- [X] ~~Implement an extended Undo feature to revert more than 15 moves.~~
 - [ ] Implement a "reset" button (doesn't start a new game; restarts the current game)
+### View options
 - [ ] Add custom card color options in settings.
+- [X] ~~Dark mode and light mode~~
+- [X] ~~Color mode and greyscale mode~~
+### Other
 - [ ] PWA
 
 <br/>
