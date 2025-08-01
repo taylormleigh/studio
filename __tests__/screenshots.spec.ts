@@ -104,40 +104,105 @@ test.describe('App Screenshot Tests', () => {
   });
 
 
-  test('Victory Dialog Screen', async ({ page }, testInfo) => {
-    await page.goto('/');
+  test.describe('Victory Screens', () => {
     const theme: Theme = 'light';
     const colorMode: ColorMode = 'color';
 
-    // Force a winnable state for Solitaire
-    await page.evaluate(() => {
-        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
-        const winningState = {
-            gameType: 'Solitaire',
-            tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
-            foundation: [
-                ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
-                ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
-                ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
-                ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
-            ],
-            stock: [],
-            waste: [],
-            drawCount: 1,
-            score: 100,
-            moves: 50,
-        };
-        localStorage.setItem('deck-of-cards-debug-state', JSON.stringify(winningState));
+    test('Solitaire Victory', async ({ page }, testInfo) => {
+        await page.goto('/');
+        await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
+            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+                gameType: 'Solitaire',
+                tableau: [[], [], [], [], [], [], [{ suit: 'DIAMONDS', rank: 'K', faceUp: true }]],
+                foundation: [
+                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
+                    ranks.slice(0, 12).map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                ],
+                stock: [],
+                waste: [],
+                drawCount: 1,
+                score: 100,
+                moves: 50,
+            }));
+        });
+
+        await page.reload();
+        await expect(page.getByTestId('tableau-piles')).toBeVisible();
+        await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('foundation-pile-3').click();
+
+        await expect(page.getByTestId('victory-dialog')).toBeVisible();
+        await page.waitForTimeout(1000); 
+        const device = getDeviceName(testInfo);
+        await page.screenshot({ path: `test-results/${device}-solitaire-victory.png`, fullPage: true });
     });
 
-    await page.reload();
-    await expect(page.getByTestId('tableau-piles')).toBeVisible();
-    await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
-    await page.getByTestId('foundation-pile-3').click();
+    test('Freecell Victory', async ({ page }, testInfo) => {
+        await page.goto('/');
+        await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q'];
+            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+                gameType: 'Freecell',
+                tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
+                foundation: [
+                    ranks.map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'HEARTS', rank, faceUp: true })),
+                    ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank, faceUp: true })),
+                    ranks.map(rank => ({ suit: 'DIAMONDS', rank, faceUp: true })),
+                ],
+                freecells: [null, null, null, null],
+                moves: 51,
+                score: 0,
+            }));
+        });
+        
+        await page.reload();
+        await expect(page.getByTestId('tableau-piles')).toBeVisible();
+        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('foundation-pile-2').click();
 
-    await expect(page.getByTestId('victory-dialog')).toBeVisible();
-    await page.waitForTimeout(1000); // allow confetti to animate
-    const device = getDeviceName(testInfo);
-    await page.screenshot({ path: `test-results/${device}-winningdialog-${theme}-${colorMode}.png`, fullPage: true });
+        await expect(page.getByTestId('victory-dialog')).toBeVisible();
+        await page.waitForTimeout(1000);
+        const device = getDeviceName(testInfo);
+        await page.screenshot({ path: `test-results/${device}-freecell-victory.png`, fullPage: true });
+    });
+
+    test('Spider Victory', async ({ page }, testInfo) => {
+        await page.goto('/');
+        await page.evaluate(() => {
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const suits = ['SPADES', 'HEARTS'];
+            const completedFoundation = Array.from({length: 7}, (_, i) => 
+                ranks.map(rank => ({ suit: suits[i % 2], rank, faceUp: true }))
+            )
+            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+                gameType: 'Spider',
+                tableau: [
+                    ranks.slice(0, 12).reverse().map(rank => ({ suit: 'SPADES', rank, faceUp: true })),
+                    [{ suit: 'SPADES', rank: 'K', faceUp: true }],
+                    [], [], [], [], [], [], [], []
+                ],
+                foundation: completedFoundation,
+                stock: [],
+                completedSets: 7,
+                suitCount: 2,
+                moves: 99,
+                score: 400,
+            }));
+        });
+
+        await page.reload();
+        await expect(page.getByTestId('tableau-piles')).toBeVisible();
+        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').first().click();
+        await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
+
+        await expect(page.getByTestId('victory-dialog')).toBeVisible();
+        await page.waitForTimeout(1000);
+        const device = getDeviceName(testInfo);
+        await page.screenshot({ path: `test-results/${device}-spider-victory.png`, fullPage: true });
+    });
   });
 });
