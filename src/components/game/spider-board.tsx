@@ -2,7 +2,7 @@
 "use client";
 
 import { DragEvent } from 'react';
-import { GameState as SpiderGameState } from '@/lib/spider';
+import { GameState as SpiderGameState, canMoveToTableau } from '@/lib/spider';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
@@ -23,14 +23,8 @@ export default function SpiderBoard({
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
-  const handleTableauClick = (pileIndex: number) => {
-    if (selectedCard) {
-      if(selectedCard.type === 'tableau' && selectedCard.pileIndex === pileIndex) {
-        // Deselect if clicking same pile
-      } else {
-        handleDrop({ dataTransfer: { getData: () => JSON.stringify(selectedCard) } } as any, 'tableau', pileIndex);
-      }
-    }
+  const handleTableauClick = (pileIndex: number, cardIndex: number) => {
+    handleCardClick('tableau', pileIndex, cardIndex);
   };
 
   const handleDragOver = (e: DragEvent) => {
@@ -81,7 +75,7 @@ export default function SpiderBoard({
             className="relative"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-            onClick={() => pile.length === 0 && handleTableauClick(pileIndex)}
+            onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >
             <div className="absolute top-0 left-0 w-full h-full">
               {pile.length === 0 ? (
@@ -104,13 +98,13 @@ export default function SpiderBoard({
                           card={card}
                           isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                          draggable={card.faceUp}
+                          draggable={card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true)}
                           isStacked={card.faceUp && !isTopCard}
                           className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                           onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={(e) => {
                               e.stopPropagation();
-                              handleCardClick('tableau', pileIndex, cardIndex);
+                              handleTableauClick(pileIndex, cardIndex);
                           }}
                         />
                     </div>

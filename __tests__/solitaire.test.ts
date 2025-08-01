@@ -453,9 +453,3 @@ describe('Solitaire Game Logic', () => {
   });
 
 });
-
-    
-
-    
-
-

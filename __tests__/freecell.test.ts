@@ -300,28 +300,28 @@ describe('Freecell Game Logic', () => {
   describe('Card Movement Simulation', () => {
     
     it('should move a valid stack of cards between tableau piles', () => {
-      const initialState: GameState = {
-          gameType: 'Freecell',
-          tableau: [
-              [
-                { suit: 'DIAMONDS', rank: 'K', faceUp: true },
-                { suit: 'SPADES', rank: '5', faceUp: true },
-                { suit: 'HEARTS', rank: '4', faceUp: true }
-              ],
-              [{ suit: 'CLUBS', rank: '6', faceUp: true }],
-               [], [], [], [], [], []
-          ],
-          foundation: [[], [], [], []],
-          freecells: [null, null, null, null],
-          moves: 0, score: 0
-      };
-      
-      const newState = moveCardsInTest(initialState, 'tableau', 0, 1, 'tableau', 1);
+      let state = moveCardsInTest(
+        {
+            gameType: 'Freecell',
+            tableau: [
+                [
+                  { suit: 'DIAMONDS', rank: 'K', faceUp: true },
+                  { suit: 'SPADES', rank: '5', faceUp: true },
+                  { suit: 'HEARTS', rank: '4', faceUp: true }
+                ],
+                [{ suit: 'CLUBS', rank: '6', faceUp: true }],
+                 [], [], [], [], [], []
+            ],
+            foundation: [[], [], [], []],
+            freecells: [null, null, null, null],
+            moves: 0, score: 0
+        }, 'tableau', 0, 1, 'tableau', 1
+      );
 
-      expect(newState.tableau[0].length).toBe(1); // K of diamonds remains
-      expect(newState.tableau[1].length).toBe(3); // 6 of clubs + 5 of spades + 4 of hearts
-      expect(last(newState.tableau[1])?.rank).toBe('4');
-      expect(newState.moves).toBe(1);
+      expect(state.tableau[0].length).toBe(1); // K of diamonds remains
+      expect(state.tableau[1].length).toBe(3); // 6 of clubs + 5 of spades + 4 of hearts
+      expect(last(state.tableau[1])?.rank).toBe('4');
+      expect(state.moves).toBe(1);
     });
 
     it('should not move a stack of cards larger than the movable limit', () => {
@@ -358,6 +358,3 @@ describe('Freecell Game Logic', () => {
 
   });
 });
-
-    
-    

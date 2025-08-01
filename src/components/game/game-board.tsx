@@ -280,10 +280,6 @@ export default function GameBoard() {
     onOpenSettings: () => setIsSettingsOpen(true)
   });
 
-  const swipeHandlers = useSwipeGestures({
-    onSwipeRight: handleUndo,
-  });
-
   /**
    * Handles the logic for moving cards between different piles and areas.
    * This function contains the core rules for each game type.
@@ -664,7 +660,6 @@ export default function GameBoard() {
   return (
     <div 
       className="flex flex-col min-h-screen"
-      {...swipeHandlers}
     >
       <GameHeader 
         onNewGame={handleNewGame} 

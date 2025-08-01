@@ -32,12 +32,16 @@ const RANK_VALUES: Record<Rank, number> = {
  * @returns An array of 104 Card objects.
  */
 function createSpiderDeck(suitCount: SpiderSuitCount): Card[] {
-    const selectedSuits = SUITS.slice(0, suitCount);
-    const decksToUse = 8 / suitCount;
+    const selectedSuits = 
+        suitCount === 1 ? ['SPADES', 'SPADES', 'SPADES', 'SPADES', 'SPADES', 'SPADES', 'SPADES', 'SPADES'] as Suit[] :
+        suitCount === 2 ? ['SPADES', 'SPADES', 'SPADES', 'SPADES', 'HEARTS', 'HEARTS', 'HEARTS', 'HEARTS'] as Suit[] :
+        [...SUITS, ...SUITS];
+
     let deck: Card[] = [];
-    for(let i=0; i<decksToUse; i++) {
-        deck.push(...selectedSuits.flatMap(suit => RANKS.map(rank => ({ suit, rank, faceUp: false }))));
-    }
+    selectedSuits.forEach(suit => {
+        deck.push(...RANKS.map(rank => ({ suit, rank, faceUp: false })));
+    });
+
     return deck;
 }
 
@@ -99,9 +103,9 @@ function isRun(cards: Card[]): boolean {
  * @param destinationCard The top card of the destination pile, or undefined if the pile is empty.
  * @returns True if the move is valid, false otherwise.
  */
-export function canMoveToTableau(cardsToMove: Card[], destinationCard: Card | undefined): boolean {
+export function canMoveToTableau(cardsToMove: Card[], destinationCard: Card | undefined, isDragCheck = false): boolean {
   // The stack being moved must be a valid run (same suit, descending order).
-  if (!isRun(cardsToMove)) {
+  if (isDragCheck && !isRun(cardsToMove)) {
     return false;
   }
   
