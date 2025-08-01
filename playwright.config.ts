@@ -26,6 +26,10 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
     {
+      name: 'Tablet',
+      use: { ...devices['iPad (gen 7)'] }
+    },
+    {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
     },
