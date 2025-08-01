@@ -200,16 +200,10 @@ describe('Solitaire Game Logic', () => {
         const sourcePile = state.waste;
         const card = sourcePile[sourcePile.length-1];
         
-        let destPileIndex = -1;
-        for (let i = 0; i < state.foundation.length; i++) {
-          const destPile = state.foundation[i];
-          if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
-              if (destPile.length === 0 || destPile[0].suit === card.suit) {
-                destPileIndex = i;
-                break;
-              }
-          }
-        }
+        let destPileIndex = state.foundation.findIndex(destPile => 
+            canMoveToFoundation(card, destPile[destPile.length - 1]) &&
+            (destPile.length === 0 || destPile[0].suit === card.suit)
+        );
   
         if (destPileIndex !== -1) {
             const cardToMoveFromWaste = sourcePile.pop();
@@ -232,16 +226,10 @@ describe('Solitaire Game Logic', () => {
       const sourcePile = state.tableau[0];
       const card = sourcePile[sourcePile.length-1];
       
-      let destPileIndex = -1;
-      for (let i = 0; i < state.foundation.length; i++) {
-        const destPile = state.foundation[i];
-        if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
-            if (destPile.length === 0 || destPile[0].suit === card.suit) {
-              destPileIndex = i;
-              break;
-            }
-        }
-      }
+      const destPileIndex = state.foundation.findIndex(destPile => 
+        canMoveToFoundation(card, destPile[destPile.length - 1]) &&
+        (destPile.length === 0 || destPile[0].suit === card.suit)
+      );
 
       if (destPileIndex !== -1) {
           const cardToMove = sourcePile.pop();
@@ -270,16 +258,10 @@ describe('Solitaire Game Logic', () => {
         const sourcePile = state.tableau[0];
         const card = sourcePile[sourcePile.length-1];
         
-        let foundationDestIndex = -1;
-        for (let i = 0; i < state.foundation.length; i++) {
-            const destPile = state.foundation[i];
-            if (canMoveToFoundation(card, destPile[destPile.length - 1])) {
-                if (destPile.length === 0 || destPile[0].suit === card.suit) {
-                    foundationDestIndex = i;
-                    break;
-                }
-            }
-        }
+        const foundationDestIndex = state.foundation.findIndex(destPile => 
+            canMoveToFoundation(card, destPile[destPile.length - 1]) &&
+            (destPile.length === 0 || destPile[0].suit === card.suit)
+        );
 
         if (foundationDestIndex !== -1) {
             const cardToMove = sourcePile.pop();
@@ -360,19 +342,15 @@ describe('Solitaire Game Logic', () => {
       // Simulate the "click to move" on the '8 of Hearts' (the base of the pile to move).
       // The logic should find the best destination for the *entire* valid run starting from the clicked card.
       const sourcePileIndex = 0;
-      const cardIndex = 0;
+      const cardIndex = 0; // Clicked the '8 of Hearts'
       const cardsToMove = state.tableau[sourcePileIndex].slice(cardIndex);
       let bestDestinationIndex = -1;
 
       // Find the best destination for the entire run.
-      if(isRun(cardsToMove)){
-          for(let i=0; i<state.tableau.length; i++){
-              if(i === sourcePileIndex) continue;
-              if(canMoveToTableau(cardsToMove[0], state.tableau[i][state.tableau[i].length - 1])){
-                  bestDestinationIndex = i;
-                  break; // Found the first valid destination for the whole pile
-              }
-          }
+      if (isRun(cardsToMove)) {
+          bestDestinationIndex = state.tableau.findIndex((pile, i) => 
+              i !== sourcePileIndex && canMoveToTableau(cardsToMove[0], pile[pile.length - 1])
+          );
       }
 
       // If a valid destination was found, execute the move.
@@ -448,7 +426,7 @@ describe('Solitaire Game Logic', () => {
 
     it('should auto-move a tableau pile to another valid tableau pile on click', () => {
         // Setup: A pile that can be moved
-        const pileToMove: Card[] = [{ suit: 'HEARTS', rank: '4', faceUp: true }];
+        const pileToMove: Card[] = [{ suit: 'HEARTS', rank: '4', faceUp: true }, { suit: 'SPADES', rank: '3', faceUp: true }, { suit: 'HEARTS', rank: '2', faceUp: true }];
         // Setup: A valid destination
         const destinationCard: Card = { suit: 'SPADES', rank: '5', faceUp: true };
 
@@ -491,7 +469,7 @@ describe('Solitaire Game Logic', () => {
 
         expect(moved).toBe(true); // Assert that a move was found and executed
         expect(state.tableau[0].length).toBe(0); // Source pile is now empty
-        expect(state.tableau[1].length).toBe(2); // Destination has the new card
+        expect(state.tableau[1].length).toBe(4); // Destination has the new card
         expect(state.tableau[1][1].rank).toBe('4');
     });
 
@@ -548,7 +526,7 @@ describe('Solitaire Game Logic', () => {
       state.foundation[heartsFoundationIndex] = [];
 
       // Simulate click
-      const card = state.waste[state.waste.length - 1];
+      const card = state.waste[0];
       let foundationDestIndex = -1;
       for (let i = 0; i < state.foundation.length; i++) {
         if (canMoveToFoundation(card, state.foundation[i][state.foundation[i].length - 1])) {
@@ -557,7 +535,8 @@ describe('Solitaire Game Logic', () => {
         }
       }
       if (foundationDestIndex !== -1) {
-        state.foundation[foundationDestIndex].push(state.waste.pop()!);
+        var toPush = state.waste.pop();
+        state.foundation[foundationDestIndex].push(toPush!);
       }
 
       expect(state.waste.length).toBe(0);
@@ -588,7 +567,7 @@ describe('Solitaire Game Logic', () => {
   });
 
   describe('isGameWon', () => {
-    it('should return true when all foundation piles are full', () => {
+    it('isGameWon should return true when all foundation piles are full', () => {
         const state: GameState = {
             gameType: 'Solitaire',
             tableau: [[], [], [], [], [], [], []],
@@ -609,9 +588,9 @@ describe('Solitaire Game Logic', () => {
       expect(isGameWon(state)).toBe(true);
     });
 
-    it('should return false when foundation piles are not full', () => {
+    it('isGameOne should return false when foundation piles are not full', () => {
       const state = createInitialState();
-      expect(isGamewon(state)).toBe(false);
+      expect(isGameWon(state)).toBe(false);
     });
   });
 
@@ -625,6 +604,8 @@ describe('Solitaire Game Logic', () => {
 
 
 
+
+    
 
     
 
