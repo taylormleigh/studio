@@ -79,7 +79,7 @@ export default function SpiderBoard({
           >
             <div className="absolute top-0 left-0 w-full h-full">
               {pile.length === 0 ? (
-                <Card isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
+                <Card data-testid={`tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
@@ -96,6 +96,7 @@ export default function SpiderBoard({
                     >
                         <Card
                           card={card}
+                          data-testid={`card-${card.suit}-${card.rank}`}
                           isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                           draggable={card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true)}
