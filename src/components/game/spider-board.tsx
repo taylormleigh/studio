@@ -43,7 +43,7 @@ export default function SpiderBoard({
   const FoundationPiles = () => (
     <div className="col-span-8 grid grid-cols-8 gap-x-0" data-testid="foundation-piles">
      {Array.from({ length: 8 }).map((_, i) => (
-       <div key={`foundation-${i}`} data-testid={`foundation-set-${i}`}>
+       <div key={`foundation-${i}`} data-testid={`foundation-pile-${i}`}>
          <Card card={gameState.foundation[i] ? gameState.foundation[i][gameState.foundation[i].length -1] : undefined} />
        </div>
      ))}

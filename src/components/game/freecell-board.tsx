@@ -77,7 +77,7 @@ export default function FreecellBoard({
   }
 
   const FreecellPiles = () => (
-    <div className="col-span-4 grid grid-cols-4 gap-x-0">
+    <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
       {gameState.freecells.map((card, i) => (
         <div 
           key={`freecell-${i}`}
@@ -100,7 +100,7 @@ export default function FreecellBoard({
   );
 
   const FoundationPiles = () => (
-     <div className="col-span-4 grid grid-cols-4 gap-x-0">
+     <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="foundation-piles">
       {gameState.foundation.map((pile, i) => (
         <div 
           key={`foundation-${i}`} 

@@ -86,7 +86,7 @@ export default function SolitaireBoard({
   );
 
   const FoundationPiles = () => (
-    <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]">
+    <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles">
       {gameState.foundation.map((pile, i) => (
         <div 
           key={i} 
