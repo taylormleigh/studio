@@ -1,6 +1,6 @@
 
 
-import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS, isRun, last } from '../src/lib/solitaire';
+import { createInitialState, canMoveToTableau, canMoveToFoundation, isGameWon, getCardColor, Card, GameState, SUITS, isRun, last, first } from '../src/lib/solitaire';
 
 describe('Solitaire Game Logic', () => {
 
@@ -153,7 +153,7 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[1].length).toBe(0); // Source pile should be empty
     });
 
-    it('should correctly move the last pile of cards from a tableau pile, leaving it empty', () => {
+    it('should correctly move the final pile of cards from a tableau pile, leaving it empty', () => {
         const pileToMove: Card[] = [
             { suit: 'HEARTS', rank: 'J', faceUp: true },
             { suit: 'SPADES', rank: '10', faceUp: true }
@@ -165,7 +165,7 @@ describe('Solitaire Game Logic', () => {
     
         const sourcePile = state.tableau[1];
         const destPile = state.tableau[0];
-        const cards = sourcePile.splice(0, 2);
+        const cards = sourcePile.splice(0, pileToMove.length);
         destPile.push(...cards);
 
         expect(state.tableau[0].length).toBe(3);
@@ -289,27 +289,27 @@ describe('Solitaire Game Logic', () => {
         expect(state).toEqual(originalState);
     });
 
-    it('should correctly move the final pile of cards, leaving the source pile empty', () => {
+    it('should correctly move the final pile of cards via drag-and-drop, leaving the source pile empty', () => {
       // Setup: A pile of two cards is the only thing in tableau pile 1
       const pileToMove: Card[] = [
-        { suit: 'HEARTS', rank: 'J', faceUp: true },
+        { suit: 'DIAMONDS', rank: 'J', faceUp: true },
         { suit: 'SPADES', rank: '10', faceUp: true },
       ];
       // Setup: A valid destination card in tableau pile 0
-      const destinationCard: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
+      const topOfDest: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
   
       // Place the cards in the simulated state
-      state.tableau[0] = [destinationCard];
+      state.tableau[0] = [topOfDest];
       state.tableau[1] = [...pileToMove];
   
-      // Simulate the move: remove the two cards from pile 1
+      // Simulate the move:
       const sourcePile = state.tableau[1];
-      const cards = sourcePile.splice(0, pileToMove.length);
-      
-      // Simulate adding them to pile 0
       const destPile = state.tableau[0];
+  
+      // The move is valid, so we perform the state update
+      const cards = sourcePile.splice(0); // a drag from the top card of the pile is a drag of the whole pile
       destPile.push(...cards);
-      
+    
       // Assertions
       expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
       expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
@@ -368,33 +368,6 @@ describe('Solitaire Game Logic', () => {
       expect(state.tableau[2].length).toBe(1); // Other piles should be unchanged
       expect(state.tableau[3].length).toBe(1);
       expect(state.tableau[4].length).toBe(1);
-    });
-
-    it('should correctly move the final pile of cards via drag-and-drop', () => {
-        // Setup: A pile of two cards is the only thing in tableau pile 1
-        const pileToMove: Card[] = [
-            { suit: 'DIAMONDS', rank: 'J', faceUp: true },
-            { suit: 'SPADES', rank: '10', faceUp: true },
-        ];
-        // Setup: A valid destination card in tableau pile 0
-        const topOfDest: Card = { suit: 'CLUBS', rank: 'Q', faceUp: true };
-
-        // Place the cards in the simulated state
-        state.tableau[0] = [topOfDest];
-        state.tableau[1] = [...pileToMove];
-
-        // Simulate the move:
-        const sourcePile = state.tableau[1];
-        const destPile = state.tableau[0];
-
-        // The move is valid, so we perform the state update
-        const cards = sourcePile.splice(0); // a drag from the top card of the pile is a drag of the whole pile
-        destPile.push(...cards);
-      
-        // Assertions
-        expect(state.tableau[1].length).toBe(0); // Source pile should now be empty
-        expect(state.tableau[0].length).toBe(3); // Destination pile should have the new cards
-        expect(last(state.tableau[0])!.rank).toBe('10'); // The last card should be the 10 of spades
     });
 
     it('should allow moving the final stack of cards from one tableau pile to another', () => {
