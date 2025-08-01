@@ -1,49 +1,85 @@
-import { test, expect } from '@playwright/test';
+
+import { test, expect, Page } from '@playwright/test';
+
+type Theme = 'light' | 'dark';
+type ColorMode = 'color' | 'greyscale';
+type GameType = 'Solitaire' | 'Freecell' | 'Spider';
+
+// Helper function to set the theme and color mode via localStorage
+const applySettings = async (page: Page, theme: Theme, colorMode: ColorMode, gameType: GameType) => {
+  await page.evaluate(({ theme, colorMode, gameType }) => {
+    const settings = {
+      cardStyle: theme === 'dark' ? 'domino' : 'modern',
+      colorMode: colorMode,
+      gameType: gameType,
+    };
+    localStorage.setItem('deck-of-cards-settings', JSON.stringify(settings));
+  }, { theme, colorMode, gameType });
+  await page.reload();
+  await expect(page.getByTestId('tableau-piles')).toBeVisible();
+};
+
+// Helper function to interact with the game to get a more realistic state
+const interactWithGame = async (page: Page, gameType: GameType) => {
+    await page.waitForTimeout(500); // Wait for cards to settle
+    if (gameType === 'Solitaire') {
+      await page.getByTestId('stock-pile').click();
+      await page.getByTestId('stock-pile').click();
+    }
+    if (gameType === 'Freecell') {
+      await page.getByTestId('tableau-pile-0').getByRole('img').last().click();
+      await page.getByTestId('freecell-pile-0').click();
+    }
+    if (gameType === 'Spider') {
+      await page.getByTestId('stock-pile').click();
+    }
+    await page.waitForTimeout(500); // wait for moves to complete
+};
+
+const games: GameType[] = ['Solitaire', 'Freecell', 'Spider'];
+const themes: Theme[] = ['light', 'dark'];
+const colorModes: ColorMode[] = ['color', 'greyscale'];
 
 test.describe('App Screenshot Tests', () => {
 
-  test('Main Game Screen', async ({ page }) => {
-    await page.goto('/');
-    // Wait for the game to be initialized before taking a screenshot
-    await expect(page.getByTestId('tableau-piles')).toBeVisible();
-    const viewport = page.viewportSize();
-    await page.screenshot({ path: `test-results/screenshot-main-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
-  });
+  for (const game of games) {
+    test.describe(`${game} Game`, () => {
+      for (const theme of themes) {
+        for (const colorMode of colorModes) {
+          const testTitlePrefix = `${game} - ${theme} - ${colorMode}`;
 
-  test('Game Dialog Screen', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('game-title')).toBeVisible();
-    
-    // Click the game title to open the dialog
-    await page.getByTestId('game-title').click();
-    
-    // Wait for the dialog to be visible and animations to settle.
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.waitForTimeout(500); // Add a pause for animations
-    
-    const viewport = page.viewportSize();
-    await page.screenshot({ path: `test-results/screenshot-game-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
-  });
+          test(`${testTitlePrefix}: Main Game Screen`, async ({ page }) => {
+            await applySettings(page, theme, colorMode, game);
+            await interactWithGame(page, game);
+            await expect(page.getByTestId('game-board')).toBeVisible();
+            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-main.png`, fullPage: true });
+          });
 
-  test('Settings Dialog Screen', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByLabel('Settings')).toBeVisible();
-    
-    // Click the settings button to open the dialog
-    await page.getByLabel('Settings').click();
-    
-    // Wait for the dialog to be visible and animations to settle.
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.waitForTimeout(500); // Add a pause for animations
-    
-    const viewport = page.viewportSize();
-    await page.screenshot({ path: `test-results/screenshot-settings-dialog-${viewport?.width}x${viewport?.height}.png`, fullPage: true });
-  });
+          test(`${testTitlePrefix}: Game Dialog`, async ({ page }) => {
+            await applySettings(page, theme, colorMode, game);
+            await interactWithGame(page, game);
+            await page.getByTestId('game-title').click();
+            await expect(page.getByRole('dialog')).toBeVisible();
+            await page.waitForTimeout(500); // Allow dialog animation to complete
+            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-game-dialog.png`, fullPage: true });
+          });
 
-  test('Victory Dialog Screen', async ({ page, browserName }) => {
-    // This test is a bit more complex as it requires winning the game.
-    // For simplicity, we'll skip this test in the interest of time.
-    test.skip(true, 'Victory screen test is complex and skipped for now.');
-  });
+          test(`${testTitlePrefix}: Settings Dialog`, async ({ page }) => {
+            await applySettings(page, theme, colorMode, game);
+            await interactWithGame(page, game);
+            await page.getByLabel('Settings').click();
+            await expect(page.getByRole('dialog')).toBeVisible();
+            await page.waitForTimeout(500); // Allow dialog animation to complete
+            await page.screenshot({ path: `test-results/screenshot-${testTitlePrefix}-settings-dialog.png`, fullPage: true });
+          });
+        }
+      }
+    });
+  }
 
+  test('Victory Dialog Screen (Solitaire)', async ({ page }) => {
+    // This test is complex to automate reliably, so we'll skip it for now.
+    // Winning a game would require implementing game-solving logic.
+    test.skip(true, 'Victory screen test is skipped for now.');
+  });
 });
