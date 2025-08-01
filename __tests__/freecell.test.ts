@@ -296,14 +296,12 @@ describe('Freecell Game Logic', () => {
       
       const sourcePileIndex = 0;
       const destPileIndex = 1;
-      const sourceCardIndex = 1; // index of the '5 of Spades'
+      const sourceCardIndex = 1;
 
-      // We can move up to 5 cards since we have 4 empty freecells
-      const movableCount = getMovableCardCount(specificState, false); // Moving to non-empty pile
+      const movableCount = getMovableCardCount(specificState, false);
       const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
       const destCard = last(specificState.tableau[destPileIndex]);
 
-      // This condition mimics the logic in the game board component
       if(isRun(stackToMove) && canMoveToTableau(stackToMove[0], destCard) && stackToMove.length <= movableCount) {
           const moved = specificState.tableau[sourcePileIndex].splice(sourceCardIndex);
           specificState.tableau[destPileIndex].push(...moved);
@@ -342,24 +340,22 @@ describe('Freecell Game Logic', () => {
       const destPileIndex = 1;
       const sourceCardIndex = 1;
       
-      // All freecells are full, no empty tableau piles, so we can only move 1 card.
-      const movableCount = getMovableCardCount(specificState, false); // moving to non-empty
+      const movableCount = getMovableCardCount(specificState, false);
       const stackToMove = specificState.tableau[sourcePileIndex].slice(sourceCardIndex);
       
       const originalSourcePileJSON = JSON.stringify(specificState.tableau[sourcePileIndex]);
       const originalDestPileJSON = JSON.stringify(specificState.tableau[destPileIndex]);
   
-      // This condition mimics the game board logic. It will be false, so no move happens.
       if (isRun(stackToMove) && canMoveToTableau(stackToMove[0], last(specificState.tableau[destPileIndex])) && stackToMove.length <= movableCount) {
-          // This block should not be executed.
           const movedCards = specificState.tableau[sourcePileIndex].splice(sourceCardIndex);
           specificState.tableau[destPileIndex].push(...movedCards);
       }
   
-      // Assert that state remains unchanged because the move was invalid.
       expect(JSON.stringify(specificState.tableau[sourcePileIndex])).toEqual(originalSourcePileJSON);
       expect(JSON.stringify(specificState.tableau[destPileIndex])).toEqual(originalDestPileJSON);
     });
 
   });
 });
+
+    
