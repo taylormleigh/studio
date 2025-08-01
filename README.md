@@ -2,9 +2,10 @@
     <img src="public/favicon.svg" width="64" height="64" alt="appicon" />
 </p>
 
-### a deck of cards
-### simple, ad free, offline-friendly game for mobile and browser ([Demo](https://deckofcards.vercel.app/))
-A deck of cards is a web-based classic card game suite, built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic optimized for e-ink displays. Used Google Firebase to develop. No trackers, no database, no ads, just a deck of cards to play games with on your phone.
+### *a deck of cards*
+## clean and simple card games for mobile and browser 
+Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
+<br/>A deck of cards is a web-based classic card game suite built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic that is specifically optimized for e-ink displays. Google Firebase used to develop. No trackers, no database, no ads, just a deck of cards to play games with on your phone.
 
 - [Core Features](#core-features)
 - [Screenshots](#screenshots)
@@ -44,11 +45,6 @@ A deck of cards is a web-based classic card game suite, built with Next.js, Reac
 <img width="200" src="https://github.com/user-attachments/assets/78e83afc-b6cb-4fd9-9391-1dfb6286abca" />
 <img width="200" src="https://github.com/user-attachments/assets/92b03e0b-f80d-45a9-8c3a-f45804aa5d8b" />
 
-
-# To-Do List
-## Bugs
-- [ ] **Cannot Move Last Stack:** When a stack of cards is the last item in a tableau pile (i.e., there are no face-down cards underneath), it cannot be moved to another pile.
-- [ ] **Freecell Test Suite:** The simulation helper for moving cards in `freecell.test.ts` has a minor flaw related to calculating movable card counts when moving to an empty pile, causing some tests to fail. The core game logic is correct, but the test simulation needs to be fixed.
 
 ## Future Features
 ### More card games
