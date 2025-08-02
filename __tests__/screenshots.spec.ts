@@ -165,7 +165,7 @@ test.describe('App Screenshot Tests', () => {
                 return [ spades, hearts, clubs, diamonds ];
             };
 
-            var foundationPiles = getNewCompletedFoundation();
+            var foundationPiles = [ ...getNewCompletedFoundation() ];
             var finalCard = foundationPiles[0].pop();
             
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
