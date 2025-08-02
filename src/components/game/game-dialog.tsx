@@ -136,12 +136,12 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
         
         <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
 
-        <button className="flex gap-1 text-xs">
-          <GitFork size={16} />
-          <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer">
-            github repo
-          </a>
-        </button>
+        <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer" className="flex justify-end border-bottom border-2 rounded-md p-1 pr-2 border-primary">
+            <button className="d-flex w-100 justify-end flex gap-1 text-xxs align-self-end">  
+                <GitFork size={14} />
+                github repo
+            </button>
+        </a>
 
       </DialogContent>
     </Dialog>
