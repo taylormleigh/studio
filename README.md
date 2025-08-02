@@ -1,4 +1,4 @@
-<img src="public/favicon.svg" width="64" height="64" alt="appicon" />
+<img  type="gif" src="https://github.com/user-attachments/assets/8896d08d-769c-4d74-84e4-9c98b2786a91"/>
 
 ### *a deck of cards*
 ## clean and simple card games for mobile and browser 
@@ -35,24 +35,37 @@ A playful, handwritten-style font for the main game title, giving the app a uniq
 ### Body Font: Google Sans Code
 A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
 
-### Icons: [Lucida](https://lucide.dev/)
+### UI Icons: [Lucida](https://lucide.dev/)
 Specific icons atypical to UI conventions used because damnit I need at least a *little* bit of whimsy in an app
+
+### App Icon
+<img src="public/favicon.svg" width="64" height="64" alt="appicon" />
 
 ## Screenshots
 ### Browser
-<br/><img width="600" src="https://github.com/user-attachments/assets/cd7b260e-6b0b-43d1-af3b-98c175093d30" />
-<br/><img width="300" alt="Screenshot 2025-08-01 at 1 07 11 AM" src="https://github.com/user-attachments/assets/6666322d-e757-4f46-a162-487c86c57654" />
-<img width="300" alt="Screenshot 2025-08-01 at 1 08 23 AM" src="https://github.com/user-attachments/assets/a72de738-bf13-4f2d-9f6f-ca67dc78774e" />
-<br/><img width="600" alt="Screenshot 2025-08-01 at 1 09 18 AM" src="https://github.com/user-attachments/assets/dea18213-a79e-44e9-b4a6-bbd398ee9570" />
+<br/><img width="604" src="test-results/browser-solitaire-light-color.png" />
+<br/><img width="300" src="test-results/browser-settingsdialog-dark-color.png" />
+<img width="300" src="test-results/browser-gamedialog-dark-color.png" />
+<br/><img width="604" src="test-results/browser-solitaire-dark-color.png" />
 
 ### Mobile
-<br/><img width="150" src="https://github.com/user-attachments/assets/24d8fe78-108f-45b6-a194-254aaadf9e72" />
-<img width="150" src="https://github.com/user-attachments/assets/15e43f9e-c50a-4553-aeea-02f13444cb28" />
-<img width="150" src="https://github.com/user-attachments/assets/0787c33e-0fd2-4c44-9f52-ed5fb155aec2" />
-<img width="150" src="https://github.com/user-attachments/assets/62b2f0c2-2a45-488a-b610-0bd14b38bf01" />
-<br/><img width="200" src="https://github.com/user-attachments/assets/8ee2511b-32ae-4ca2-b9d7-93846e626951" />
-<img width="200" src="https://github.com/user-attachments/assets/78e83afc-b6cb-4fd9-9391-1dfb6286abca" />
-<img width="200" src="https://github.com/user-attachments/assets/92b03e0b-f80d-45a9-8c3a-f45804aa5d8b" />
+#### Light mode
+<br/><img width="198" src="test-results/mobile-solitaire-light-color.png"/>
+<img width="198" src="test-results/mobile-freecell-light-color.png"/>
+<img width="198" src="test-results/mobile-spider-light-color.png"/>
+
+#### Dark mode
+<br/><img width="198" src="test-results/mobile-solitaire-dark-color.png"/>
+<img width="198" src="test-results/mobile-freecell-dark-color.png"/>
+<img width="198" src="test-results/mobile-spider-dark-color.png"/>
+
+#### Greyscale (optimized for e-ink)
+<br/><img width="97" src="test-results/mobile-solitaire-light-greyscale.png"/>
+<img width="97" src="test-results/mobile-solitaire-dark-greyscale.png"/>
+<img width="97" src="test-results/mobile-freecell-dark-greyscale.png"/>
+<img width="97" src="test-results/mobile-freecell-light-greyscale.png"/>
+<img width="97" src="test-results/mobile-spider-light-greyscale.png"/>
+<img width="97" src="test-results/mobile-spider-dark-greyscale.png"/>
 
 ## Future Features
 ### More card games

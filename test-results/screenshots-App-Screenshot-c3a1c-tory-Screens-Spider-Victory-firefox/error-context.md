@@ -12,7 +12,7 @@
   - button "New Game":
     - img
     - text: new
-- main: 7 ♥ 7 2 ♦ 2 2 ♠ 2 Q ♥ Q 10 ♠ 10 J ♥ J 8 ♣ 8
+- main: 8 ♥ 8 5 ♠ 5 K ♠ K J ♦ J A ♥ A 2 ♠ 2 4 ♣ 4
 - contentinfo:
   - img
   - text: "0"
@@ -23,6 +23,4 @@
 - region "Notifications (F8)":
   - list
 - alert
-- button "Open Next.js Dev Tools":
-  - img
 ```
