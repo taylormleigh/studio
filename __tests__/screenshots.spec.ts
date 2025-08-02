@@ -4,6 +4,7 @@ import { test, expect, Page, TestInfo } from '@playwright/test';
 type Theme = 'light' | 'dark';
 type ColorMode = 'color' | 'greyscale';
 type GameType = 'Solitaire' | 'Freecell' | 'Spider';
+type Suit = 'SPADES' | 'HEARTS' | 'CLUBS' | 'DIAMONDS';
 
 // Helper function to set the theme and color mode via localStorage
 const applySettings = async (page: Page, theme: Theme, colorMode: ColorMode, gameType: GameType) => {
@@ -109,22 +110,27 @@ test.describe('App Screenshot Tests', () => {
     const colorMode: ColorMode = 'color';
 
     test('Solitaire Victory', async ({ page }, testInfo) => {
-        await page.goto('/');
-        await page.evaluate(() => {
-          const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+      await page.goto('/');
+      await page.evaluate(() => {
+            const getNewCompletedFoundation = () => {
+                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-          var diamondsFoundationPile = ranks.map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true }));
-          var finalCard = diamondsFoundationPile.pop();
+                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+        
+                var spades = getCompletedSet('SPADES');
+                var hearts = getCompletedSet('HEARTS');
+                var clubs = getCompletedSet('CLUBS');
+                var diamonds = getCompletedSet('DIAMONDS');
 
+                return [ spades, hearts, clubs, diamonds ];
+            };
+
+            var foundationPiles = getNewCompletedFoundation();
+            var finalCard = foundationPiles[0].pop();
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Solitaire',
                 tableau: [[], [], [], [], [], [], [finalCard]],
-                foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank: rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'CLUBS', rank: rank, faceUp: true })),
-                    diamondsFoundationPile,
-                ],
+                foundation: foundationPiles,
                 stock: [],
                 waste: [],
                 drawCount: 1,
@@ -134,6 +140,7 @@ test.describe('App Screenshot Tests', () => {
         });
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
         await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+        await page.waitForTimeout(500); //wait for dialog to fully load
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000); 
@@ -142,22 +149,14 @@ test.describe('App Screenshot Tests', () => {
     });
 
     test('Freecell Victory', async ({ page }, testInfo) => {
-        await page.goto('/');
-        await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-            var diamondsFoundationPile = ranks.map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true }));
-            var finalCard = diamondsFoundationPile.pop();
-
+      await page.goto('/');
+      await page.evaluate(() => {
+            var foundationPiles = getNewCompletedFoundation();
+            var finalCard = foundationPiles[0].pop();
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
                 tableau: [[finalCard], [], [], [], [], [], [], []],
-                foundation: [
-                    ranks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'HEARTS', rank: rank, faceUp: true })),
-                    ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank: rank, faceUp: true })),
-                    diamondsFoundationPile,
-                ],
+                foundation: foundationPiles,
                 freecells: [null, null, null, null],
                 moves: 51,
                 score: 0,
@@ -173,30 +172,18 @@ test.describe('App Screenshot Tests', () => {
     });
 
     test('Spider Victory', async ({ page }, testInfo) => {
-        await page.goto('/');
-        await page.evaluate(() => {
-            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-            const suits = ['SPADES', 'HEARTS', 'CLUBS', 'DIAMONDS'];
-            
-            // Create 7 completed sets (7 * 13 = 91 cards)
-            const completedFoundation = Array.from({length: 7}, (_, i) => 
-                ranks.map(rank => ({ suit: suits[i % 4], rank: rank, faceUp: true }))
-            );
-
-            // Create the final set on the tableau, one move away from completion
-            const finalSetRanks = ['K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']; 
-            const AlmostCompletePile = finalSetRanks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true }));
-            const AceToComplete = { suit: 'SPADES', rank: 'A', faceUp: true };
-
+      await page.goto('/');
+      await page.evaluate(() => {
+            var oneCompletedSet = getNewCompletedFoundation();
+            var completedFoundation = [ ...oneCompletedSet, ...oneCompletedSet ];
+            var finalCard = completedFoundation[0].pop();
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Spider',
-                tableau: [
-                    AlmostCompletePile,      // Pile with K-2 of Spades
-                    [AceToComplete],         // Pile with A of Spades
-                    [], [], [], [], [], [], [], []
+                tableau: [ 
+                    [], [finalCard], [], [], [], [], [], [], []
                 ],
                 foundation: completedFoundation,
-                stock: [], // No cards left in stock
+                stock: [],
                 completedSets: 7,
                 suitCount: 4, // Test with 4 suits for complexity
                 moves: 99,
@@ -205,9 +192,8 @@ test.describe('App Screenshot Tests', () => {
         });
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
 
-        // Move the Ace from the almost complete pile onto the King
         await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
-        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
+        await page.waitForTimeout(500); //wait for dialog to fully load
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000);
