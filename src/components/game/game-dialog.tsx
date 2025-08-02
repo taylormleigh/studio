@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useStats, GameStats } from '@/hooks/use-stats';
 import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
+import { GitFork } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -134,6 +135,13 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
         <Separator />
         
         <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
+
+        <button className="flex gap-1 text-xs">
+          <GitFork size={16} />
+          <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer">
+            github repo
+          </a>
+        </button>
 
       </DialogContent>
     </Dialog>
