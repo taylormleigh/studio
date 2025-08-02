@@ -613,7 +613,7 @@ export default function GameBoard() {
   // Adjust container width based on game type for optimal layout.
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
   ? 'md:max-w-[480px]' 
-  : (gameState.gameType === 'Freecell' ? 'md:max-w-[420px]' : 'md:max-w-[420px]');
+  : (gameState.gameType === 'Freecell' ? 'md:max-w-[480px]' : 'md:max-w-[480px]');
 
   const boardProps = {
     gameState: gameState as any, // Cast to any to satisfy specific board props
