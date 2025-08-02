@@ -78,16 +78,23 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
         )}
       >
         <div className="flex items-center gap-1">
-          <div className="sm:text-sm md:text-md font-bold leading-none">{card.rank}</div>
-          {isStacked && <SuitIcon suit={card.suit} className="text-lg leading-none" />}
+          {/* stacked face up card rank */}
+          <div className="sm:text-sm md:text-md font-bold leading-none">
+            {card.rank}
+          </div>
+
+          {/* stacked face up card suite icon */}
+          {isStacked && <SuitIcon suit={card.suit} className="text-lg sm:text-md " />}
         </div>
 
         {!isStacked && (
           <>
+            {/* top card suite icon */}
             <div className="self-center flex">
               <SuitIcon suit={card.suit} className="text-2xl" />
             </div>
             <div>
+              {/* lower right-hand rank */}
               <div className="hidden xs:hidden md:flex self-end rotate-180">
                 <div className="sm:text-md md:text-md font-bold leading-none">{card.rank}</div>
               </div>
