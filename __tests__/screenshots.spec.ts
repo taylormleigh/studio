@@ -132,7 +132,6 @@ test.describe('App Screenshot Tests', () => {
                 moves: 50,
             }));
         });
-        // await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
         await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
 
@@ -145,26 +144,27 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
         await page.goto('/');
         await page.evaluate(() => {
-          const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+            var diamondsFoundationPile = ranks.map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true }));
+            var finalCard = diamondsFoundationPile.pop();
+
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
-                tableau: [[{ suit: 'CLUBS', rank: 'K', faceUp: true }], [], [], [], [], [], [], []],
+                tableau: [[finalCard], [], [], [], [], [], [], []],
                 foundation: [
                     ranks.map(rank => ({ suit: 'SPADES', rank: rank, faceUp: true })),
                     ranks.map(rank => ({ suit: 'HEARTS', rank: rank, faceUp: true })),
                     ranks.slice(0, 12).map(rank => ({ suit: 'CLUBS', rank: rank, faceUp: true })),
-                    ranks.map(rank => ({ suit: 'DIAMONDS', rank: rank, faceUp: true })),
+                    diamondsFoundationPile,
                 ],
                 freecells: [null, null, null, null],
                 moves: 51,
                 score: 0,
             }));
         });
-        
-        await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
         await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
-        await page.getByTestId('foundation-pile-2').click();
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000);
@@ -203,8 +203,6 @@ test.describe('App Screenshot Tests', () => {
                 score: 400,
             }));
         });
-
-        await page.reload();
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
 
         // Move the Ace from the almost complete pile onto the King
