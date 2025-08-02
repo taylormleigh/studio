@@ -1,11 +1,9 @@
-<img src="public/favicon.svg" width="64" height="64" alt="appicon" />
+<img  type="gif" src="https://github.com/user-attachments/assets/8896d08d-769c-4d74-84e4-9c98b2786a91"/>
 
 ### *a deck of cards*
 ## clean and simple card games for mobile and browser 
 Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 <br/>A deck of cards is a web-based classic card game suite built with Next.js, React, and Tailwind CSS. It is designed with a clean, high-contrast aesthetic that is specifically optimized for e-ink displays. Google Firebase used to develop. No trackers, no database, no ads, just a deck of cards to play games with on your phone.
-
-<img width="600" type="gif" src="https://github.com/user-attachments/assets/d0568722-b2f3-479b-a8af-6661fc0fb5af"/>
 
 - [Core Features](#core-features)
 - [Screenshots](#screenshots)
@@ -13,7 +11,6 @@ Demo: [deckofcards.vercel.app](https://deckofcards.vercel.app/)
 - [To-Do List](#to-do-list)
   - [Bugs](#bugs)
   - [Future Features](#future-features)
-
 
 ## Core Features
 - **Multiple Games:** Play classic Klondike Solitaire, Freecell, and Spider.
@@ -38,8 +35,11 @@ A playful, handwritten-style font for the main game title, giving the app a uniq
 ### Body Font: Google Sans Code
 A clean, monospaced font used for all UI text, ensuring excellent readability and a modern, technical feel.
 
-### Icons: [Lucida](https://lucide.dev/)
+### UI Icons: [Lucida](https://lucide.dev/)
 Specific icons atypical to UI conventions used because damnit I need at least a *little* bit of whimsy in an app
+
+### App Icon
+<img src="public/favicon.svg" width="64" height="64" alt="appicon" />
 
 ## Screenshots
 ### Browser
