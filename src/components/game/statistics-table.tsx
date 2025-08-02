@@ -19,7 +19,7 @@ export function StatisticsTable({ stats, gameType }: StatisticsTableProps) {
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-0">
       <Table>
         <TableBody>
           <TableRow>

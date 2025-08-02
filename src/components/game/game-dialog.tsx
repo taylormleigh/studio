@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStats, GameStats } from '@/hooks/use-stats';
+import Divider from 'public/icons/divider.svg'
 import { useSettings, GameType, SolitaireDrawType, SpiderSuitCount } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import { GitFork } from 'lucide-react';
@@ -132,16 +133,20 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
             )}
         </div>
 
-        <Separator />
+        <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" stroke-width="6"/>
+        </svg>
         
         <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
 
-        <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer" className="flex justify-end border-bottom border-2 rounded-md p-1 pr-2 border-primary">
-            <button className="d-flex w-100 justify-end flex gap-1 text-xxs align-self-end">  
-                <GitFork size={14} />
-                github repo
-            </button>
-        </a>
+        <div className="flex flex-row justify-end pt-1 opacity-50">
+            <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer">
+                <button className="flex gap-1 text-xxs">  
+                    <GitFork size={14} />
+                    github repo
+                </button>
+            </a>
+        </div>
 
       </DialogContent>
     </Dialog>
