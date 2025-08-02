@@ -2,7 +2,7 @@
 
 ```yaml
 - banner:
-  - button "Undo":
+  - button "Undo" [disabled]:
     - img
     - text: undo
   - heading "Solitaire" [level=1]
@@ -12,10 +12,10 @@
   - button "New Game":
     - img
     - text: new
-- main: A ♦ A A ♣ A Q ♠ Q 8 ♦ 8 9 ♠ 9 2 ♦ 2 J ♣ J 6 ♣ 6
+- main: K ♥ K 3 ♣ 3 3 ♥ 3 2 ♣ 2 5 ♠ 5 8 ♣ 8 4 ♠ 4
 - contentinfo:
   - img
-  - text: "1"
+  - text: "0"
   - img
   - text: 00:05
   - img
@@ -23,6 +23,4 @@
 - region "Notifications (F8)":
   - list
 - alert
-- button "Open Next.js Dev Tools":
-  - img
 ```
