@@ -144,6 +144,7 @@ test.describe('App Screenshot Tests', () => {
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000); 
+
         const device = getDeviceName(testInfo);
         await page.screenshot({ path: `test-results/${device}-solitaire-victory.png`, fullPage: true });
     });
@@ -151,11 +152,25 @@ test.describe('App Screenshot Tests', () => {
     test('Freecell Victory', async ({ page }, testInfo) => {
       await page.goto('/');
       await page.evaluate(() => {
+            const getNewCompletedFoundation = () => {
+                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+        
+                var spades = getCompletedSet('SPADES');
+                var hearts = getCompletedSet('HEARTS');
+                var clubs = getCompletedSet('CLUBS');
+                var diamonds = getCompletedSet('DIAMONDS');
+
+                return [ spades, hearts, clubs, diamonds ];
+            };
+
             var foundationPiles = getNewCompletedFoundation();
             var finalCard = foundationPiles[0].pop();
+            
             localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
                 gameType: 'Freecell',
-                tableau: [[finalCard], [], [], [], [], [], [], []],
+                tableau: [[], [], [], [], [], [], [finalCard], []],
                 foundation: foundationPiles,
                 freecells: [null, null, null, null],
                 moves: 51,
@@ -163,17 +178,29 @@ test.describe('App Screenshot Tests', () => {
             }));
         });
         await expect(page.getByTestId('tableau-piles')).toBeVisible();
-        await page.getByTestId('tableau-pile-0').locator('[data-testid^="card-"]').last().click();
+        await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+        await page.waitForTimeout(500); //wait for dialog to fully load
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
         await page.waitForTimeout(1000);
-        const device = getDeviceName(testInfo);
-        await page.screenshot({ path: `test-results/${device}-freecell-victory.png`, fullPage: true });
     });
 
     test('Spider Victory', async ({ page }, testInfo) => {
       await page.goto('/');
       await page.evaluate(() => {
+            const getNewCompletedFoundation = () => {
+                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+        
+                var spades = getCompletedSet('SPADES');
+                var hearts = getCompletedSet('HEARTS');
+                var clubs = getCompletedSet('CLUBS');
+                var diamonds = getCompletedSet('DIAMONDS');
+
+                return [ spades, hearts, clubs, diamonds ];
+            };
+
             var oneCompletedSet = getNewCompletedFoundation();
             var completedFoundation = [ ...oneCompletedSet, ...oneCompletedSet ];
             var finalCard = completedFoundation[0].pop();
@@ -196,9 +223,6 @@ test.describe('App Screenshot Tests', () => {
         await page.waitForTimeout(500); //wait for dialog to fully load
 
         await expect(page.getByTestId('victory-dialog')).toBeVisible();
-        await page.waitForTimeout(1000);
-        const device = getDeviceName(testInfo);
-        await page.screenshot({ path: `test-results/${device}-spider-victory.png`, fullPage: true });
     });
   });
 });
