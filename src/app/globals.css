@@ -86,6 +86,11 @@ html, body, .font-body, .font-headline {
   border-width: 1.5px;
 }
 
+.text-xxs {
+  font-size: 0.6rem;
+  line-height: 1rem;
+}
+
 .text-md {
   font-size: 1.6rem;
   line-height: 0.8rem;
