@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@font-face {
+  font-family: 'Google Sans Code';
+  src: url('/fonts/Google_Sans_Code/static/GoogleSansCode-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PresentationFont';
+  src: url('/fonts/PresentationFonts/Lazarus Oz Syndfri.ttf') format('truetype');
+  font-weight: 200;
+  /* src: url('/fonts/PresentationFonts/Tunnepinta.ttf') format('truetype'); */
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 95%; /* Lighter gray for a softer feel */
+    --header-background: 0 0% 92%; /* Slightly darker gray for header */
+    --foreground: 0 0% 15%; /* Darker text for better contrast */
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 0 0% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 90%; /* A slightly off-white for secondary elements */
+    --secondary-foreground: 0 0% 15%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 80%; /* Softer borders */
+    --input: 0 0% 85%;
+    --ring: 0 0% 9%;
+    --radius: 0.5rem; /* A bit more rounded */
+    /* --title-font: "Rubik Scribble", system-ui, sans-serif; */
+    --title-font: "PresentationFont", system-ui, sans-serif;
+    --primary-font: "Google Sans Code", monospace;
+
+    /* Dynamic Card Sizes */
+    --card-rank-font-size: clamp(0.7rem, 3.5vw, 1.8rem);
+    --card-suit-font-size: clamp(1rem, 5vw, 2.5rem);
+    --card-stacked-suit-font-size: clamp(0.6rem, 2.5vw, 1.5rem);
+  }
+  
+  .dark {
+    --background: 240 10% 3.9%;
+    --header-background: 240 10% 8%; /* Slightly lighter black for header */
+    --foreground: 0 0% 98%;
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 0 0% 15%; /* Black text on cards */
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 0 0% 98%;
+  }
+}
+
+
+html, body, .font-body, .font-headline {
+  font-family: var(--primary-font);
+}
+
+#game-title {
+  font-family: var(--title-font);
+  font-size: 2.2rem;
+  letter-spacing: 0.1rem;
+  font-weight: 900;
+}
+
+.card-border {
+  border-width: 1.5px;
+}
+
+.text-xxs {
+  font-size: 0.6rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 620px) {
+  #game-title {
+      font-size: 3rem;
+      line-height: 1.3rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.grayscale {
+  filter: grayscale(1);
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 1; }
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #f00; /* Example color */
+  opacity: 0;
+  animation: confetti-fall 5s linear infinite;
+}
