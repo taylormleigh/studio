@@ -134,7 +134,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
         </div>
 
         <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" stroke-width="6"/>
+          <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
         </svg>
         
         <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
