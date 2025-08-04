@@ -491,13 +491,13 @@ export default function GameBoard() {
             const touch = e.changedTouches[0];
             
             // Temporarily hide the dragged card to accurately find the drop target
-            const draggedElement = document.getElementById('dragged-card');
-            if (draggedElement) draggedElement.style.display = 'none';
+            const draggedCardDiv = document.getElementById('dragged-card');
+            if (draggedCardDiv) draggedCardDiv.style.display = 'none';
     
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
             
             // Restore visibility
-            if (draggedElement) draggedElement.style.display = 'block';
+            if (draggedCardDiv) draggedCardDiv.style.display = 'block';
 
             if (dropTarget) {
                 let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
@@ -725,7 +725,7 @@ export default function GameBoard() {
       onTouchMove={swipeHandlers.onTouchMove}
       onTouchEnd={(e) => {
         swipeHandlers.onTouchEnd(e);
-        handleTouchEnd(e); // Also call the board's touch end handler
+        handleTouchEnd(e);
       }}
     >
       <GameHeader 

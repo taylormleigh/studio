@@ -20,24 +20,25 @@ export const useSwipeGestures = ({ onSwipeRight, onSwipeLeft, onDrag }: SwipeGes
         const touch = e.touches[0];
         setTouchStartX(touch.clientX);
         setTouchStartY(touch.clientY);
-        setIsDragging(false);
+        setIsDragging(false); // Reset dragging state on new touch
     };
 
     const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+        if (!touchStartX || !touchStartY) return;
+
         const currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
         
         // If a drag handler is provided, we prioritize it.
         if (onDrag) {
             onDrag(currentX, currentY);
-            if (!isDragging) setIsDragging(true);
+            if (!isDragging) setIsDragging(true); // Mark as dragging on first move
             return;
         }
 
-        // Fallback to swipe logic if no drag handler
-        if (!touchStartX || !touchStartY) return;
+        // Fallback to simple swipe logic if no onDrag handler is present
         const diffX = currentX - touchStartX;
-        if (!isDragging && Math.abs(diffX) > 10) {
+        if (!isDragging && Math.abs(diffX) > 10) { // Simple drag detection for swipe
             setIsDragging(true);
         }
     };
