@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
 import { GameDialog } from './game-dialog';
 import { Card } from './card';
+import { UndoButton } from './undo-button';
 
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/use-settings';
@@ -648,10 +649,8 @@ export default function GameBoard() {
     <div className="flex flex-col min-h-screen">
     <GameHeader 
         onNewGame={() => {}} 
-        onUndo={() => {}} 
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
-        canUndo={false}
       />
       <main className="flex-grow p-3">
         <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
@@ -730,10 +729,8 @@ export default function GameBoard() {
     >
       <GameHeader 
         onNewGame={handleNewGame} 
-        onUndo={handleUndo} 
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
-        canUndo={history.length > 0}
       />
       <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
         {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} moveCards={moveCards} />}
@@ -742,6 +739,7 @@ export default function GameBoard() {
       </main>
 
       {renderDraggedCard()}
+      <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
       
       <GameFooter 
         moves={gameState.moves}
