@@ -95,7 +95,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {installable && (
               <>
                 <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" stroke-width="6"/>
+                  <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
                 </svg>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right"></Label>
