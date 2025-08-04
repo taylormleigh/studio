@@ -32,4 +32,8 @@ const pwaConfig = {
 // Ensure PWA is only enabled for production builds
 const withPWAConfig = withPWA(pwaConfig);
 
+// The line below is the original setting to only enable PWA in production.
+// export default process.env.NODE_ENV === 'development' ? nextConfig : withPWAConfig(nextConfig);
+
+// This line enables PWA in all environments, including development.
 export default withPWAConfig(nextConfig);
