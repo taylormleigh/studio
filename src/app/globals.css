@@ -93,7 +93,7 @@ html, body, .font-body, .font-headline {
   font-size: clamp(2rem, 5vw, 3rem) !important;
 }
 .bg-card {
-  overflow: clip;
+  overflow: hidden;
 }
 
 .text-xxs {
