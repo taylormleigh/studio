@@ -93,15 +93,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
 
             {installable && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">App</Label>
-                  <div className="col-span-3">
-                      <Button onClick={handleInstallPrompt} variant="outline">
-                          <Download className="mr-2 h-4 w-4" />
-                          Install App
-                      </Button>
-                  </div>
-              </div>
+              <>
+                <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" stroke-width="6"/>
+                </svg>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right"></Label>
+                    <div className="col-span-3">
+                        <Button onClick={handleInstallPrompt} variant="outline">
+                            <Download className="mr-2 h-4 w-4" />
+                            Install App
+                        </Button>
+                    </div>
+                </div>
+              </>
              )}
         </div>
       </DialogContent>
