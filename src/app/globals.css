@@ -86,26 +86,50 @@ html, body, .font-body, .font-headline {
   border-width: 1.5px;
 }
 
-.text-xxs {
-  font-size: 0.6rem;
-  line-height: 1rem;
+.card-suite-icon-corner {
+  font-size: clamp(1.7rem, 0.5vw, 3.6rem) !important;
+}
+.card-suite-icon-center {
+  font-size: clamp(2rem, 5vw, 3rem) !important;
+}
+.bg-card {
+  overflow: clip;
 }
 
+.text-xxs {
+  font-size: clamp(0.6rem, 2vw, 0.8rem);
+  line-height: 1rem;
+  transition: 0.2s all ease-in-out;
+}
+.text-xs {
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
+  line-height: 1rem;
+  transition: 0.2s all ease-in-out;
+}
+.text-sm {
+  font-size: clamp(0.8rem, 2vw, 1.6rem);
+  line-height: 0.9rem;
+  transition: 0.2s all ease-in-out;
+}
 .text-md {
-  font-size: 1.6rem;
+  font-size: clamp(1.6rem, 2vw, 1.8rem);
   line-height: 0.8rem;
+  transition: 0.2s all ease-in-out;
 }
 .text-lg {
-  font-size: 1.8rem;
+  font-size: clamp(1.8rem, 2.5vw, 1.2rem);
   line-height: 1rem;
+  transition: 0.2s all ease-in-out;
 }
 .text-xl {
-  font-size: 2rem;
+  font-size: clamp(2rem, 2.5vw, 2.2rem);
   line-height: 1.1rem;
+  transition: 0.2s all ease-in-out;
 }
 .text-2xl {
-  font-size: 2.2rem;
+  font-size: clamp(2.2rem, 1vw, 2.5rem);
   line-height: 1.2rem;
+  transition: 0.2s all ease-in-out;
 }
 
 @media (min-width: 620px) {
