@@ -7,14 +7,12 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { CardPreview } from './card-preview';
+import { Download } from 'lucide-react';
 
 
 interface SettingsDialogProps {
@@ -23,7 +21,7 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { settings, setSettings } = useSettings();
+  const { settings, setSettings, installable, handleInstallPrompt } = useSettings();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,6 +91,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     </div>
                 </RadioGroup>
             </div>
+
+            {installable && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">App</Label>
+                  <div className="col-span-3">
+                      <Button onClick={handleInstallPrompt} variant="outline">
+                          <Download className="mr-2 h-4 w-4" />
+                          Install App
+                      </Button>
+                  </div>
+              </div>
+             )}
         </div>
       </DialogContent>
     </Dialog>

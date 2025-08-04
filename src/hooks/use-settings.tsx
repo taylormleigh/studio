@@ -9,6 +9,15 @@ export type SpiderSuitCount = 1 | 2 | 4;
 export type CardStyle = 'modern' | 'domino';
 export type ColorMode = 'color' | 'greyscale';
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 export interface GameSettings {
   gameType: GameType;
   solitaireDrawCount: SolitaireDrawType;
@@ -32,12 +41,16 @@ const defaultSettings: GameSettings = {
 interface SettingsContextType {
   settings: GameSettings;
   setSettings: (settings: Partial<GameSettings>) => void;
+  installable: boolean;
+  handleInstallPrompt: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<GameSettings>(defaultSettings);
+  const [installable, setInstallable] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   // Effect to load settings from localStorage on mount
   useEffect(() => {
@@ -60,6 +73,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Could not load settings from localStorage", error);
     }
+  }, []);
+
+  // Effect to listen for the beforeinstallprompt event
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallable(true);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
   
   // Effect to apply/remove classes and save to localStorage
@@ -86,13 +114,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings]);
 
+  const handleInstallPrompt = () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null);
+      setInstallable(false);
+    });
+  };
 
   const setSettings = useCallback((newSettings: Partial<GameSettings>) => {
     setSettingsState(prev => ({ ...prev, ...newSettings }));
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ settings, setSettings }}>
+    <SettingsContext.Provider value={{ settings, setSettings, installable, handleInstallPrompt }}>
       {children}
     </SettingsContext.Provider>
   );
