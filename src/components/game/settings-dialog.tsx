@@ -52,7 +52,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   checked={settings.autoMove}
                   onCheckedChange={(checked) => setSettings({ autoMove: checked })}
                 />
-                <Label htmlFor="auto-move">{settings.autoMove ? 'Click to move' : 'Drag to move'}</Label>
+                <Label htmlFor="auto-move">{settings.autoMove ? 'Click to auto-move' : 'Drag/Click'}</Label>
               </div>
             </div>
             

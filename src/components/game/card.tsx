@@ -56,6 +56,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
 
   const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
   const suitColorClass = isRed ? 'text-[#ff5555]' : 'text-[#000000]';
+  const rankStyle = { fontSize: 'var(--card-rank-font-size)' };
 
   return (
     <div
@@ -79,24 +80,24 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
       >
         <div className="flex items-center gap-1">
           {/* stacked face up card rank */}
-          <div className="sm:text-md md:text-md font-bold leading-none leading-none">
+          <div className="font-bold leading-none" style={rankStyle}>
             {card.rank}
           </div>
 
           {/* stacked face up card suite icon */}
-          {isStacked && <SuitIcon suit={card.suit} className="card-suite-icon-corner text-lg sm:text-md xs:text-md" />}
+          {isStacked && <SuitIcon suit={card.suit} style={{ fontSize: 'var(--card-suite-icon-corner-size)' }} />}
         </div>
 
         {!isStacked && (
           <>
             {/* top card suite icon */}
             <div className="self-center flex">
-              <SuitIcon suit={card.suit} className="card-suite-icon-center text-2xl" />
+              <SuitIcon suit={card.suit} style={{ fontSize: 'var(--card-suite-icon-center-size)' }} />
             </div>
             <div>
               {/* lower right-hand rank */}
               <div className="hidden xs:hidden md:flex self-end rotate-180">
-                <div className="sm:text-md md:text-md font-bold leading-none">
+                <div className="font-bold leading-none" style={rankStyle}>
                   {card.rank}
                 </div>
               </div>
