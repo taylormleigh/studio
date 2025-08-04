@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -16,6 +16,7 @@ import VictoryDialog from './victory-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
 import { GameDialog } from './game-dialog';
+import { Card } from './card';
 
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/use-settings';
@@ -68,6 +69,8 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
+  const [draggedCardInfo, setDraggedCardInfo] = useState<SelectedCardInfo | null>(null);
+  const [draggedCardPosition, setDraggedCardPosition] = useState<{ x: number; y: number } | null>(null);
 
   
   // Effect to confirm component has mounted on the client, preventing SSR issues.
@@ -289,7 +292,16 @@ export default function GameBoard() {
     });
   }, [updateState, toast]);
 
-  const swipeHandlers = useSwipeGestures({ onSwipeRight: handleUndo });
+    const handleDrag = (x: number, y: number) => {
+        if (draggedCardInfo) {
+            setDraggedCardPosition({ x, y });
+        }
+    };
+    
+  const swipeHandlers = useSwipeGestures({ 
+    onSwipeRight: handleUndo,
+    onDrag: handleDrag
+  });
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
@@ -470,7 +482,50 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
   
-  /**
+    const handleTouchStart = (info: SelectedCardInfo) => {
+        setDraggedCardInfo(info);
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+        if (draggedCardInfo && draggedCardPosition) {
+            const touch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+            if (dropTarget) {
+                let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
+                let destPileIndex: number | null = null;
+    
+                // Check if dropped on a tableau pile
+                const tableauPile = dropTarget.closest('[data-testid^="tableau-pile-"]');
+                if (tableauPile) {
+                    destType = 'tableau';
+                    destPileIndex = parseInt(tableauPile.getAttribute('data-testid')!.split('-')[3], 10);
+                }
+    
+                // Check if dropped on a foundation pile
+                const foundationPile = dropTarget.closest('[data-testid^="foundation-pile-"]');
+                if (foundationPile) {
+                    destType = 'foundation';
+                    destPileIndex = parseInt(foundationPile.getAttribute('data-testid')!.split('-')[3], 10);
+                }
+    
+                // Check if dropped on a freecell pile
+                const freecellPile = dropTarget.closest('[data-testid^="freecell-pile-"]');
+                if (freecellPile) {
+                    destType = 'freecell';
+                    destPileIndex = parseInt(freecellPile.getAttribute('data-testid')!.split('-')[3], 10);
+                }
+    
+                if (destType && destPileIndex !== null) {
+                    moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
+                }
+            }
+        }
+        setDraggedCardInfo(null);
+        setDraggedCardPosition(null);
+    };
+
+    /**
    * Handles all card click events, routing to selection, deselection, or auto-move logic.
    * @param sourceType The area of the clicked card.
    * @param pileIndex The pile index of the clicked card.
@@ -478,8 +533,6 @@ export default function GameBoard() {
    */
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
-  
-    const sourceCardInfo = { type: sourceType, pileIndex, cardIndex };
   
     // Logic for flipping a face-down card in Solitaire/Spider.
     if (gameState.gameType !== 'Freecell' && sourceType === 'tableau') {
@@ -497,15 +550,13 @@ export default function GameBoard() {
       }
     }
   
-    // --- Move Logic (handles both auto-move and second click of a selection) ---
     if (selectedCard) {
-      if (selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex) {
-        setSelectedCard(null); // Deselect if clicking the same card again.
-      } else {
+      const isDifferentCard = !(selectedCard.type === sourceType && selectedCard.pileIndex === pileIndex && selectedCard.cardIndex === cardIndex);
+      if (isDifferentCard) {
         moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, sourceType as any, pileIndex);
-        setSelectedCard(null); // Clear selection after attempting a move.
       }
-      return; 
+      setSelectedCard(null);
+      return;
     }
   
     // --- Auto-Move or Select Logic (for the first click) ---
@@ -578,7 +629,7 @@ export default function GameBoard() {
     }
   
     // If not auto-moving, just set the card as selected.
-    setSelectedCard(sourceCardInfo);
+    setSelectedCard({ type: sourceType, pileIndex, cardIndex });
   };
   
   
@@ -605,6 +656,36 @@ export default function GameBoard() {
     </div>
   );
 
+  const renderDraggedCard = () => {
+    if (!draggedCardInfo || !draggedCardPosition || !gameState) return null;
+
+    let card;
+    if (draggedCardInfo.type === 'tableau') {
+        card = gameState.tableau[draggedCardInfo.pileIndex][draggedCardInfo.cardIndex];
+    } else if (draggedCardInfo.type === 'freecell' && gameState.gameType === 'Freecell') {
+        card = (gameState as FreecellGameState).freecells[draggedCardInfo.pileIndex];
+    } else if (draggedCardInfo.type === 'waste' && gameState.gameType === 'Solitaire') {
+        card = last((gameState as SolitaireGameState).waste);
+    }
+
+    if (!card) return null;
+
+    return (
+        <div
+            className="pointer-events-none absolute"
+            style={{
+                left: draggedCardPosition.x,
+                top: draggedCardPosition.y,
+                transform: 'translate(-50%, -50%)', // Center on cursor/finger
+                zIndex: 1000,
+                width: '96px'
+            }}
+        >
+            <Card card={card} isSelected={true}/>
+        </div>
+    );
+};
+  
   // Show loader until the component has mounted and game state is initialized.
   if (!isClient || !gameState) {
     return renderLoader();
@@ -623,12 +704,15 @@ export default function GameBoard() {
     handleDragStart,
     handleDrop,
     handleDraw,
+    handleTouchStart,
+    handleTouchEnd,
   };
 
   return (
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
+      {...swipeHandlers}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
@@ -643,6 +727,8 @@ export default function GameBoard() {
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
 
+      {renderDraggedCard()}
+      
       <GameFooter 
         moves={gameState.moves}
         time={time}

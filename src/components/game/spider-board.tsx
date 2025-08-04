@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent } from 'react';
+import { DragEvent, TouchEvent } from 'react';
 import { GameState as SpiderGameState, canMoveToTableau } from '@/lib/spider';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -16,10 +16,12 @@ interface SpiderBoardProps {
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
+  handleTouchStart: (info: SelectedCardInfo) => void;
+  handleTouchEnd: (e: TouchEvent) => void;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, handleTouchEnd
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -87,6 +89,7 @@ export default function SpiderBoard({
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
                   const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
+                  const draggable = card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true);
 
                   return (
                     <div 
@@ -102,14 +105,16 @@ export default function SpiderBoard({
                           data-testid={`card-${card.suit}-${card.rank}`}
                           isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                          draggable={card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true)}
+                          draggable={draggable}
                           isStacked={card.faceUp && !isTopCard}
                           className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
-                          onDragStart={(e) => card.faceUp && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                          onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={(e) => {
                               e.stopPropagation();
                               handleTableauClick(pileIndex, cardIndex);
                           }}
+                          onTouchStart={() => draggable && handleTouchStart({ type: 'tableau', pileIndex, cardIndex })}
+                          onTouchEnd={handleTouchEnd}
                         />
                     </div>
                   )
