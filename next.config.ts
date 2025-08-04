@@ -27,9 +27,11 @@ const pwaConfig = {
   dest: 'public',
   register: true,
   skipWaiting: true,
+  disable: false, // Disabling this will enable PWA in development mode
 };
 
 // Ensure PWA is only enabled for production builds
 const withPWAConfig = withPWA(pwaConfig);
 
-export default process.env.NODE_ENV === 'development' ? nextConfig : withPWAConfig(nextConfig);
+// The line below is the original setting to only enable PWA in production.
+export default process.env.NODE_ENV === 'development' ? withPWAConfig(nextConfig) : withPWAConfig(nextConfig);
