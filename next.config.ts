@@ -20,7 +20,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  devIndicators: false,
+  devIndicators: {
+    buildActivity: false
+  },
 };
 
 const pwaConfig = {
@@ -33,5 +35,4 @@ const pwaConfig = {
 // Ensure PWA is only enabled for production builds
 const withPWAConfig = withPWA(pwaConfig);
 
-// The line below is the original setting to only enable PWA in production.
-export default process.env.NODE_ENV === 'development' ? withPWAConfig(nextConfig) : withPWAConfig(nextConfig);
+export default withPWAConfig(nextConfig);
