@@ -1,0 +1,22 @@
+{
+  "name": "Deck of Cards",
+  "short_name": "DeckOfCards",
+  "description": "Simple card games for web and mobile",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#E0E0E0",
+  "background_color": "#E0E0E0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
