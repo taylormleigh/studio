@@ -32,7 +32,6 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#E0E0E0" />
         
-        <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
       </head>
       <body className="font-body antialiased bg-background">
