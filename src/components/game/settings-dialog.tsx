@@ -64,7 +64,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   checked={settings.animationMode === 'full'}
                   onCheckedChange={(checked) => setSettings({ animationMode: checked ? 'full' : 'limited' })}
                 />
-                <Label htmlFor="animation-mode">{settings.animationMode === 'full' ? 'Full Animations' : 'Limited Animations'}</Label>
+                <Label htmlFor="animation-mode">{settings.animationMode === 'full' ? 'Show animation' : 'Limit animation'}</Label>
               </div>
             </div>
             
