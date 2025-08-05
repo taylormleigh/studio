@@ -77,7 +77,16 @@ html, body, .font-body, .font-headline {
 
 .undo-button {
   border: 3px solid white;
+  background-color: #000000;
+  color: white;
+  opacity: 1 !important;
 }
+  .undo-button:hover {
+    border: 3px solid white;
+    background-color: #000000 !important;
+    color: #a0a0a0 !important;
+    opacity: 1 !important;
+  }
 
 #game-title {
   font-family: var(--title-font);
