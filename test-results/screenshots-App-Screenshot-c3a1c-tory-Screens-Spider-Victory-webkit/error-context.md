@@ -2,17 +2,17 @@
 
 ```yaml
 - banner:
-  - button "Undo" [disabled]:
-    - img
-    - text: undo
-  - heading "Solitaire" [level=1]
   - button "Settings":
     - img
     - text: settings
+  - heading "Solitaire" [level=1]
   - button "New Game":
     - img
     - text: new
-- main: A ♠ A Q ♣ Q 9 ♥ 9 10 ♥ 10 3 ♦ 3 J ♠ J 7 ♣ 7
+- main: 9 ♥ 9 9 ♦ 9 K ♣ K 10 ♥ 10 Q ♥ Q 2 ♠ 2 6 ♦ 6
+- button "Undo":
+  - img
+  - text: undo
 - contentinfo:
   - img
   - text: "0"
