@@ -28,6 +28,8 @@ const pwaConfig = {
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  scope: '/',
+  start_url: '/',
 };
 
 // Ensure PWA is only enabled for production builds
