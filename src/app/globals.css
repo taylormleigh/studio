@@ -75,9 +75,14 @@ html, body, .font-body, .font-headline {
   font-family: var(--primary-font);
 }
 
+.undo-button {
+  border: 3px solid white;
+}
+
 #game-title {
   font-family: var(--title-font);
   font-size: 2.2rem;
+  line-height:2.2rem;
   letter-spacing: 0.1rem;
   font-weight: 900;
 }
@@ -135,7 +140,7 @@ html, body, .font-body, .font-headline {
 @media (min-width: 620px) {
   #game-title {
       font-size: 3rem;
-      line-height: 1.3rem;
+      line-height: 3rem;
   }
 }
 

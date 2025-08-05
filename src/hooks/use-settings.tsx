@@ -26,6 +26,7 @@ export interface GameSettings {
   autoMove: boolean;
   cardStyle: CardStyle;
   colorMode: ColorMode;
+  undoButtonPosition: { x: number, y: number } | null;
 }
 
 const defaultSettings: GameSettings = {
@@ -36,6 +37,7 @@ const defaultSettings: GameSettings = {
   autoMove: true,
   cardStyle: 'modern',
   colorMode: 'color',
+  undoButtonPosition: null,
 };
 
 interface SettingsContextType {

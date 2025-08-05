@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
 import { GameDialog } from './game-dialog';
 import { Card } from './card';
+import { UndoButton } from './undo-button';
 
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/use-settings';
@@ -489,8 +490,16 @@ export default function GameBoard() {
     const handleTouchEnd = (e: TouchEvent) => {
         if (draggedCardInfo && draggedCardPosition) {
             const touch = e.changedTouches[0];
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            // Temporarily hide the dragged card to accurately find the drop target
+            const draggedCardDiv = document.getElementById('dragged-card');
+            if (draggedCardDiv) draggedCardDiv.style.display = 'none';
     
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            // Restore visibility
+            if (draggedCardDiv) draggedCardDiv.style.display = 'block';
+
             if (dropTarget) {
                 let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
                 let destPileIndex: number | null = null;
@@ -640,10 +649,8 @@ export default function GameBoard() {
     <div className="flex flex-col min-h-screen">
     <GameHeader 
         onNewGame={() => {}} 
-        onUndo={() => {}} 
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
-        canUndo={false}
       />
       <main className="flex-grow p-3">
         <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 lg:gap-4 mb-4">
@@ -672,6 +679,7 @@ export default function GameBoard() {
 
     return (
         <div
+            id="dragged-card"
             className="pointer-events-none absolute"
             style={{
                 left: draggedCardPosition.x,
@@ -712,14 +720,17 @@ export default function GameBoard() {
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
-      {...swipeHandlers}
+      onTouchStart={swipeHandlers.onTouchStart}
+      onTouchMove={swipeHandlers.onTouchMove}
+      onTouchEnd={(e) => {
+        swipeHandlers.onTouchEnd(e);
+        handleTouchEnd(e);
+      }}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
-        onUndo={handleUndo} 
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
-        canUndo={history.length > 0}
       />
       <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
         {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} moveCards={moveCards} />}
@@ -728,6 +739,7 @@ export default function GameBoard() {
       </main>
 
       {renderDraggedCard()}
+      <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
       
       <GameFooter 
         moves={gameState.moves}
