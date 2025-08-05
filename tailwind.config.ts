@@ -16,8 +16,8 @@ export default {
         'lg': '620px',
       },
       fontFamily: {
-        body: ["Google Sans Code", "Courier New", "Courier", "monospace"],
-        headline: ["Rubik Scribble", "Comic Sans MS", "Comic Sans", "cursive"],
+        body: ["var(--primary-font)"],
+        headline: ["var(--title-font)"],
         code: ['monospace'],
       },
       colors: {
