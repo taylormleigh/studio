@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  devIndicators: {
+    buildActivity: false,
   }
 };
 
