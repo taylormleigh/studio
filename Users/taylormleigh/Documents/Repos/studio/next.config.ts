@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  devIndicators: {
+    buildActivity: false,
+  },
 };
 
 const pwaConfig = {
