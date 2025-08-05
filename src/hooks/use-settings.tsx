@@ -8,6 +8,7 @@ export type SolitaireDrawType = 1 | 3;
 export type SpiderSuitCount = 1 | 2 | 4;
 export type CardStyle = 'modern' | 'domino';
 export type ColorMode = 'color' | 'greyscale';
+export type AnimationMode = 'full' | 'limited';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -26,6 +27,7 @@ export interface GameSettings {
   autoMove: boolean;
   cardStyle: CardStyle;
   colorMode: ColorMode;
+  animationMode: AnimationMode;
   undoButtonPosition: { x: number, y: number } | null;
 }
 
@@ -37,6 +39,7 @@ const defaultSettings: GameSettings = {
   autoMove: true,
   cardStyle: 'modern',
   colorMode: 'color',
+  animationMode: 'full',
   undoButtonPosition: null,
 };
 
@@ -106,6 +109,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       document.documentElement.classList.add('grayscale');
     } else {
       document.documentElement.classList.remove('grayscale');
+    }
+
+    // Apply animation class
+    if (settings.animationMode === 'limited') {
+      document.documentElement.classList.add('limit-animations');
+    } else {
+      document.documentElement.classList.remove('limit-animations');
     }
     
     // Save settings to localStorage

@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useSettings } from '@/hooks/use-settings';
+import { useSettings, type GameSettings } from '@/hooks/use-settings';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -51,6 +51,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   onCheckedChange={(checked) => setSettings({ autoMove: checked })}
                 />
                 <Label htmlFor="auto-move">{settings.autoMove ? 'Auto-move on click' : 'Drag or Click'}</Label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="animation-mode" className="text-right">
+                Animation
+              </Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Switch
+                  id="animation-mode"
+                  checked={settings.animationMode === 'full'}
+                  onCheckedChange={(checked) => setSettings({ animationMode: checked ? 'full' : 'limited' })}
+                />
+                <Label htmlFor="animation-mode">{settings.animationMode === 'full' ? 'Full Animations' : 'Limited Animations'}</Label>
               </div>
             </div>
             
