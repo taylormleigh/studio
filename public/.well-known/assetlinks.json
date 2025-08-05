@@ -5,7 +5,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "app.vercel.deckofcards.twa",
-      "sha256_cert_fingerprints": ["6A:16:DB:1B:8A:2B:CA:EF:41:02:B6:EC:FA:74:EE:FD:1C:65:AF:B5:C6:B8:BF:CA:D6:97:33:A5:15:48:42:CC"]
+      "sha256_cert_fingerprints": ["9D:B3:9D:13:A8:E6:8D:8F:00:CB:D7:61:75:9B:34:3A:8B:4D:AE:62:2C:DA:45:5C:C7:DB:0C:4C:62:B2:00:E5"]
     }
   }
 ]
