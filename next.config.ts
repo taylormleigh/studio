@@ -27,9 +27,7 @@ const pwaConfig = {
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  scope: '/',
-  start_url: '/',
+  disable: process.env.NODE_ENV === 'development'
 };
 
 // Ensure PWA is only enabled for production builds
