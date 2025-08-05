@@ -7,13 +7,13 @@
   - heading "Solitaire" [level=1]
   - button "New Game":
     - img
-- main: A ♠ 5 ♦ 8 ♦ 2 ♥ 2 ♦ 7 ♦ Q ♠ 2 ♠
+- main: A ♦ Q ♦ 6 ♦ J ♣ J ♦ 7 ♥ 7 ♦
 - button "Undo":
   - img
   - text: undo
 - contentinfo:
   - img
-  - text: "1"
+  - text: "0"
   - img
   - text: 00:05
   - img
@@ -21,6 +21,4 @@
 - region "Notifications (F8)":
   - list
 - alert
-- button "Open Next.js Dev Tools":
-  - img
 ```

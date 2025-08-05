@@ -19,7 +19,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  }
+  },
+  devIndicators: false
 };
 
 const pwaConfig = {

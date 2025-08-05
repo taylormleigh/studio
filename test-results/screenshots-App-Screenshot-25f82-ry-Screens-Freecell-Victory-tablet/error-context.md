@@ -9,7 +9,7 @@
   - button "New Game":
     - img
     - text: new
-- main: Q ♥ Q J ♥ J Q ♣ Q 7 ♠ 7 4 ♠ 4 J ♠ J 2 ♥ 2
+- main: 9 ♣ 9 J ♦ J Q ♠ Q 7 ♦ 7 3 ♥ 3 8 ♣ 8 5 ♠ 5
 - button "Undo":
   - img
   - text: undo
@@ -23,6 +23,4 @@
 - region "Notifications (F8)":
   - list
 - alert
-- button "Open Next.js Dev Tools":
-  - img
 ```
