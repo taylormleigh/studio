@@ -19,14 +19,14 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  }
+  },
+  devIndicators: false
 };
 
 const pwaConfig = {
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: false, // Disabling this will enable PWA in development mode
 };
 
 // Ensure PWA is only enabled for production builds
