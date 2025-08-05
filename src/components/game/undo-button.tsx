@@ -108,7 +108,6 @@ export function UndoButton({ onUndo, canUndo }: UndoButtonProps) {
     <Button
       variant="ghost"
       onClick={handleClick}
-      disabled={!canUndo}
       aria-label="Undo"
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
