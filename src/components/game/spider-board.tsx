@@ -95,7 +95,6 @@ export default function SpiderBoard({
                         <Card
                           card={card}
                           data-testid={`card-${card.suit}-${card.rank}`}
-                          isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                           isStacked={card.faceUp && !isTopCard}
                           className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}

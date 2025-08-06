@@ -42,7 +42,6 @@ export default function SolitaireBoard({
               <Card 
                 card={last(gameState.waste)} 
                 data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
-                isSelected={selectedCard?.type === 'waste'}
                 onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
@@ -57,7 +56,6 @@ export default function SolitaireBoard({
               <Card 
                 card={last(gameState.waste)} 
                 data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
-                isSelected={selectedCard?.type === 'waste'}
                 onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
@@ -79,13 +77,11 @@ export default function SolitaireBoard({
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onClick={() => handleFoundationClick(i)}
         >
           <Card 
             card={last(pile)}
             data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-            isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
             onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onClick={() => handleFoundationClick(i)}
@@ -126,7 +122,6 @@ export default function SolitaireBoard({
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
-                  const isSelected = selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex;
                   const draggable = card.faceUp && isSolitaireRun(pile.slice(cardIndex));
                   const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0);
                   
@@ -144,7 +139,6 @@ export default function SolitaireBoard({
                       <Card
                         card={card}
                         data-testid={`card-${card.suit}-${card.rank}`}
-                        isSelected={isSelected}
                         isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                         isStacked={card.faceUp && !isTopCard}
                         className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}

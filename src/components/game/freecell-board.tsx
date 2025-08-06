@@ -42,7 +42,6 @@ export default function FreecellBoard({
             card={card || undefined} 
             data-testid={card ? `card-${card.suit}-${card.rank}` : `card-freecell-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
-            isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
             onMouseDown={(e) => card && handleMouseDown(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
             onTouchStart={(e) => card && handleTouchStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
             onClick={() => handleFreecellClick(i)}
@@ -64,7 +63,6 @@ export default function FreecellBoard({
             card={pile[pile.length - 1]} 
             data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-            isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
             onClick={() => handleFoundationClick(i)}
           />
         </div>
@@ -107,7 +105,6 @@ export default function FreecellBoard({
                           <Card
                             card={card}
                             data-testid={`card-${card.suit}-${card.rank}`}
-                            isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                             isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                             isStacked={!isTopCard}
                             onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
