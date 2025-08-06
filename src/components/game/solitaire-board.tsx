@@ -2,7 +2,7 @@
 "use client";
 
 import type { MouseEvent, TouchEvent } from 'react';
-import { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, last } from '@/lib/solitaire';
+import type { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
@@ -78,6 +78,7 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
+          onClick={() => handleCardClick('foundation', i, pile.length - 1)}
         >
           <Card 
             card={last(pile)}
@@ -85,7 +86,6 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-            onClick={() => handleCardClick('foundation', i, pile.length - 1)}
           />
         </div>
       ))}
@@ -115,6 +115,10 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                   key={`${card.suit}-${card.rank}-${cardIndex}`} 
                   className="absolute w-full"
                   style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick('tableau', pileIndex, cardIndex);
+                  }}
                 >
                   <Card
                     card={card}
@@ -124,10 +128,6 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                     className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                     onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
                     onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleCardClick('tableau', pileIndex, cardIndex);
-                    }}
                   />
                 </div>
               )
