@@ -1,6 +1,8 @@
 
 
 import { canMoveToFoundation as canMoveToFoundationFreecell } from './freecell';
+import type { GameMove } from './game-logic';
+import type { SelectedCardInfo } from '@/components/game/game-board';
 
 export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
@@ -22,6 +24,11 @@ export interface GameState {
   drawCount: 1 | 3;
   score: number;
   moves: number;
+  // Add methods to the prototype
+  canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean;
+  canMoveToFoundation(cardToMove: Card, foundationPile: Pile): boolean;
+  isGameWon(): boolean;
+  isRun(cards: Card[]): boolean;
 }
 
 export const SUITS: Suit[] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
@@ -70,7 +77,7 @@ export function shuffleDeck(array: any[]) {
  * @param drawCount The number of cards to draw from the stock at a time (1 or 3).
  * @returns A new GameState object.
  */
-export function createInitialState(drawCount: 1 | 3 = 1): GameState {
+export function createInitialState(drawCount: 1 | 3 = 1): SolitaireGameState {
   const deck = shuffleDeck(createDeck());
   const tableau: Pile[] = Array.from({ length: 7 }, () => []);
   
@@ -88,7 +95,7 @@ export function createInitialState(drawCount: 1 | 3 = 1): GameState {
     }
   });
 
-  return {
+  const gameState: Omit<SolitaireGameState, 'canMoveToTableau' | 'canMoveToFoundation' | 'isGameWon' | 'isRun'> = {
     gameType: 'Solitaire',
     tableau,
     foundation: [[], [], [], []],
@@ -98,6 +105,16 @@ export function createInitialState(drawCount: 1 | 3 = 1): GameState {
     score: 0,
     moves: 0,
   };
+  
+  // We can't assign methods directly in the object literal if we want to use `this`
+  // so we create an object and then assign the methods to its prototype.
+  const stateWithMethods = Object.create(gameState) as SolitaireGameState;
+  stateWithMethods.canMoveToTableau = canMoveToTableau;
+  stateWithMethods.canMoveToFoundation = canMoveToFoundation;
+  stateWithMethods.isGameWon = isGameWon;
+  stateWithMethods.isRun = isRun;
+
+  return stateWithMethods;
 }
 
 /**
@@ -111,42 +128,30 @@ export function getCardColor(card: Card): 'red' | 'black' {
 
 /**
  * Checks if a card can be legally moved to a tableau pile.
- * @param cardToMove The card being moved.
- * @param destinationCard The top card of the destination pile, or undefined if the pile is empty.
- * @returns True if the move is valid, false otherwise.
+ * This function is bound to the GameState prototype.
  */
-export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
-  // Rule for moving to an empty tableau pile: only a King can be moved.
+export function canMoveToTableau(this: SolitaireGameState, cardToMove: Card, destinationCard: Card | undefined): boolean {
   if (!destinationCard) {
     return cardToMove.rank === 'K';
   }
-
-  // Rule for moving to a non-empty pile.
   if (!destinationCard.faceUp) {
-    return false; // Cannot move onto a face-down card.
+    return false;
   }
-  // Cards must be of alternating colors.
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
-  // Ranks must be in descending order.
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
-  
   return !colorsMatch && ranksCorrect;
 }
 
 
 /**
  * Checks if a card can be legally moved to a foundation pile.
- * @param cardToMove The card being moved.
- * @param foundationPile The destination foundation pile.
- * @returns True if the move is valid, false otherwise.
+ * This function is bound to the GameState prototype.
  */
-export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
+export function canMoveToFoundation(this: SolitaireGameState, cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = last(foundationPile);
-  // An Ace can be moved to an empty foundation pile.
   if (!topCard) {
     return cardToMove.rank === 'A';
   }
-  // Subsequent cards must be of the same suit and one rank higher.
   const suitsMatch = cardToMove.suit === topCard.suit;
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
   return suitsMatch && ranksCorrect;
@@ -155,20 +160,17 @@ export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): b
 
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
- * @param state The current game state.
- * @returns True if the game is won, false otherwise.
+ * This function is bound to the GameState prototype.
  */
-export function isGameWon(state: GameState): boolean {
-  return state.foundation.every(pile => pile.length === 13);
+export function isGameWon(this: SolitaireGameState): boolean {
+  return this.foundation.every(pile => pile.length === 13);
 }
 
 /**
  * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
- * This is used to validate moving multiple cards at once in the tableau.
- * @param cards The stack of cards to check.
- * @returns True if the stack is a valid run, false otherwise.
+ * This function is bound to the GameState prototype.
  */
-export function isRun(cards: Card[]): boolean {
+export function isRun(this: SolitaireGameState, cards: Card[]): boolean {
   if (cards.length <= 1) return true;
   for (let i = 0; i < cards.length - 1; i++) {
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
@@ -176,6 +178,35 @@ export function isRun(cards: Card[]): boolean {
   }
   return true;
 }
+
+/**
+ * Finds the highest-priority valid auto-move for a given card/stack.
+ * Priority: Foundation -> Tableau.
+ */
+export function findAutoMove(gs: SolitaireGameState, source: SelectedCardInfo): GameMove | null {
+    const cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
+    const cardToMove = cardsToMove[0];
+
+    // Priority 1: Try to move a single card to any foundation pile.
+    if (cardsToMove.length === 1) {
+        for (let i = 0; i < gs.foundation.length; i++) {
+            if (gs.canMoveToFoundation(cardToMove, gs.foundation[i])) {
+                return { source, destination: { type: 'foundation', pileIndex: i } };
+            }
+        }
+    }
+
+    // Priority 2: Try to move the stack to any other tableau pile.
+    for (let i = 0; i < gs.tableau.length; i++) {
+        if (source.type === 'tableau' && source.pileIndex === i) continue; // Don't move to the same pile
+        if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+            return { source, destination: { type: 'tableau', pileIndex: i } };
+        }
+    }
+
+    return null;
+}
+
 
 /**
  * Safely gets the first card of a pile.

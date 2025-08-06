@@ -1,5 +1,8 @@
 
+
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck, getCardColor, last } from './solitaire';
+import type { GameMove } from './game-logic';
+import type { SelectedCardInfo } from '@/components/game/game-board';
 
 export type { Card, Suit, Rank };
 
@@ -10,6 +13,11 @@ export interface GameState {
   freecells: (Card | null)[];
   moves: number;
   score: number;
+  // Methods
+  canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean;
+  canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean;
+  isGameWon(): boolean;
+  isRun(cards: Card[]): boolean;
 }
 
 // Map card ranks to numerical values for comparison.
@@ -22,7 +30,7 @@ const RANK_VALUES: Record<Rank, number> = {
  * All 52 cards are dealt face-up into the 8 tableau piles.
  * @returns A new GameState object.
  */
-export function createInitialState(): GameState {
+export function createInitialState(): FreecellGameState {
   const deck = shuffleDeck(createDeck()).map(c => ({ ...c, faceUp: true }));
   const tableau: Card[][] = Array.from({ length: 8 }, () => []);
   
@@ -31,7 +39,7 @@ export function createInitialState(): GameState {
     tableau[index % 8].push(card);
   });
 
-  return {
+  const gameState: Omit<GameState, 'canMoveToTableau' | 'canMoveToFoundation' | 'isGameWon' | 'isRun'> = {
     gameType: 'Freecell',
     tableau,
     foundation: [[], [], [], []],
@@ -39,39 +47,36 @@ export function createInitialState(): GameState {
     moves: 0,
     score: 0,
   };
+
+  const stateWithMethods = Object.create(gameState) as GameState;
+  stateWithMethods.canMoveToTableau = canMoveToTableau;
+  stateWithMethods.canMoveToFoundation = canMoveToFoundation;
+  stateWithMethods.isGameWon = isGameWon;
+  stateWithMethods.isRun = isRun;
+
+  return stateWithMethods;
 }
 
 /**
  * Checks if a card can be legally moved to a tableau pile.
- * @param cardToMove The card being moved.
- * @param destinationCard The top card of the destination pile, or undefined if the pile is empty.
- * @returns True if the move is valid, false otherwise.
  */
-export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
-  // Any card can move to an empty tableau pile.
+export function canMoveToTableau(this: FreecellGameState, cardToMove: Card, destinationCard: Card | undefined): boolean {
   if (!destinationCard) {
     return true; 
   }
-  // Cards must be of alternating colors.
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
-  // Ranks must be in descending order.
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   return !colorsMatch && ranksCorrect;
 }
 
 /**
  * Checks if a card can be legally moved to a foundation pile.
- * @param cardToMove The card being moved.
- * @param foundationPile The destination foundation pile.
- * @returns True if the move is valid, false otherwise.
  */
-export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
+export function canMoveToFoundation(this: FreecellGameState, cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = last(foundationPile);
-  // An Ace can be moved to an empty foundation pile.
   if (!topCard) {
     return cardToMove.rank === 'A';
   }
-  // Subsequent cards must be of the same suit and one rank higher.
   const suitsMatch = cardToMove.suit === topCard.suit;
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
   return suitsMatch && ranksCorrect;
@@ -79,20 +84,15 @@ export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): b
 
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
- * @param state The current game state.
- * @returns True if the game is won, false otherwise.
  */
-export function isGameWon(state: GameState): boolean {
-  return state.foundation.every(pile => pile.length === 13);
+export function isGameWon(this: FreecellGameState): boolean {
+  return this.foundation.every(pile => pile.length === 13);
 }
 
 /**
  * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
- * This is used to validate moving multiple cards at once in the tableau.
- * @param cards The stack of cards to check.
- * @returns True if the stack is a valid run, false otherwise.
  */
-export function isRun(cards: Card[]): boolean {
+export function isRun(this: FreecellGameState, cards: Card[]): boolean {
   if (cards.length <= 1) return true;
   for (let i = 0; i < cards.length - 1; i++) {
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
@@ -105,21 +105,53 @@ export function isRun(cards: Card[]): boolean {
 /**
  * Calculates how many cards can be moved at once based on the number of available
  * empty freecells and empty tableau piles.
- * The formula is: (1 + empty_freecells) * 2^(empty_tableau_piles)
- * @param state The current game state.
- * @param isDestinationEmpty If true, the destination tableau pile is empty, which reduces the multiplier.
- * @returns The maximum number of cards that can be moved in a single stack.
  */
-export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean): number {
+export function getMovableCardCount(state: FreecellGameState, isDestinationEmpty: boolean): number {
     const emptyFreecells = state.freecells.filter(c => c === null).length;
     let emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
-
-    // If moving to an empty tableau pile, that destination pile doesn't contribute
-    // to the number of empty piles that multiply the movable count.
-    // The pile you are moving TO is not counted as an empty space.
     if (isDestinationEmpty && emptyTableauPiles > 0) {
         emptyTableauPiles--;
     }
-    
     return (1 + emptyFreecells) * (2 ** emptyTableauPiles);
 };
+
+/**
+ * Finds the highest-priority valid auto-move for a given card/stack in Freecell.
+ * Priority: Foundation -> Tableau -> Freecell.
+ */
+export function findAutoMove(gs: FreecellGameState, source: SelectedCardInfo): GameMove | null {
+    const cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
+    if(cardsToMove.length === 0) return null;
+    const cardToMove = cardsToMove[0];
+
+    // Priority 1: Try to move a single card to any foundation pile.
+    if (cardsToMove.length === 1) {
+        for (let i = 0; i < gs.foundation.length; i++) {
+            if (gs.canMoveToFoundation(cardToMove, gs.foundation[i])) {
+                return { source, destination: { type: 'foundation', pileIndex: i } };
+            }
+        }
+    }
+
+    // Priority 2: Try to move the stack to any other tableau pile.
+    for (let i = 0; i < gs.tableau.length; i++) {
+        if (source.type === 'tableau' && source.pileIndex === i) continue;
+        if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+            const isDestEmpty = gs.tableau[i].length === 0;
+            const maxMove = getMovableCardCount(gs, isDestEmpty);
+            if(cardsToMove.length <= maxMove) {
+                return { source, destination: { type: 'tableau', pileIndex: i } };
+            }
+        }
+    }
+
+    // Priority 3: Try to move a single card to an empty freecell.
+    if (cardsToMove.length === 1) {
+        const emptyCellIndex = gs.freecells.findIndex(cell => cell === null);
+        if (emptyCellIndex !== -1) {
+            return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
+        }
+    }
+
+    return null;
+}

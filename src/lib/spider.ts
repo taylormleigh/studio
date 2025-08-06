@@ -1,4 +1,6 @@
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck } from './solitaire';
+import type { GameMove } from './game-logic';
+import type { SelectedCardInfo } from '@/components/game/game-board';
 
 export type { Card, Suit, Rank };
 
@@ -13,6 +15,10 @@ export interface GameState {
   suitCount: SpiderSuitCount;
   moves: number;
   score: number;
+  // Methods
+  canMoveToTableau(cardsToMove: Card[], destinationCard: Card | undefined, isDragCheck?: boolean): boolean;
+  isGameWon(): boolean;
+  isRun(cards: Card[]): boolean;
 }
 
 // Map card ranks to numerical values for comparison.
@@ -22,12 +28,6 @@ const RANK_VALUES: Record<Rank, number> = {
 
 /**
  * Creates a deck for Spider Solitaire based on the number of suits.
- * Spider uses two standard 52-card decks (104 cards total).
- * 1 Suit: 8 sets of Spades.
- * 2 Suits: 4 sets of Spades, 4 sets of Hearts.
- * 4 Suits: 2 sets of each of the 4 suits.
- * @param suitCount The number of suits to play with.
- * @returns An array of 104 Card objects.
  */
 function createSpiderDeck(suitCount: SpiderSuitCount): Card[] {
     const selectedSuits = 
@@ -45,8 +45,6 @@ function createSpiderDeck(suitCount: SpiderSuitCount): Card[] {
 
 /**
  * Creates the initial game state for a new game of Spider Solitaire.
- * @param suitCount The number of suits to use (1, 2, or 4).
- * @returns A new GameState object.
  */
 export function createInitialState(suitCount: SpiderSuitCount): GameState {
   const deck = shuffleDeck(createSpiderDeck(suitCount));
@@ -64,7 +62,7 @@ export function createInitialState(suitCount: SpiderSuitCount): GameState {
     }
   });
 
-  return {
+  const gameState: Omit<GameState, 'canMoveToTableau' | 'isGameWon' | 'isRun'> = {
     gameType: 'Spider',
     tableau,
     foundation: [],
@@ -74,22 +72,24 @@ export function createInitialState(suitCount: SpiderSuitCount): GameState {
     moves: 0,
     score: 500, // Starting score, decreases with moves.
   };
+
+  const stateWithMethods = Object.create(gameState) as GameState;
+  stateWithMethods.canMoveToTableau = canMoveToTableau;
+  stateWithMethods.isGameWon = isGameWon;
+  stateWithMethods.isRun = isRun;
+
+  return stateWithMethods;
 }
 
 /**
  * Checks if a stack of cards forms a valid run for moving.
- * In Spider, a movable run must be of the same suit and in descending rank order.
- * @param cards The stack of cards to check.
- * @returns True if the stack is a valid run, false otherwise.
  */
-export function isRun(cards: Card[]): boolean {
+export function isRun(this: GameState, cards: Card[]): boolean {
     if (cards.length < 1) return false;
-    if (cards.length === 1) return true; // A single card is always a valid run.
+    if (cards.length === 1) return true;
     const firstSuit = cards[0].suit;
     for (let i = 0; i < cards.length - 1; i++) {
-        // All cards in the run must be of the same suit.
         if (cards[i].suit !== firstSuit) return false;
-        // Cards must be in descending rank order.
         if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) return false;
     }
     return true;
@@ -97,63 +97,78 @@ export function isRun(cards: Card[]): boolean {
 
 /**
  * Checks if a stack of cards can be legally moved to a tableau pile.
- * @param cardsToMove The stack of cards being moved.
- * @param destinationCard The top card of the destination pile, or undefined if the pile is empty.
- * @returns True if the move is valid, false otherwise.
  */
-export function canMoveToTableau(cardsToMove: Card[], destinationCard: Card | undefined, isDragCheck = false): boolean {
-  // The stack being moved must be a valid run (same suit, descending order).
-  if (isDragCheck && !isRun(cardsToMove)) {
+export function canMoveToTableau(this: GameState, cardsToMove: Card[], destinationCard: Card | undefined, isDragCheck = false): boolean {
+  if (isDragCheck && !this.isRun(cardsToMove)) {
     return false;
   }
   
   const cardToMove = cardsToMove[0];
 
-  // Any valid run can move to an empty tableau pile.
   if (!destinationCard) {
     return true;
   }
 
-  // The top card of the run can be placed on a card of one higher rank, regardless of suit.
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   return ranksCorrect;
 }
 
 /**
  * Checks a tableau pile for a completed set (King to Ace of the same suit).
- * If a set is found, it's removed from the pile.
- * @param tableauPile The tableau pile to check.
- * @returns An object containing the updated pile, the number of sets completed, and the completed set itself.
  */
-export function checkForCompletedSet(tableauPile: Card[]): { updatedPile: Card[], setsCompleted: number, completedSet: Card[] | null } {
-    if (tableauPile.length < 13) {
-      return { updatedPile: tableauPile, setsCompleted: 0, completedSet: null };
-    }
-  
-    // Check the last 13 cards for a complete set.
-    const topThirteen = tableauPile.slice(tableauPile.length - 13);
-    const topCard = topThirteen[0];
-  
-    // A completed set starts with a King and must be a valid run.
-    if (topCard.rank === 'K' && isRun(topThirteen)) {
-      // A full run from K to A of the same suit has been found.
-      return {
-        updatedPile: tableauPile.slice(0, tableauPile.length - 13),
-        setsCompleted: 1,
-        completedSet: topThirteen,
-      };
-    }
-  
-    return { updatedPile: tableauPile, setsCompleted: 0, completedSet: null };
+export function checkForCompletedSet(state: GameState): GameState {
+    if (state.gameType !== 'Spider') return state;
+
+    let newState = state;
+    let setsFoundInIteration: boolean;
+    do {
+        setsFoundInIteration = false;
+        let tempState = JSON.parse(JSON.stringify(newState)) as SpiderGameState;
+
+        for (let i = 0; i < tempState.tableau.length; i++) {
+            const pile = tempState.tableau[i];
+            if (pile.length >= 13) {
+                const topThirteen = pile.slice(pile.length - 13);
+                const topCard = topThirteen[0];
+                if (topCard.rank === 'K' && Object.create(tempState).isRun(topThirteen)) {
+                    setsFoundInIteration = true;
+                    tempState.tableau[i] = pile.slice(0, pile.length - 13);
+                    tempState.foundation.push(topThirteen);
+                    tempState.completedSets++;
+                    tempState.score += 100;
+
+                    if (tempState.tableau[i].length > 0) {
+                        tempState.tableau[i][tempState.tableau[i].length - 1].faceUp = true;
+                    }
+                }
+            }
+        }
+        if (setsFoundInIteration) newState = tempState;
+    } while (setsFoundInIteration);
+    return newState;
 }
   
 /**
  * Checks if the game has been won.
- * In Spider, the game is won when 8 sets are completed.
- * @param state The current game state.
- * @returns True if the game is won, false otherwise.
  */
-export function isGameWon(state: GameState): boolean {
-  return state.completedSets === 8;
+export function isGameWon(this: GameState): boolean {
+  return this.completedSets === 8;
 }
     
+/**
+ * Finds the highest-priority valid auto-move for a given card/stack in Spider.
+ * Priority is only to another Tableau pile.
+ */
+export function findAutoMove(gs: SpiderGameState, source: SelectedCardInfo): GameMove | null {
+    const cardsToMove = gs.tableau[source.pileIndex].slice(source.cardIndex);
+    
+    // Try to move the stack to any other tableau pile.
+    for (let i = 0; i < gs.tableau.length; i++) {
+        if (source.pileIndex === i) continue; // Cannot move to the same pile.
+        if (gs.canMoveToTableau(cardsToMove, gs.tableau[i][gs.tableau[i].length - 1])) {
+            return { source, destination: { type: 'tableau', pileIndex: i } };
+        }
+    }
+
+    return null;
+}
