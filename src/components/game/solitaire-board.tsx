@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent } from 'react';
+import { DragEvent, MouseEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -12,14 +12,15 @@ interface SolitaireBoardProps {
   selectedCard: SelectedCardInfo | null;
   highlightedPile: HighlightedPile | null;
   handleCardClick: (type: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => void;
-  handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
+  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'foundation', pileIndex: number) => void;
   handleDraw: () => void;
   moveCards: (sourceType: 'tableau' | 'waste' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'foundation', destPileIndex: number) => void;
 }
 
 export default function SolitaireBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, moveCards
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop, handleDraw, moveCards
 }: SolitaireBoardProps) {
   const { settings } = useSettings();
 
@@ -51,8 +52,8 @@ export default function SolitaireBoard({
                 card={last(gameState.waste)} 
                 data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
                 isSelected={selectedCard?.type === 'waste'}
-                draggable={true}
-                onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+                onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+                onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
@@ -66,8 +67,8 @@ export default function SolitaireBoard({
                 card={last(gameState.waste)} 
                 data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
                 isSelected={selectedCard?.type === 'waste'}
-                draggable={true}
-                onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+                onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+                onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
@@ -95,8 +96,8 @@ export default function SolitaireBoard({
             card={last(pile)}
             data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-            draggable={pile.length > 0}
-            onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+            onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+            onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
           />
         </div>
       ))}
@@ -126,7 +127,6 @@ export default function SolitaireBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             onClick={() => handleTableauClick(pileIndex, 0)}
           >
@@ -156,10 +156,10 @@ export default function SolitaireBoard({
                         data-testid={`card-${card.suit}-${card.rank}`}
                         isSelected={isSelected}
                         isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                        draggable={draggable}
                         isStacked={card.faceUp && !isTopCard}
                         className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
-                        onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                         onClick={(e) => {
                             e.stopPropagation();
                             handleCardClick('tableau', pileIndex, cardIndex);

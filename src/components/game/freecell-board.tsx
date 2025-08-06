@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent } from 'react';
+import { DragEvent, MouseEvent, TouchEvent } from 'react';
 import type { GameState as FreecellGameState } from '@/lib/freecell';
 import { getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { Card } from './card';
@@ -13,12 +13,13 @@ interface FreecellBoardProps {
   selectedCard: SelectedCardInfo | null;
   highlightedPile: HighlightedPile | null;
   handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
-  handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
+  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
@@ -67,9 +68,9 @@ export default function FreecellBoard({
               data-testid={`card-${card.suit}-${card.rank}`}
               isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
               isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-              draggable={isDraggable}
               isStacked={!isTopCard}
-              onDragStart={(e) => isDraggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+              onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
+              onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
               onClick={(e) => {
                   e.stopPropagation();
                   handleTableauClick(pileIndex, cardIndex);
@@ -95,8 +96,8 @@ export default function FreecellBoard({
             data-testid={card ? `card-${card.suit}-${card.rank}` : `card-freecell-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
-            draggable={!!card}
-            onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+            onMouseDown={(e) => card && handleMouseDown(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+            onTouchStart={(e) => card && handleTouchStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
           />
         </div>
       ))}
@@ -119,7 +120,6 @@ export default function FreecellBoard({
             data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
-            draggable={false} // Cannot drag from foundation
           />
         </div>
       ))}

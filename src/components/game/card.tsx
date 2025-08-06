@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
 import { SuitIcon } from './suit-icon';
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId = 'card-undefined' }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, onMouseDown, onTouchStart, style, isStacked, "data-testid": dataTestId = 'card-undefined' }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
@@ -60,15 +60,13 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
   return (
     <div
       onClick={onClick}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
       style={style}
       data-testid={dataTestId}
       className={cn(
         baseClasses,
-        'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
-        draggable && "cursor-grab",
+        'bg-card border-black cursor-pointer relative duration-300 ease-in-out'
       )}
     >
       <div
@@ -115,9 +113,8 @@ type CardProps = {
   isStacked?: boolean;
   className?: string;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
-  draggable?: boolean;
+  onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
   style?: React.CSSProperties;
   "data-testid"?: string;
 };

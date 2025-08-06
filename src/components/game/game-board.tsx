@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent, MouseEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -38,8 +38,41 @@ export type HighlightedPile = {
   pileIndex: number;
 } | null;
 
+type DraggedCardInfo = SelectedCardInfo & {
+    cards: CardType[];
+    initialX: number;
+    initialY: number;
+};
+
 
 const UNDO_LIMIT = 100;
+
+const DraggedCard = ({ cardInfo, position }: { cardInfo: DraggedCardInfo, position: { x: number, y: number } }) => {
+    if (!cardInfo) return null;
+
+    return (
+        <div 
+            className="absolute pointer-events-none"
+            style={{
+                left: position.x,
+                top: position.y,
+                zIndex: 9999,
+            }}
+        >
+            <div className="relative">
+                {cardInfo.cards.map((card, index) => (
+                    <div
+                        key={`${card.suit}-${card.rank}`}
+                        className="absolute"
+                        style={{ top: `${index * 24}px`}}
+                    >
+                         <Card card={card} className="w-24"/>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export default function GameBoard() {
   const { settings } = useSettings();
@@ -57,6 +90,12 @@ export default function GameBoard() {
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
   
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedCardInfo, setDraggedCardInfo] = useState<DraggedCardInfo | null>(null);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -385,21 +424,6 @@ export default function GameBoard() {
      }, true);
      return moveMade;
   }, [updateState, toast]);
-    
-  const handleDragStart = (e: DragEvent, info: SelectedCardInfo) => {
-    e.dataTransfer.setData('application/json', JSON.stringify(info));
-    e.dataTransfer.effectAllowed = 'move';
-    setSelectedCard(null); 
-  };
-  
-  const handleDrop = (e: DragEvent, destType: 'tableau' | 'foundation' | 'freecell', destPileIndex: number) => {
-    e.preventDefault();
-    const infoJSON = e.dataTransfer.getData('application/json');
-    if (!infoJSON) return;
-
-    const info: SelectedCardInfo = JSON.parse(infoJSON);
-    moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
-  };
 
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
@@ -495,6 +519,89 @@ export default function GameBoard() {
     setSelectedCard({ type: sourceType, pileIndex, cardIndex });
   };
   
+    
+  const handleDragStart = (e: MouseEvent, info: SelectedCardInfo) => {
+    if (!gameState) return;
+    setIsDragging(true);
+    setSelectedCard(null);
+
+    let cards: CardType[];
+    switch (info.type) {
+        case 'tableau': cards = gameState.tableau[info.pileIndex].slice(info.cardIndex); break;
+        case 'waste': cards = (gameState.gameType === 'Solitaire') ? [(gameState as SolitaireGameState).waste.slice(-1)[0]] : []; break;
+        case 'foundation': cards = (gameState.gameType === 'Solitaire') ? [gameState.foundation[info.pileIndex].slice(-1)[0]] : []; break;
+        case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[info.pileIndex]!] : []; break;
+        default: cards = [];
+    }
+
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setDragPosition({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
+    setDraggedCardInfo({ ...info, cards, initialX: e.clientX, initialY: e.clientY });
+  };
+
+  const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
+      const touch = e.touches[0];
+      handleDragStart(touch as any, info);
+  };
+  
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (isDragging) {
+        setDragPosition({
+            x: clientX - dragOffset.x,
+            y: clientY - dragOffset.y,
+        });
+    }
+  };
+  
+  const handleDragEnd = (clientX: number, clientY: number) => {
+    if (isDragging && draggedCardInfo) {
+      const draggedEl = document.elementFromPoint(draggedCardInfo.initialX, draggedCardInfo.initialY);
+      if (draggedEl) {
+        (draggedEl as HTMLElement).style.display = 'none';
+      }
+
+      const dropTarget = document.elementFromPoint(clientX, clientY);
+      
+      if (draggedEl) {
+        (draggedEl as HTMLElement).style.display = '';
+      }
+
+      if (dropTarget) {
+          let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
+          let targetPileIndex: number | null = null;
+
+          let currentEl: HTMLElement | null = dropTarget as HTMLElement;
+          while (currentEl) {
+              const testId = currentEl.dataset.testid;
+              if (testId) {
+                  if (testId.startsWith('tableau-pile-')) {
+                      targetType = 'tableau';
+                      targetPileIndex = parseInt(testId.replace('tableau-pile-', ''), 10);
+                      break;
+                  }
+                  if (testId.startsWith('foundation-pile-')) {
+                      targetType = 'foundation';
+                      targetPileIndex = parseInt(testId.replace('foundation-pile-', ''), 10);
+                      break;
+                  }
+                  if (testId.startsWith('freecell-pile-')) {
+                    targetType = 'freecell';
+                    targetPileIndex = parseInt(testId.replace('freecell-pile-', ''), 10);
+                    break;
+                }
+              }
+              currentEl = currentEl.parentElement;
+          }
+          if (targetType && targetPileIndex !== null) {
+              moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, targetType, targetPileIndex);
+          }
+      }
+    }
+    setIsDragging(false);
+    setDraggedCardInfo(null);
+  };
+
   
   const renderLoader = () => (
     <div className="flex flex-col min-h-screen">
@@ -528,8 +635,9 @@ export default function GameBoard() {
     selectedCard,
     highlightedPile,
     handleCardClick,
-    handleDragStart,
-    handleDrop,
+    handleMouseDown,
+    handleTouchStart,
+    handleDrop: () => {}, // No-op for HTML5 dnd
     handleDraw,
     moveCards
   };
@@ -538,6 +646,10 @@ export default function GameBoard() {
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
+      onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+      onMouseUp={(e) => handleDragEnd(e.clientX, e.clientY)}
+      onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
@@ -549,6 +661,8 @@ export default function GameBoard() {
         {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
+
+      {isDragging && draggedCardInfo && <DraggedCard cardInfo={draggedCardInfo} position={dragPosition} />}
 
       <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
       

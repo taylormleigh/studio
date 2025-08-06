@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent } from 'react';
+import { DragEvent, MouseEvent, TouchEvent } from 'react';
 import { GameState as SpiderGameState, canMoveToTableau } from '@/lib/spider';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -12,13 +12,14 @@ interface SpiderBoardProps {
   selectedCard: SelectedCardInfo | null;
   highlightedPile: HighlightedPile | null;
   handleCardClick: (type: 'tableau', pileIndex: number, cardIndex: number) => void;
-  handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
+  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop, handleDraw
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -104,10 +105,10 @@ export default function SpiderBoard({
                           data-testid={`card-${card.suit}-${card.rank}`}
                           isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
                           isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                          draggable={draggable}
                           isStacked={card.faceUp && !isTopCard}
                           className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
-                          onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                          onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
+                          onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={(e) => {
                               e.stopPropagation();
                               handleCardClick('tableau', pileIndex, cardIndex);
