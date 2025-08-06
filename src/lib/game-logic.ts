@@ -260,9 +260,18 @@ const findFreecellAutoMoveToFreecell = (gameState: FreecellGameState, source: Se
 }
 
 const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
-    return findFreecellAutoMoveToFoundation(gameState, source) || 
-           findFreecellAutoMoveToTableau(gameState, source) ||
-           (source.type === 'tableau' ? findFreecellAutoMoveToFreecell(gameState, source) : null);
+    const fromTableau = findFreecellAutoMoveToFoundation(gameState, source) || 
+                        findFreecellAutoMoveToTableau(gameState, source) ||
+                        findFreecellAutoMoveToFreecell(gameState, source);
+    if (fromTableau) return fromTableau;
+    
+    // Only check moves from freecell if the source is a freecell
+    if (source.type === 'freecell') {
+        return findFreecellAutoMoveToFoundation(gameState, source) || 
+               findFreecellAutoMoveToTableau(gameState, source);
+    }
+    
+    return null;
 };
 
 
@@ -377,18 +386,16 @@ const handleInitialClick = (
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
     
-    // Attempt an auto-move if the setting is enabled
+    // If autoMove is on, try to find and execute a move immediately.
     if (settings.autoMove) {
-        if (gameState.gameType === 'Freecell' && (clickInfo.type === 'tableau' || clickInfo.type === 'freecell')) {
-            const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
-            if (autoMoveResult) return autoMoveResult;
-        } else if (gameState.gameType !== 'Freecell') {
-            const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
-            if (autoMoveResult) return autoMoveResult;
+        const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
+        // If a move was made, return the result. Otherwise, fall through to select the card.
+        if (autoMoveResult) {
+            return autoMoveResult;
         }
     }
     
-    // If no auto-move, select the card
+    // If autoMove is off, or if no auto-move was found, just select the card.
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 };
 
