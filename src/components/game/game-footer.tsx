@@ -16,7 +16,7 @@ export default function GameFooter({ moves, time, score }: GameFooterProps) {
   const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);
 
   return (
-    <footer data-testid="game-footer" className="flex justify-center items-center text-xs text-muted-foreground p-0">
+    <footer data-testid="game-footer" className="game-footer flex justify-center items-center text-xs text-muted-foreground p-0">
       <div className="flex flex-row gap-10 w-100">
         <div className="flex flex-row gap-1 items-center p-2" data-testid="moves-counter">
           <Pointer strokeWidth={iconStrokeWidth} size={iconSize} />

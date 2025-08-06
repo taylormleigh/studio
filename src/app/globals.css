@@ -70,6 +70,9 @@
   }
 }
 
+body {
+  overflow: hidden;
+}
 
 html, body, .font-body, .font-headline {
   font-family: var(--primary-font);
@@ -162,6 +165,11 @@ html, body, .font-body, .font-headline {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.game-footer {
+  position: sticky;
+  bottom: 0;
 }
 
 .grayscale {
