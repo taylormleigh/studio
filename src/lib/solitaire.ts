@@ -1,6 +1,4 @@
 
-
-import { canMoveToFoundation as canMoveToFoundationFreecell } from './freecell';
 import type { GameMove } from './game-logic';
 import type { SelectedCardInfo } from '@/components/game/game-board';
 
@@ -111,88 +109,117 @@ export function getCardColor(card: Card): 'red' | 'black' {
 
 /**
  * Checks if a card can be legally moved to a tableau pile.
+ * @param cardToMove The card (or bottom card of a stack) to be moved.
+ * @param destinationCard The card at the top of the destination tableau pile. Can be undefined if the pile is empty.
+ * @returns True if the move is valid, false otherwise.
  */
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
+  // If the destination pile is empty, only a King can be moved there.
   if (!destinationCard) {
     return cardToMove.rank === 'K';
   }
+  // The destination card must be face-up to accept a new card.
   if (!destinationCard.faceUp) {
     return false;
   }
+  // The card to move must be of the opposite color to the destination card.
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
+  // The card to move must be one rank lower than the destination card.
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
+  
   return !colorsMatch && ranksCorrect;
 }
 
 /**
  * Checks if a card can be legally moved to a foundation pile.
+ * @param cardToMove The card to be moved.
+ * @param foundationPile The specific foundation pile to move to.
+ * @returns True if the move is valid, false otherwise.
  */
 export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = last(foundationPile);
+  // If the foundation pile is empty, only an Ace can be moved there.
   if (!topCard) {
     return cardToMove.rank === 'A';
   }
+  // The card must be of the same suit as the foundation pile.
   const suitsMatch = cardToMove.suit === topCard.suit;
+  // The card must be one rank higher than the card currently on top of the pile.
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
+  
   return suitsMatch && ranksCorrect;
 }
 
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
+ * @param state The current game state.
+ * @returns True if the game is won, false otherwise.
  */
 export function isGameWon(state: GameState): boolean {
   return state.foundation.every(pile => pile.length === 13);
 }
 
 /**
- * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
+ * Checks if a stack of cards forms a valid run for moving (alternating colors, descending rank).
+ * @param cards The stack of cards to check.
+ * @returns True if the stack is a valid run, false otherwise.
  */
 export function isRun(cards: Card[]): boolean {
+  // A single card is always a valid run.
   if (cards.length <= 1) return true;
+  // Iterate through the stack to check the color and rank rules between adjacent cards.
   for (let i = 0; i < cards.length - 1; i++) {
+    // Check for alternating colors.
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
+    // Check for descending rank.
     if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) return false;
   }
   return true;
 }
 
 /**
- * Finds the highest-priority valid auto-move for a given card/stack in Solitaire.
- * Priority: Foundation -> Tableau.
+ * Finds the highest-priority valid auto-move for a given clicked card in Solitaire.
+ * The logic prioritizes moving to a foundation pile over moving to a tableau pile.
+ * @param gs The current game state.
+ * @param source The information about the clicked card (source of the potential move).
+ * @returns A valid GameMove object if a move is found, otherwise null.
  */
 export function findAutoMoveForSolitaire(gs: GameState, source: SelectedCardInfo): GameMove | null {
-    const cardsToMove = getCardsToMoveFromSource(gs, source);
-    if (cardsToMove.length === 0) return null;
-    const cardToMove = cardsToMove[0];
-    
-    // Priority 1: Try to move a single card to any foundation pile.
-    if (cardsToMove.length === 1) {
-        for (let i = 0; i < gs.foundation.length; i++) {
-            if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
-                return { source, destination: { type: 'foundation', pileIndex: i } };
-            }
+    // Determine the actual card to be moved based on the source of the click.
+    const cardToMove = source.type === 'waste'
+        ? last(gs.waste)
+        : gs.tableau[source.pileIndex]?.[source.cardIndex];
+
+    // If no card was found at the source, no move is possible.
+    if (!cardToMove) return null;
+
+    // Priority 1: Check all foundation piles for a valid move.
+    for (let i = 0; i < gs.foundation.length; i++) {
+        // If the card can be moved to the current foundation pile...
+        if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
+            // ...return this as the highest-priority move.
+            return { source, destination: { type: 'foundation', pileIndex: i } };
         }
     }
 
-    // Priority 2: Try to move the stack to any other tableau pile.
+    // Priority 2: If no foundation move was found, check all tableau piles.
+    const cardsToMove = source.type === 'tableau' 
+      ? gs.tableau[source.pileIndex].slice(source.cardIndex) 
+      : [cardToMove];
+      
     for (let i = 0; i < gs.tableau.length; i++) {
+        // A card/stack cannot be moved to its own pile.
         if (source.type === 'tableau' && source.pileIndex === i) continue;
-        if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+        
+        // Check if the card/stack can be legally moved to the current tableau pile.
+        if (canMoveToTableau(cardsToMove[0], last(gs.tableau[i]))) {
+            // If it's a valid move, return it.
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
     }
     
+    // If no valid move was found in either foundations or tableaus, return null.
     return null;
-}
-
-function getCardsToMoveFromSource(gs: GameState, source: SelectedCardInfo): Card[] {
-    if (source.type === 'tableau') {
-        return gs.tableau[source.pileIndex]?.slice(source.cardIndex) || [];
-    }
-    if (source.type === 'waste') {
-        return gs.waste.length > 0 ? [last(gs.waste)!] : [];
-    }
-    return [];
 }
 
 
@@ -213,7 +240,3 @@ export function first(pile: Pile): Card | undefined {
 export function last(pile: Pile): Card | undefined {
     return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
-    
-
-
-
