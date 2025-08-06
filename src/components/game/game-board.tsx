@@ -299,10 +299,7 @@ export default function GameBoard() {
         }
     };
     
-  const swipeHandlers = useSwipeGestures({ 
-    onSwipeRight: handleUndo,
-    onDrag: handleDrag
-  });
+  const swipeHandlers = useSwipeGestures({ onDrag: handleDrag });
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
@@ -483,56 +480,56 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
   
-    const handleTouchStart = (info: SelectedCardInfo) => {
-        setDraggedCardInfo(info);
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
-        if (draggedCardInfo && draggedCardPosition) {
-            const touch = e.changedTouches[0];
-            
-            // Temporarily hide the dragged card to accurately find the drop target
-            const draggedCardDiv = document.getElementById('dragged-card');
-            if (draggedCardDiv) draggedCardDiv.style.display = 'none';
-    
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-            
-            // Restore visibility
-            if (draggedCardDiv) draggedCardDiv.style.display = 'block';
+  const handleTouchStart = (info: SelectedCardInfo) => {
+    setDraggedCardInfo(info);
+  };
+  
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (draggedCardInfo && draggedCardPosition) {
+        const touch = e.changedTouches[0];
+        
+        // Temporarily hide the dragged card to accurately find the drop target
+        const draggedCardDiv = document.getElementById('dragged-card');
+        if (draggedCardDiv) draggedCardDiv.style.display = 'none';
 
-            if (dropTarget) {
-                let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
-                let destPileIndex: number | null = null;
-    
-                // Check if dropped on a tableau pile
-                const tableauPile = dropTarget.closest('[data-testid^="tableau-pile-"]');
-                if (tableauPile) {
-                    destType = 'tableau';
-                    destPileIndex = parseInt(tableauPile.getAttribute('data-testid')!.split('-')[3], 10);
-                }
-    
-                // Check if dropped on a foundation pile
-                const foundationPile = dropTarget.closest('[data-testid^="foundation-pile-"]');
-                if (foundationPile) {
-                    destType = 'foundation';
-                    destPileIndex = parseInt(foundationPile.getAttribute('data-testid')!.split('-')[3], 10);
-                }
-    
-                // Check if dropped on a freecell pile
-                const freecellPile = dropTarget.closest('[data-testid^="freecell-pile-"]');
-                if (freecellPile) {
-                    destType = 'freecell';
-                    destPileIndex = parseInt(freecellPile.getAttribute('data-testid')!.split('-')[3], 10);
-                }
-    
-                if (destType && destPileIndex !== null) {
-                    moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
-                }
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        // Restore visibility
+        if (draggedCardDiv) draggedCardDiv.style.display = 'block';
+
+        if (dropTarget) {
+            let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
+            let destPileIndex: number | null = null;
+
+            // Check if dropped on a tableau pile
+            const tableauPile = dropTarget.closest('[data-testid^="tableau-pile-"]');
+            if (tableauPile) {
+                destType = 'tableau';
+                destPileIndex = parseInt(tableauPile.getAttribute('data-testid')!.split('-')[3], 10);
+            }
+
+            // Check if dropped on a foundation pile
+            const foundationPile = dropTarget.closest('[data-testid^="foundation-pile-"]');
+            if (foundationPile) {
+                destType = 'foundation';
+                destPileIndex = parseInt(foundationPile.getAttribute('data-testid')!.split('-')[3], 10);
+            }
+
+            // Check if dropped on a freecell pile
+            const freecellPile = dropTarget.closest('[data-testid^="freecell-pile-"]');
+            if (freecellPile) {
+                destType = 'freecell';
+                destPileIndex = parseInt(freecellPile.getAttribute('data-testid')!.split('-')[3], 10);
+            }
+
+            if (destType && destPileIndex !== null) {
+                moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
             }
         }
-        setDraggedCardInfo(null);
-        setDraggedCardPosition(null);
-    };
+    }
+    setDraggedCardInfo(null);
+    setDraggedCardPosition(null);
+  };
 
     /**
    * Handles all card click events, routing to selection, deselection, or auto-move logic.
@@ -722,10 +719,7 @@ export default function GameBoard() {
       data-testid="game-board"
       onTouchStart={swipeHandlers.onTouchStart}
       onTouchMove={swipeHandlers.onTouchMove}
-      onTouchEnd={(e) => {
-        swipeHandlers.onTouchEnd(e);
-        handleTouchEnd(e);
-      }}
+      onTouchEnd={handleTouchEnd}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
