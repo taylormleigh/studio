@@ -117,7 +117,7 @@ export const checkForCompletedSet = (state: GameState): GameState => {
 // Move Validation Logic (Game Specific Implementations)
 // ================================================================================================
 
-const isValidSolitaireMove = (gs: SolitaireGameState, move: GameMove): boolean => {
+const isValidSolitaireMove = (gs: SolitaireGameState, move: GameMove, toast: ReturnType<typeof useToast>['toast']): boolean => {
     const cards = getCardsToMove(gs, move.source);
     if (!cards.length) return false;
     if (move.source.type === 'tableau' && !isSolitaireRun(cards)) return false;
@@ -134,7 +134,7 @@ const isValidFreecellMove = (gs: FreecellGameState, move: GameMove, toast: Retur
     const isDestEmpty = move.destination.type === 'tableau' && gs.tableau[move.destination.pileIndex].length === 0;
     const maxMove = getMovableCardCount(gs, isDestEmpty);
     if (cards.length > maxMove) {
-        toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cards.length} cards. Only ${maxMove} are movable.` });
+        if (toast) toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cards.length} cards. Only ${maxMove} are movable.` });
         return false;
     }
     if (move.source.type === 'tableau' && !isFreecellRun(cards)) return false;
@@ -145,7 +145,7 @@ const isValidFreecellMove = (gs: FreecellGameState, move: GameMove, toast: Retur
     return false;
 };
 
-const isValidSpiderMove = (gs: SpiderGameState, move: GameMove): boolean => {
+const isValidSpiderMove = (gs: SpiderGameState, move: GameMove, toast: ReturnType<typeof useToast>['toast']): boolean => {
     const cards = getCardsToMove(gs, move.source);
     if (!cards.length || !isSpiderRun(cards)) return false;
     if (move.destination.type === 'tableau') return canMoveSpiderToTableau(cards, last(gs.tableau[move.destination.pileIndex]));
@@ -203,9 +203,7 @@ const findFreecellAutoMoveToFreecell = (gs: FreecellGameState, src: SelectedCard
 const findFreecellAutoMoveFromTableau = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src) || findFreecellAutoMoveToFreecell(gs, src);
 const findFreecellAutoMoveFromFreecell = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src);
 const findFreecellAutoMove = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
-    if (src.type === 'freecell') {
-        return findFreecellAutoMoveFromFreecell(gs, src);
-    }
+    if (src.type === 'freecell') return findFreecellAutoMoveFromFreecell(gs, src);
     return findFreecellAutoMoveFromTableau(gs, src);
 };
 
@@ -301,13 +299,13 @@ const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: Gam
         return handleInitialClickWithAutoMove(gs, clickInfo);
     }
     
-    // If auto-move is off, just select the card.
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 };
 
 /** Handles a click when a card is already selected. */
 const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click: ClickSource, toast: ReturnType<typeof useToast>['toast']): ProcessResult => {
     const clickedCard = getClickedCard(gs, click);
+    const clickedOnEmptyPile = click.cardIndex === -1;
 
     // Deselect if clicking the same card
     if (sel.type === click.type && sel.pileIndex === click.pileIndex && sel.cardIndex === click.cardIndex) {
@@ -321,13 +319,15 @@ const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click:
         const newState = executeMove(gs, move);
         const highlightedPile = { type: move.destination.type, pileIndex: move.destination.pileIndex };
         return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
-    } else if (clickedCard && clickedCard.faceUp) {
-        // If the move is invalid, but the user clicked another valid, face-up card, switch selection.
+    } 
+    
+    // If the move is invalid, check if we should change selection
+    if (!clickedOnEmptyPile && clickedCard && clickedCard.faceUp) {
         return { newState: null, newSelectedCard: click, highlightedPile: null, saveHistory: false };
-    } else {
-        // Otherwise, the move is invalid and no new card was clicked, so deselect.
-        return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
+
+    // Otherwise, the move is invalid, so deselect.
+    return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
 /** Main entry point for processing any card click action. */
