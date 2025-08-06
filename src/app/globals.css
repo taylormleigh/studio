@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @font-face {
   font-family: 'Google Sans Code';
   src: url('/fonts/Google_Sans_Code/static/GoogleSansCode-Regular.ttf') format('truetype');
@@ -16,7 +15,6 @@
   src: url('/fonts/PresentationFonts/Lazarus Oz Syndfri.ttf') format('truetype');
   font-weight: 200;
 }
-
 
 @layer base {
   :root {
