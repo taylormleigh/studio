@@ -1,5 +1,3 @@
-
-
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck } from './solitaire';
 
 export type { Card, Suit, Rank };
@@ -84,7 +82,7 @@ export function createInitialState(suitCount: SpiderSuitCount): GameState {
  * @param cards The stack of cards to check.
  * @returns True if the stack is a valid run, false otherwise.
  */
-function isRun(cards: Card[]): boolean {
+export function isRun(cards: Card[]): boolean {
     if (cards.length < 1) return false;
     if (cards.length === 1) return true; // A single card is always a valid run.
     const firstSuit = cards[0].suit;

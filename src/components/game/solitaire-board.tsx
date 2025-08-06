@@ -3,10 +3,11 @@
 
 import type { MouseEvent, TouchEvent } from 'react';
 import type { GameState as SolitaireGameState } from '@/lib/solitaire';
-import { isRun as isSolitaireRun, last } from '@/lib/solitaire';
+import { last } from '@/lib/solitaire';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
+import Tableau from './tableau';
 
 interface SolitaireBoardProps {
   gameState: SolitaireGameState;
@@ -38,7 +39,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
           </>
         )}
       </div>
-      <TableauPiles {...props} />
+      <Tableau {...props} gridCols="grid-cols-7" />
     </>
   );
 }
@@ -92,51 +93,4 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
         </div>
       ))}
     </div>
-);
-
-const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart }: SolitaireBoardProps) => (
-  <div className="grid grid-cols-7 gap-x-[clamp(2px,1vw,4px)] min-h-[28rem]" data-testid="tableau-piles">
-    {gameState.tableau.map((pile, pileIndex) => (
-      <div 
-        key={pileIndex} 
-        data-testid={`tableau-pile-${pileIndex}`}
-        className="relative"
-        onClick={() => pile.length === 0 && handleCardClick('tableau', pileIndex, 0)}
-      >
-        <div className="absolute top-0 left-0 w-full h-full">
-          {pile.length === 0 ? (
-            <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
-          ) : (
-            pile.map((card, cardIndex) => {
-              const isTopCard = cardIndex === pile.length - 1;
-              const draggable = card.faceUp && isSolitaireRun(pile.slice(cardIndex));
-              const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0);
-              
-              return (
-                <div 
-                  key={`${card.suit}-${card.rank}-${cardIndex}`} 
-                  className="absolute w-full"
-                  style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
-                >
-                  <Card
-                    card={card}
-                    data-testid={`card-${card.suit}-${card.rank}`}
-                    isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-                    isStacked={card.faceUp && !isTopCard}
-                    className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
-                    onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
-                    onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleCardClick('tableau', pileIndex, cardIndex);
-                    }}
-                  />
-                </div>
-              )
-            })
-          )}
-        </div>
-      </div>
-    ))}
-  </div>
 );
