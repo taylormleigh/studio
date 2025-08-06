@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, ClickSource, isGameWon, GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
+import { processCardClick, isGameWon, GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -16,7 +16,6 @@ import VictoryDialog from './victory-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsDialog } from './settings-dialog';
 import { GameDialog } from './game-dialog';
-import { Card } from './card';
 import { UndoButton } from './undo-button';
 
 import { useToast } from '@/hooks/use-toast';
@@ -30,38 +29,7 @@ export type HighlightedPile = {
   pileIndex: number;
 } | null;
 
-type DraggedCardInfo = LocatedCard & {
-    cards: CardType[];
-};
-
 const UNDO_LIMIT = 100;
-
-const DraggedCard = ({ cardInfo, position }: { cardInfo: DraggedCardInfo, position: { x: number, y: number } }) => {
-    if (!cardInfo) return null;
-
-    return (
-        <div 
-            className="absolute pointer-events-none"
-            style={{
-                left: position.x,
-                top: position.y,
-                zIndex: 9999,
-            }}
-        >
-            <div className="relative">
-                {cardInfo.cards.map((card, index) => (
-                    <div
-                        key={`${card.suit}-${card.rank}`}
-                        className="absolute"
-                        style={{ top: `${index * 24}px`}}
-                    >
-                         <Card card={card} />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 export default function GameBoard() {
   const { settings } = useSettings();
@@ -78,11 +46,6 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<LocatedCard | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
-  
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedCardInfo, setDraggedCardInfo] = useState<DraggedCardInfo | null>(null);
-  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsClient(true);
@@ -225,8 +188,8 @@ export default function GameBoard() {
     updateState(newState);
   }, [gameState, toast, updateState]);
 
-  const handleCardClick = (card: CardType | undefined, location: ClickSource) => {
-    if (!gameState || isDragging) return;
+  const handleCardClick = (card: CardType | undefined, location: CardLocation) => {
+    if (!gameState) return;
   
     const result = processCardClick({
         gameState,
@@ -244,6 +207,27 @@ export default function GameBoard() {
     setSelectedCard(result.newSelectedCard);
     setHighlightedPile(result.highlightedPile);
   };
+    
+  const handleMouseDown = (e: MouseEvent, card: CardType, location: CardLocation) => {
+    e.stopPropagation();
+    if (settings.autoMove) return;
+    const { gameState } = { gameState: gameState! };
+    const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
+    setSelectedCard(result.newSelectedCard);
+};
+
+  const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation) => {
+      e.stopPropagation();
+      if (settings.autoMove) return;
+      const { gameState } = { gameState: gameState! };
+      const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
+      setSelectedCard(result.newSelectedCard);
+  };
+
+  const handleDrop = (location: CardLocation) => {
+      if (settings.autoMove || !selectedCard) return;
+      handleCardClick(undefined, location);
+  };
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
@@ -251,92 +235,6 @@ export default function GameBoard() {
     onDraw: handleDraw,
     onOpenSettings: () => setIsSettingsOpen(true)
   });
-  
-  const startDrag = (clientX: number, clientY: number, card: CardType, location: CardLocation) => {
-    if (!gameState) return;
-    setIsDragging(true);
-    setSelectedCard(null);
-  
-    let cards: CardType[];
-    switch (location.type) {
-        case 'tableau': cards = gameState.tableau[location.pileIndex].slice(location.cardIndex); break;
-        case 'waste': cards = (gameState.gameType === 'Solitaire') ? [(gameState as SolitaireGameState).waste.slice(-1)[0]] : []; break;
-        case 'foundation': cards = (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') ? [gameState.foundation[location.pileIndex].slice(-1)[0]] : []; break;
-        case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[location.pileIndex]!] : []; break;
-        default: cards = [];
-    }
-    
-    const targetElement = document.querySelector(`[data-testid*="${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
-    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY };
-
-    setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
-    setDragPosition({ x: rect.left, y: rect.top });
-    setDraggedCardInfo({ ...card, location, cards });
-};
-    
-const handleMouseDown = (e: MouseEvent, card: CardType, location: CardLocation) => {
-    e.stopPropagation();
-    startDrag(e.clientX, e.clientY, card, location);
-};
-
-const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation) => {
-    e.stopPropagation();
-    const touch = e.touches[0];
-    startDrag(touch.clientX, touch.clientY, card, location);
-};
-
-  const handleDragMove = (clientX: number, clientY: number) => {
-    if (isDragging) {
-      setDragPosition({
-        x: clientX - dragOffset.x,
-        y: clientY - dragOffset.y,
-      });
-    }
-  };
-  
-  const handleDrop = (clientX: number, clientY: number) => {
-    if (!isDragging || !draggedCardInfo || !gameState) return;
-
-    // Temporarily hide the dragged cards to find the element underneath
-    const draggedElements = document.querySelectorAll('.absolute.pointer-events-none');
-    draggedElements.forEach(el => (el as HTMLElement).style.display = 'none');
-    const dropTarget = document.elementFromPoint(clientX, clientY);
-    draggedElements.forEach(el => (el as HTMLElement).style.display = ''); // Restore visibility
-
-    if (dropTarget) {
-        let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
-        let targetPileIndex: number | null = null;
-        
-        let currentEl: HTMLElement | null = dropTarget as HTMLElement;
-        while (currentEl) {
-            const testId = currentEl.dataset.testid;
-            if (testId) {
-                const parts = testId.split('-');
-                if (testId.includes('-pile-')) {
-                   const type = testId.split('-')[0] as any;
-                   const index = parseInt(testId.split('-')[2]);
-                   if (['tableau', 'foundation', 'freecell'].includes(type) && !isNaN(index)) {
-                       targetType = type;
-                       targetPileIndex = index;
-                       break;
-                   }
-                }
-            }
-            currentEl = currentEl.parentElement;
-        }
-        
-        if (targetType && targetPileIndex !== null) {
-            const clickInfo: ClickSource = { type: targetType, pileIndex: targetPileIndex, cardIndex: -1 };
-            const result = processCardClick({ gameState, selectedCard: draggedCardInfo, clickSource: clickInfo, clickedCard: undefined, settings, toast });
-            if (result.newState) {
-                updateState(result.newState, result.saveHistory);
-            }
-        }
-    }
-    
-    setIsDragging(false);
-    setDraggedCardInfo(null);
-  };
   
   const renderLoader = () => (
     <div className="flex flex-col min-h-screen">
@@ -372,6 +270,7 @@ const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation)
     handleCardClick,
     handleMouseDown,
     handleTouchStart,
+    handleDrop,
     handleDraw
   };
 
@@ -379,10 +278,6 @@ const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation)
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
-      onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
-      onMouseUp={(e) => handleDrop(e.clientX, e.clientY)}
-      onTouchMove={(e) => e.touches[0] && handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchEnd={(e) => e.changedTouches[0] && handleDrop(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
@@ -394,8 +289,6 @@ const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation)
         {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
-
-      {isDragging && draggedCardInfo && <DraggedCard cardInfo={draggedCardInfo} position={dragPosition} />}
 
       <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
       

@@ -18,9 +18,10 @@ interface TableauProps {
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
   handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
   handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
+  handleDrop: (location: CardLocation) => void;
 }
 
-export default function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart }: TableauProps) {
+export default function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
   const getCardYOffset = (pile: CardType[], cardIndex: number) => {
     if (gameState.gameType === 'Spider') {
         return pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 26 : 10), 0)
@@ -59,13 +60,15 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
           key={pileIndex} 
           data-testid={`tableau-pile-${pileIndex}`}
           className="relative"
-          onClick={() => pile.length === 0 && handleCardClick(undefined, { type: 'tableau', pileIndex, cardIndex: -1 })}
         >
           <div className="absolute top-0 left-0 w-full h-full">
             {pile.length === 0 ? (
               <Card 
                 data-testid={`card-tableau-empty-${pileIndex}`} 
                 isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
+                onMouseUp={() => handleDrop({ type: 'tableau', pileIndex, cardIndex: -1 })}
+                onTouchEnd={() => handleDrop({ type: 'tableau', pileIndex, cardIndex: -1 })}
+                onClick={() => handleCardClick(undefined, { type: 'tableau', pileIndex, cardIndex: -1 })}
               />
             ) : (
               pile.map((card, cardIndex) => {
@@ -88,6 +91,8 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
                         className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                         onMouseDown={(e) => draggable && handleMouseDown(e, card, location)}
                         onTouchStart={(e) => draggable && handleTouchStart(e, card, location)}
+                        onMouseUp={() => handleDrop(location)}
+                        onTouchEnd={() => handleDrop(location)}
                         onClick={(e) => {
                             e.stopPropagation();
                             handleCardClick(card, location);

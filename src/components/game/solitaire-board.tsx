@@ -17,6 +17,7 @@ interface SolitaireBoardProps {
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
   handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
   handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
+  handleDrop: (location: CardLocation) => void;
   handleDraw: () => void;
 }
 
@@ -45,7 +46,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
   );
 }
 
-const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
+const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick, handleDrop }: SolitaireBoardProps) => {
   const { settings } = useSettings();
   
   const Stock = () => (
@@ -56,15 +57,16 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 
   const Waste = () => {
     const wasteCard = last(gameState.waste);
+    const location: CardLocation = {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1};
     return (
         <div data-testid="waste-pile">
             {wasteCard ? (
                 <Card 
                     card={wasteCard} 
                     data-testid={`card-${wasteCard.suit}-${wasteCard.rank}`}
-                    onMouseDown={(e) => handleMouseDown(e, wasteCard, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                    onTouchStart={(e) => handleTouchStart(e, wasteCard, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                    onClick={() => handleCardClick(wasteCard, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1})}
+                    onMouseDown={(e) => handleMouseDown(e, wasteCard, location)}
+                    onTouchStart={(e) => handleTouchStart(e, wasteCard, location)}
+                    onClick={() => handleCardClick(wasteCard, location)}
                 />
             ) : (
                 <Card onClick={() => handleDraw()} data-testid="card-waste-empty" />
@@ -77,16 +79,16 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 }
 
 
-const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart }: SolitaireBoardProps) => (
+const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: SolitaireBoardProps) => (
     <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles">
       {gameState.foundation.map((pile, i) => {
         const topCard = last(pile);
+        const location: CardLocation = {type: 'foundation', pileIndex: i, cardIndex: pile.length-1};
         return (
           <div 
             key={i} 
             data-testid={`foundation-pile-${i}`}
             className="w-full max-w-[96px]"
-            onClick={() => handleCardClick(topCard, {type: 'foundation', pileIndex: i, cardIndex: pile.length - 1})}
           >
             <Card 
               card={topCard}
@@ -94,15 +96,17 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
               isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
               onMouseDown={(e) => {
                   e.stopPropagation(); 
-                  if(topCard) handleMouseDown(e, topCard, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})
+                  if(topCard) handleMouseDown(e, topCard, location)
               }}
               onTouchStart={(e) => {
                   e.stopPropagation();
-                  if(topCard) handleTouchStart(e, topCard, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})
+                  if(topCard) handleTouchStart(e, topCard, location)
               }}
+              onMouseUp={() => handleDrop(location)}
+              onTouchEnd={() => handleDrop(location)}
               onClick={(e) => {
                   e.stopPropagation();
-                  handleCardClick(topCard, {type: 'foundation', pileIndex: i, cardIndex: pile.length - 1})
+                  handleCardClick(topCard, location)
               }}
             />
           </div>

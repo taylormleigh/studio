@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
 import { SuitIcon } from './suit-icon';
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, onMouseDown, onTouchStart, style, isStacked, "data-testid": dataTestId = 'card-undefined' }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, style, isStacked, "data-testid": dataTestId = 'card-undefined' }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
@@ -18,7 +18,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
   const baseClasses = cn(
     cardSize,
     'rounded-md transition-all card-border',
-    // isSelected ? 'ring-2 ring-primary' : '', // Removed for no selection style
+    isSelected ? 'ring-2 ring-primary' : '', 
     ringClass,
     className
   );
@@ -28,6 +28,8 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
     return (
       <div
         onClick={onClick}
+        onMouseUp={onMouseUp}
+        onTouchEnd={onTouchEnd}
         data-testid={dataTestId}
         className={cn(
           baseClasses,
@@ -62,7 +64,9 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
     <div
       onClick={onClick}
       onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
       onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       style={style}
       data-testid={dataTestId}
       className={cn(
@@ -115,7 +119,9 @@ type CardProps = {
   className?: string;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchEnd?: (e: React.TouchEvent<HTMLDivElement>) => void;
   style?: React.CSSProperties;
   "data-testid"?: string;
 };

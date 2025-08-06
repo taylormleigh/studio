@@ -17,6 +17,7 @@ interface SpiderBoardProps {
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
   handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
   handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
+  handleDrop: (location: CardLocation) => void;
   handleDraw: () => void;
 }
 
