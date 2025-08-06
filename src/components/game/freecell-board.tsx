@@ -30,40 +30,6 @@ export default function FreecellBoard({
     handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
   };
 
-  const DraggableCard = ({ pile, pileIndex, cardIndex }: { pile: any[], pileIndex: number, cardIndex: number }) => {
-    const card = pile[cardIndex];
-    const isTopCard = cardIndex === pile.length - 1;
-    
-    const stackToTest = pile.slice(cardIndex);
-    const isValidRun = isFreecellRun(stackToTest);
-    const maxMovable = getMovableCardCount(gameState, false);
-    
-    const isDraggable = isValidRun && stackToTest.length <= maxMovable;
-    const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
-
-    return (
-      <div 
-        key={`${card.suit}-${card.rank}-${cardIndex}`} 
-        className="absolute w-full"
-        style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
-      >
-        <Card
-          card={card}
-          data-testid={`card-${card.suit}-${card.rank}`}
-          isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
-          isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-          isStacked={!isTopCard}
-          onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
-          onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-          onClick={(e) => {
-              e.stopPropagation();
-              handleCardClick('tableau', pileIndex, cardIndex);
-          }}
-        />
-      </div>
-    );
-  };
-
   const FreecellPiles = () => (
     <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
       {gameState.freecells.map((card, i) => (
@@ -123,9 +89,37 @@ export default function FreecellBoard({
                 <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 <div className="relative w-full h-full">
-                 {pile.map((_, cardIndex) => (
-                    <DraggableCard key={cardIndex} pile={pile} pileIndex={pileIndex} cardIndex={cardIndex} />
-                 ))}
+                 {pile.map((card, cardIndex) => {
+                    const isTopCard = cardIndex === pile.length - 1;
+                    const stackToTest = pile.slice(cardIndex);
+                    const isValidRun = isFreecellRun(stackToTest);
+                    const isDestinationEmpty = selectedCard?.type === 'tableau' && selectedCard?.pileIndex !== pileIndex && pile.length === 0;
+                    const maxMovable = getMovableCardCount(gameState, isDestinationEmpty);
+                    const isDraggable = isValidRun && stackToTest.length <= maxMovable;
+                    const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
+                    
+                    return (
+                        <div 
+                            key={`${card.suit}-${card.rank}-${cardIndex}`} 
+                            className="absolute w-full"
+                            style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
+                        >
+                          <Card
+                            card={card}
+                            data-testid={`card-${card.suit}-${card.rank}`}
+                            isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
+                            isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
+                            isStacked={!isTopCard}
+                            onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCardClick('tableau', pileIndex, cardIndex);
+                            }}
+                          />
+                        </div>
+                    );
+                 })}
                 </div>
               )
             }

@@ -81,7 +81,7 @@ export default function GameBoard() {
   const [history, setHistory] = useState<GameState[]>([]);
   const [time, setTime] = useState(0);
   const [isWon, setIsWon] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -359,7 +359,7 @@ export default function GameBoard() {
           if (cardsToMove.length === 0) { moveMade = false; return prev; }
           const cardToMove = cardsToMove[0];
 
-          if (!isFreecellRun(cardsToMove)) {
+          if (sourceType === 'tableau' && !isFreecellRun(cardsToMove)) {
             toast({ variant: "destructive", title: "Invalid Move", description: "You can only move cards that are in sequence (descending rank, alternating colors)." });
             moveMade = false;
             return prev;
@@ -454,7 +454,7 @@ export default function GameBoard() {
     const clickedCard = 
       (sourceType === 'waste' && gameState.gameType === 'Solitaire') ? last((gameState as SolitaireGameState).waste) :
       (sourceType === 'tableau') ? gameState.tableau[pileIndex]?.[cardIndex] :
-      (sourceType === 'foundation' && (gameState.gameType === 'Solitaire')) ? last(gameState.foundation[pileIndex]) :
+      (sourceType === 'foundation' && (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell')) ? last(gameState.foundation[pileIndex]) :
       (sourceType === 'freecell' && gameState.gameType === 'Freecell') ? (gameState as FreecellGameState).freecells[pileIndex] :
       undefined;
   
@@ -491,7 +491,7 @@ export default function GameBoard() {
             }
           }
           
-           if (!isSolitaire && (sourceType === 'tableau')) {
+           if (!isSolitaire && (sourceType === 'tableau' || sourceType === 'freecell')) {
             const emptyFreecellIndex = (g as FreecellGameState).freecells.findIndex(cell => cell === null);
             if (emptyFreecellIndex !== -1) {
               return moveCards(sourceType, pileIndex, cardIndex, 'freecell', emptyFreecellIndex);
@@ -657,7 +657,6 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
     handleCardClick,
     handleMouseDown,
     handleTouchStart,
-    handleDrop: () => {}, // No-op for HTML5 dnd
     handleDraw,
     moveCards
   };
