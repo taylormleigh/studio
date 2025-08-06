@@ -13,7 +13,7 @@ type GameHeaderProps = {
 };
 
 const iconSize = 24;
-const iconStrokeWidth = 1.85;
+const iconStrokeWidth = 1.4;
 
 export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
   const { settings } = useSettings();
