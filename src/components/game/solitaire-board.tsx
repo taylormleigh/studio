@@ -1,10 +1,10 @@
 
 "use client";
 
-import { MouseEvent, TouchEvent } from 'react';
+import type { MouseEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
-import { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 
 interface SolitaireBoardProps {
@@ -15,11 +15,10 @@ interface SolitaireBoardProps {
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   handleDraw: () => void;
-  moveCards: (sourceType: 'tableau' | 'waste' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'foundation', destPileIndex: number) => void;
 }
 
 export default function SolitaireBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDraw, moveCards
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDraw
 }: SolitaireBoardProps) {
   const { settings } = useSettings();
 

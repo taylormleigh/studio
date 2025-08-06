@@ -1,10 +1,10 @@
 
 "use client";
 
-import { DragEvent, MouseEvent, TouchEvent } from 'react';
+import type { MouseEvent, TouchEvent } from 'react';
 import { GameState as SpiderGameState, canMoveToTableau } from '@/lib/spider';
 import { Card } from './card';
-import { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 
 interface SpiderBoardProps {
@@ -14,22 +14,16 @@ interface SpiderBoardProps {
   handleCardClick: (type: 'tableau', pileIndex: number, cardIndex: number) => void;
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
-  handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop, handleDraw
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDraw
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
   const handleTableauClick = (pileIndex: number, cardIndex: number) => {
     handleCardClick('tableau', pileIndex, cardIndex);
-  };
-
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
   };
 
   const gridCols = 'grid-cols-10';
@@ -76,7 +70,6 @@ export default function SpiderBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >
             <div className="absolute top-0 left-0 w-full h-full">

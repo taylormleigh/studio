@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent, MouseEvent, TouchEvent } from 'react';
+import type { MouseEvent, TouchEvent } from 'react';
 import type { GameState as FreecellGameState } from '@/lib/freecell';
 import { getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { Card } from './card';
@@ -15,32 +15,22 @@ interface FreecellBoardProps {
   handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
-  handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
   const handleFreecellClick = (pileIndex: number) => {
-      handleCardClick('freecell', pileIndex, 0);
+    handleCardClick('freecell', pileIndex, 0);
   };
 
   const handleFoundationClick = (pileIndex: number) => {
     handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
   };
 
-  const handleTableauClick = (pileIndex: number, cardIndex: number) => {
-      handleCardClick('tableau', pileIndex, cardIndex);
-  };
-  
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const DraggableCard = ({pile, pileIndex, cardIndex}: {pile: any[], pileIndex: number, cardIndex: number}) => {
+  const DraggableCard = ({ pile, pileIndex, cardIndex }: { pile: any[], pileIndex: number, cardIndex: number }) => {
     const card = pile[cardIndex];
     const isTopCard = cardIndex === pile.length - 1;
     
@@ -49,36 +39,30 @@ export default function FreecellBoard({
     const maxMovable = getMovableCardCount(gameState, false);
     
     const isDraggable = isValidRun && stackToTest.length <= maxMovable;
-    
     const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
 
-    const style = {
-      transform: `translateY(${yOffset}px)`,
-      zIndex: cardIndex
-    };
-    
     return (
-        <div 
-          key={`${card.suit}-${card.rank}-${cardIndex}`} 
-          className="absolute w-full"
-          style={style}
-        >
-            <Card
-              card={card}
-              data-testid={`card-${card.suit}-${card.rank}`}
-              isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
-              isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
-              isStacked={!isTopCard}
-              onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
-              onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-              onClick={(e) => {
-                  e.stopPropagation();
-                  handleTableauClick(pileIndex, cardIndex);
-              }}
-            />
-        </div>
-    )
-  }
+      <div 
+        key={`${card.suit}-${card.rank}-${cardIndex}`} 
+        className="absolute w-full"
+        style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
+      >
+        <Card
+          card={card}
+          data-testid={`card-${card.suit}-${card.rank}`}
+          isSelected={selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex}
+          isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
+          isStacked={!isTopCard}
+          onMouseDown={(e) => isDraggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
+          onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+          onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick('tableau', pileIndex, cardIndex);
+          }}
+        />
+      </div>
+    );
+  };
 
   const FreecellPiles = () => (
     <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
@@ -87,7 +71,6 @@ export default function FreecellBoard({
           key={`freecell-${i}`}
           data-testid={`freecell-pile-${i}`}
           className="w-full max-w-[96px]"
-          onDrop={(e) => handleDrop(e, 'freecell', i)}
           onClick={() => handleFreecellClick(i)}
         >
           <Card 
@@ -110,7 +93,6 @@ export default function FreecellBoard({
           key={`foundation-${i}`} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onDrop={(e) => handleDrop(e, 'foundation', i)}
           onClick={() => handleFoundationClick(i)}
         >
           <Card 
@@ -126,18 +108,8 @@ export default function FreecellBoard({
   
   return (
     <>
-       <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
-          {settings.leftHandMode ? (
-            <>
-              <FoundationPiles />
-              <FreecellPiles />
-            </>
-          ) : (
-            <>
-              <FreecellPiles />
-              <FoundationPiles />
-            </>
-          )}
+      <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
+        {settings.leftHandMode ? <><FoundationPiles /><FreecellPiles /></> : <><FreecellPiles /><FoundationPiles /></>}
       </div>
       <div className="grid grid-cols-8 gap-x-[2px] min-h-[28rem]" data-testid="tableau-piles">
         {gameState.tableau.map((pile, pileIndex) => (
@@ -145,8 +117,7 @@ export default function FreecellBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
-            onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
+            onClick={() => pile.length === 0 && handleCardClick('tableau', pileIndex, 0)}
           >
             {pile.length === 0 ? (
                 <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
