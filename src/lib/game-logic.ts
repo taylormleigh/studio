@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview This file contains the core game logic for card interactions,
  * acting as a central controller that dispatches actions to game-specific
@@ -33,7 +32,6 @@ import {
     checkForCompletedSet as checkForSpiderCompletedSet,
     isGameWon as isSpiderWon,
 } from './spider';
-
 
 // ================================================================================================
 // Type Definitions
@@ -191,66 +189,82 @@ const isValidMove = (gameState: GameState, move: GameMove, toast?: ReturnType<ty
 
 
 // ================================================================================================
-// Auto-Move Logic
+// Auto-Move Logic: Finders
 // ================================================================================================
 
-const findSolitaireAutoMove = (gameState: SolitaireGameState, source: SelectedCardInfo): GameMove | null => {
+const findSolitaireAutoMoveToFoundation = (gameState: SolitaireGameState, source: SelectedCardInfo): GameMove | null => {
     const cardsToMove = getCardsToMove(gameState, source);
-    if (!cardsToMove.length) return null;
-    
-    // Priority 1: Move single card to Foundation
-    if (cardsToMove.length === 1) {
-        for (let i = 0; i < gameState.foundation.length; i++) {
-            if (isValidSolitaireMove(gameState, { source, destination: { type: 'foundation', pileIndex: i } })) {
-                return { source, destination: { type: 'foundation', pileIndex: i } };
-            }
+    if (cardsToMove.length !== 1) return null;
+
+    for (let i = 0; i < gameState.foundation.length; i++) {
+        if (isValidSolitaireMove(gameState, { source, destination: { type: 'foundation', pileIndex: i } })) {
+            return { source, destination: { type: 'foundation', pileIndex: i } };
         }
     }
-    
-    // Priority 2: Move stack to another Tableau pile
-    if (source.type === 'tableau') {
-      for (let i = 0; i < gameState.tableau.length; i++) {
-        if (source.pileIndex === i) continue;
+    return null;
+}
+
+const findSolitaireAutoMoveToTableau = (gameState: SolitaireGameState, source: SelectedCardInfo): GameMove | null => {
+    if (source.type !== 'tableau' && source.type !== 'waste') return null;
+     
+    for (let i = 0; i < gameState.tableau.length; i++) {
+        if (source.type === 'tableau' && source.pileIndex === i) continue;
         if (isValidSolitaireMove(gameState, { source, destination: { type: 'tableau', pileIndex: i } })) {
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
-      }
     }
-
     return null;
 };
 
-const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
-    const cardsToMove = getCardsToMove(gameState, source);
-    if (cardsToMove.length !== 1) return null; 
+const findSolitaireAutoMove = (gameState: SolitaireGameState, source: SelectedCardInfo): GameMove | null => {
+    return findSolitaireAutoMoveToFoundation(gameState, source) || findSolitaireAutoMoveToTableau(gameState, source);
+};
 
-    // Priority 1: Move to Foundation
+
+const findFreecellAutoMoveToFoundation = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
+    const cardsToMove = getCardsToMove(gameState, source);
+    if (cardsToMove.length !== 1) return null;
+    
     for (let i = 0; i < gameState.foundation.length; i++) {
         if (isValidFreecellMove(gameState, { source, destination: { type: 'foundation', pileIndex: i } })) {
             return { source, destination: { type: 'foundation', pileIndex: i } };
         }
     }
-    
-    // Priority 2: Move to Tableau
+    return null;
+}
+
+const findFreecellAutoMoveToTableau = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
+     const cardsToMove = getCardsToMove(gameState, source);
+     if (cardsToMove.length !== 1) return null; 
+
     for (let i = 0; i < gameState.tableau.length; i++) {
         if (source.type === 'tableau' && source.pileIndex === i) continue;
         if (isValidFreecellMove(gameState, { source, destination: { type: 'tableau', pileIndex: i } })) {
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
     }
-    
-    // Priority 3: Move to an empty Freecell
-    if (source.type !== 'freecell') {
-        const emptyCellIndex = gameState.freecells.findIndex(cell => cell === null);
-        if (emptyCellIndex !== -1) {
-            if (isValidFreecellMove(gameState, { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } })) {
-                return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
-            }
+    return null;
+}
+
+const findFreecellAutoMoveToFreecell = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
+    const cardsToMove = getCardsToMove(gameState, source);
+    if (cardsToMove.length !== 1 || source.type === 'freecell') return null;
+
+    const emptyCellIndex = gameState.freecells.findIndex(cell => cell === null);
+    if (emptyCellIndex !== -1) {
+        if (isValidFreecellMove(gameState, { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } })) {
+            return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
         }
     }
-
     return null;
+}
+
+const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
+    return findFreecellAutoMoveToFoundation(gameState, source) || 
+           findFreecellAutoMoveToTableau(gameState, source) ||
+           findFreecellAutoMoveToFreecell(gameState, source);
 };
+
 
 const findSpiderAutoMove = (gameState: SpiderGameState, source: SelectedCardInfo): GameMove | null => {
     const cardsToMove = getCardsToMove(gameState, source);
@@ -264,6 +278,11 @@ const findSpiderAutoMove = (gameState: SpiderGameState, source: SelectedCardInfo
     }
     return null;
 };
+
+
+// ================================================================================================
+// Auto-Move Logic: Dispatcher
+// ================================================================================================
 
 const autoMoveDispatch = {
     Solitaire: findSolitaireAutoMove,
@@ -319,6 +338,29 @@ const executeMove = (gameState: GameState, move: GameMove): GameState => {
 // Main Click Handler Logic
 // ================================================================================================
 
+const handleSolitaireTableauFlip = (gameState: SolitaireGameState, clickInfo: ClickSource): ProcessResult | null => {
+    const clickedCard = getClickedCard(gameState, clickInfo);
+    const isTopCard = clickInfo.cardIndex === gameState.tableau[clickInfo.pileIndex].length - 1;
+
+    if (clickedCard && !clickedCard.faceUp && isTopCard) {
+        let newState = JSON.parse(JSON.stringify(gameState));
+        newState.tableau[clickInfo.pileIndex][clickInfo.cardIndex].faceUp = true;
+        newState.moves++;
+        return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
+    }
+    return null;
+}
+
+const handleInitialClickWithAutoMove = (gameState: GameState, clickInfo: ClickSource): ProcessResult | null => {
+    const autoMove = attemptAutoMove(gameState, clickInfo);
+    if (autoMove) {
+        const newState = executeMove(gameState, autoMove);
+        const highlightedPile = { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex };
+        return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
+    }
+    return null;
+}
+
 /** Handles a click when no card is currently selected. */
 const handleInitialClick = (
     gameState: GameState,
@@ -326,24 +368,16 @@ const handleInitialClick = (
     settings: GameSettings,
 ): ProcessResult => {
     const clickedCard = getClickedCard(gameState, clickInfo);
-    if (!clickedCard) return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
-
-    // Flip face-down card in Solitaire
-    if (gameState.gameType === 'Solitaire' && clickInfo.type === 'tableau' && !clickedCard.faceUp && clickInfo.cardIndex === gameState.tableau[clickInfo.pileIndex].length - 1) {
-        let newState = JSON.parse(JSON.stringify(gameState));
-        newState.tableau[clickInfo.pileIndex][clickInfo.cardIndex].faceUp = true;
-        newState.moves++;
-        return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
+    if (!clickedCard || !clickedCard.faceUp) {
+        if (gameState.gameType === 'Solitaire' && clickInfo.type === 'tableau') {
+             return handleSolitaireTableauFlip(gameState as SolitaireGameState, clickInfo) || { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
+        }
+        return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
-    
-    if (!clickedCard.faceUp) return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 
     if (settings.autoMove) {
-        const autoMove = attemptAutoMove(gameState, clickInfo);
-        if (autoMove) {
-            const newState = executeMove(gameState, autoMove);
-            return { newState, newSelectedCard: null, highlightedPile: { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex }, saveHistory: true };
-        }
+        const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
+        if (autoMoveResult) return autoMoveResult;
     }
     
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
