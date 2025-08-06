@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview This file contains the core game logic for card interactions,
  * acting as a central controller that dispatches actions to game-specific
@@ -108,7 +107,12 @@ const getCardsToMove = (gameState: GameState, source: SelectedCardInfo): CardTyp
         case 'waste':
             return gameState.gameType === 'Solitaire' ? [(gameState as SolitaireGameState).waste.slice(-1)[0]] : [];
         case 'foundation':
-            return gameState.gameType === 'Solitaire' ? [gameState.foundation[source.pileIndex].slice(-1)[0]] : [];
+            // Can only move single cards from foundation in Solitaire
+            if (gameState.gameType === 'Solitaire') {
+              const pile = gameState.foundation[source.pileIndex];
+              return pile.length > 0 ? [pile[pile.length-1]] : [];
+            }
+            return [];
         case 'freecell':
             const card = gameState.gameType === 'Freecell' ? (gameState as FreecellGameState).freecells[source.pileIndex] : null;
             return card ? [card] : [];
@@ -121,7 +125,7 @@ const getCardsToMove = (gameState: GameState, source: SelectedCardInfo): CardTyp
  * Retrieves the card that was directly clicked by the user.
  * @returns The clicked card object, or undefined if not found.
  */
-const getClickedCard = (gameState: GameState, clickInfo: SelectedCardInfo): CardType | undefined => {
+const getClickedCard = (gameState: GameState, clickInfo: { sourceType: string, pileIndex: number, cardIndex: number }): CardType | undefined => {
     const { sourceType, pileIndex, cardIndex } = clickInfo;
     switch (sourceType) {
         case 'tableau':    return gameState.tableau[pileIndex]?.[cardIndex];
@@ -140,6 +144,9 @@ const isValidSolitaireMove = (gameState: SolitaireGameState, move: GameMove): bo
     const cardsToMove = getCardsToMove(gameState, move.source);
     if (cardsToMove.length === 0) return false;
     const cardToMove = cardsToMove[0];
+    
+    // The stack being moved must be a valid run.
+    if (move.source.type === 'tableau' && !isSolitaireRun(cardsToMove)) return false;
 
     if (move.destination.type === 'foundation') {
         return cardsToMove.length === 1 && canMoveSolitaireToFoundation(cardToMove, gameState.foundation[move.destination.pileIndex]);
@@ -150,7 +157,7 @@ const isValidSolitaireMove = (gameState: SolitaireGameState, move: GameMove): bo
     return false;
 };
 
-const isValidFreecellMove = (gameState: FreecellGameState, move: GameMove, toast: ReturnType<typeof useToast>['toast']): boolean => {
+const isValidFreecellMove = (gameState: FreecellGameState, move: GameMove, toast?: ReturnType<typeof useToast>['toast']): boolean => {
     const cardsToMove = getCardsToMove(gameState, move.source);
     if (cardsToMove.length === 0) return false;
     const cardToMove = cardsToMove[0];
@@ -159,7 +166,7 @@ const isValidFreecellMove = (gameState: FreecellGameState, move: GameMove, toast
     const isDestinationEmpty = move.destination.type === 'tableau' && gameState.tableau[move.destination.pileIndex].length === 0;
     const movableCount = getMovableCardCount(gameState, isDestinationEmpty);
     if (cardsToMove.length > movableCount) {
-        toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cardsToMove.length} cards. Only ${movableCount} are movable.` });
+        if (toast) toast({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cardsToMove.length} cards. Only ${movableCount} are movable.` });
         return false;
     }
     if (move.source.type === 'tableau' && !isFreecellRun(cardsToMove)) return false;
@@ -188,7 +195,7 @@ const isValidSpiderMove = (gameState: SpiderGameState, move: GameMove): boolean 
 };
 
 /** Dispatches to the correct game-specific validation function. */
-const isValidMove = (gameState: GameState, move: GameMove, toast: ReturnType<typeof useToast>['toast']): boolean => {
+const isValidMove = (gameState: GameState, move: GameMove, toast?: ReturnType<typeof useToast>['toast']): boolean => {
     switch (gameState.gameType) {
         case 'Solitaire': return isValidSolitaireMove(gameState, move);
         case 'Freecell':  return isValidFreecellMove(gameState, move, toast);
@@ -205,7 +212,6 @@ const isValidMove = (gameState: GameState, move: GameMove, toast: ReturnType<typ
 const findSolitaireAutoMove = (gameState: SolitaireGameState, source: SelectedCardInfo): GameMove | null => {
     const cardsToMove = getCardsToMove(gameState, source);
     if (cardsToMove.length === 0) return null;
-    const cardToMove = cardsToMove[0];
 
     // Priority 1: Move a single card to any valid foundation pile.
     if (cardsToMove.length === 1) {
@@ -217,9 +223,18 @@ const findSolitaireAutoMove = (gameState: SolitaireGameState, source: SelectedCa
     }
     
     // Priority 2: Move a stack to any valid tableau pile.
-    if (isSolitaireRun(cardsToMove)) {
+    if (source.type === 'tableau' && isSolitaireRun(cardsToMove)) {
         for (let i = 0; i < gameState.tableau.length; i++) {
-            if (source.type === 'tableau' && source.pileIndex === i) continue; // Don't move to the same pile
+            if (source.pileIndex === i) continue; // Don't move to the same pile
+            if (isValidSolitaireMove(gameState, { source, destination: { type: 'tableau', pileIndex: i } })) {
+                return { source, destination: { type: 'tableau', pileIndex: i } };
+            }
+        }
+    }
+    
+    // Priority 3: Move a single card from the waste pile to the tableau
+    if (source.type === 'waste' && cardsToMove.length === 1) {
+        for (let i = 0; i < gameState.tableau.length; i++) {
             if (isValidSolitaireMove(gameState, { source, destination: { type: 'tableau', pileIndex: i } })) {
                 return { source, destination: { type: 'tableau', pileIndex: i } };
             }
@@ -229,26 +244,36 @@ const findSolitaireAutoMove = (gameState: SolitaireGameState, source: SelectedCa
     return null;
 };
 
-/** Finds a valid auto-move for a Freecell card. Prioritizes foundation, then freecells. */
-const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo, toast: ReturnType<typeof useToast>['toast']): GameMove | null => {
+/** Finds a valid auto-move for a Freecell card. Prioritizes foundation, then tableau, then freecells. */
+const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
     const cardsToMove = getCardsToMove(gameState, source);
     if (cardsToMove.length !== 1) return null; // Can only auto-move single cards in Freecell
-    const cardToMove = cardsToMove[0];
 
     // Priority 1: Move to any valid foundation pile.
     for (let i = 0; i < gameState.foundation.length; i++) {
-        if (isValidFreecellMove(gameState, { source, destination: { type: 'foundation', pileIndex: i } }, toast)) {
+        if (isValidFreecellMove(gameState, { source, destination: { type: 'foundation', pileIndex: i } })) {
             return { source, destination: { type: 'foundation', pileIndex: i } };
         }
     }
-
-    // Priority 2: Move to an empty freecell.
-    const emptyCellIndex = gameState.freecells.findIndex(cell => cell === null);
-    if (emptyCellIndex !== -1) {
-         if (isValidFreecellMove(gameState, { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } }, toast)) {
-            return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
+    
+    // Priority 2: Move to any empty tableau pile.
+    const emptyTableauIndex = gameState.tableau.findIndex(pile => pile.length === 0);
+    if (emptyTableauIndex !== -1 && source.pileIndex !== emptyTableauIndex) {
+        if (isValidFreecellMove(gameState, { source, destination: { type: 'tableau', pileIndex: emptyTableauIndex } })) {
+            return { source, destination: { type: 'tableau', pileIndex: emptyTableauIndex } };
         }
     }
+    
+    // Priority 3: Move to an empty freecell.
+    if (source.type !== 'freecell') { // Don't move from one freecell to another automatically
+      const emptyCellIndex = gameState.freecells.findIndex(cell => cell === null);
+      if (emptyCellIndex !== -1) {
+           if (isValidFreecellMove(gameState, { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } })) {
+              return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
+          }
+      }
+    }
+
 
     return null;
 };
@@ -269,10 +294,10 @@ const findSpiderAutoMove = (gameState: SpiderGameState, source: SelectedCardInfo
 };
 
 /** Dispatches to the correct game-specific auto-move finder function. */
-const attemptAutoMove = (gameState: GameState, source: SelectedCardInfo, toast: ReturnType<typeof useToast>['toast']): GameMove | null => {
+const attemptAutoMove = (gameState: GameState, source: SelectedCardInfo): GameMove | null => {
     switch (gameState.gameType) {
         case 'Solitaire': return findSolitaireAutoMove(gameState, source);
-        case 'Freecell':  return findFreecellAutoMove(gameState, source, toast);
+        case 'Freecell':  return findFreecellAutoMove(gameState, source);
         case 'Spider':    return findSpiderAutoMove(gameState, source);
         default:          return null;
     }
@@ -288,8 +313,10 @@ const attemptAutoMove = (gameState: GameState, source: SelectedCardInfo, toast: 
  */
 const executeMove = (gameState: GameState, move: GameMove): GameState => {
     let newState = JSON.parse(JSON.stringify(gameState));
-    const cardsToMove = getCardsToMove(newState, move.source);
     const { source, destination } = move;
+
+    // This is a re-fetch because newState is a deep copy
+    const cardsToMove = getCardsToMove(newState, source);
 
     // Remove cards from source
     switch (source.type) {
@@ -331,6 +358,9 @@ const executeMove = (gameState: GameState, move: GameMove): GameState => {
     newState.moves++;
     if (newState.gameType === 'Spider' && source.type === 'tableau' && destination.type === 'tableau') {
         newState.score--;
+    } else if (newState.gameType === 'Solitaire' || newState.gameType === 'Freecell') {
+        if (destination.type === 'foundation') newState.score += 10;
+        if (source.type === 'foundation') newState.score -=10;
     }
     
     return newState;
@@ -347,15 +377,20 @@ const executeMove = (gameState: GameState, move: GameMove): GameState => {
  */
 const handleInitialClick = (
     gameState: GameState,
-    clickInfo: SelectedCardInfo,
+    clickInfo: { sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number },
     settings: GameSettings,
     toast: ReturnType<typeof useToast>['toast']
 ): { newState: GameState | null, newSelectedCard: SelectedCardInfo | null, highlightedPile: HighlightedPile, saveHistory: boolean } => {
     
     const clickedCard = getClickedCard(gameState, clickInfo);
+    
+    // If an empty pile was clicked, do nothing.
+    if (!clickedCard) {
+      return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
+    }
 
-    // If a face-down tableau card is clicked, flip it if it's the top card.
-    if (clickInfo.sourceType === 'tableau' && clickedCard && !clickedCard.faceUp && clickInfo.cardIndex === gameState.tableau[clickInfo.pileIndex].length - 1) {
+    // In Solitaire, if a face-down tableau card is clicked, flip it if it's the top card.
+    if (gameState.gameType === 'Solitaire' && clickInfo.sourceType === 'tableau' && !clickedCard.faceUp && clickInfo.cardIndex === gameState.tableau[clickInfo.pileIndex].length - 1) {
         let newState = JSON.parse(JSON.stringify(gameState));
         newState.tableau[clickInfo.pileIndex][clickInfo.cardIndex].faceUp = true;
         newState.moves++;
@@ -363,13 +398,13 @@ const handleInitialClick = (
     }
 
     // If the clicked card is not valid for interaction, do nothing.
-    if (!clickedCard || !clickedCard.faceUp) {
+    if (!clickedCard.faceUp) {
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
 
     // If auto-move is enabled, try to find and execute a move.
     if (settings.autoMove) {
-        const autoMove = attemptAutoMove(gameState, clickInfo, toast);
+        const autoMove = attemptAutoMove(gameState, clickInfo);
         if (autoMove) {
             const newState = executeMove(gameState, autoMove);
             return { newState, newSelectedCard: null, highlightedPile: { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex }, saveHistory: true };
@@ -387,7 +422,7 @@ const handleInitialClick = (
 const handleMoveWithSelectedCard = (
     gameState: GameState,
     selectedCard: SelectedCardInfo,
-    clickInfo: SelectedCardInfo,
+    clickInfo: { sourceType: string, pileIndex: number, cardIndex: number },
     toast: ReturnType<typeof useToast>['toast']
 ): { newState: GameState | null, newSelectedCard: SelectedCardInfo | null, highlightedPile: HighlightedPile, saveHistory: boolean } => {
     
@@ -404,10 +439,10 @@ const handleMoveWithSelectedCard = (
     if (isValidMove(gameState, move, toast)) {
         const newState = executeMove(gameState, move);
         return { newState, newSelectedCard: null, highlightedPile: { type: move.destination.type, pileIndex: move.destination.pileIndex }, saveHistory: true };
+    } else {
+         // If the move is invalid, just deselect the card.
+        return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
-    
-    // If the move is invalid, deselect the card.
-    return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
 /**
@@ -419,7 +454,7 @@ export const processCardClick = (
     gameState: GameState,
     selectedCard: SelectedCardInfo | null,
     settings: GameSettings,
-    clickInfo: SelectedCardInfo,
+    clickInfo: { sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number },
     toast: ReturnType<typeof useToast>['toast']
 ): { newState: GameState | null, newSelectedCard: SelectedCardInfo | null, highlightedPile: HighlightedPile, saveHistory: boolean } => {
     
