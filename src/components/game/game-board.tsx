@@ -547,11 +547,11 @@ export default function GameBoard() {
     setDragPosition({ x: clientX - (clientX - rect.left), y: clientY - (clientY - rect.top) });
     setDraggedCardInfo({ ...info, cards });
 };
-    
+
 const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
     startDrag(e.clientX, e.clientY, info);
 };
-
+    
 const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
     const touch = e.touches[0];
     startDrag(touch.clientX, touch.clientY, info);
