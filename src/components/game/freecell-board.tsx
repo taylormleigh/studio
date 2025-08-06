@@ -29,7 +29,7 @@ export default function FreecellBoard({
   const handleFoundationClick = (pileIndex: number) => {
     handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
   };
-
+  
   const FreecellPiles = () => (
     <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
       {gameState.freecells.map((card, i) => (
