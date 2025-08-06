@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, ClickSource, isGameWon, GameState } from '@/lib/game-logic';
+import { processCardClick, ClickSource, isGameWon, GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -25,21 +25,14 @@ import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
 
-export type SelectedCardInfo = {
-  type: 'tableau' | 'waste' | 'foundation' | 'freecell';
-  pileIndex: number;
-  cardIndex: number;
-};
-
 export type HighlightedPile = {
   type: 'tableau' | 'foundation' | 'freecell';
   pileIndex: number;
 } | null;
 
-type DraggedCardInfo = SelectedCardInfo & {
+type DraggedCardInfo = LocatedCard & {
     cards: CardType[];
 };
-
 
 const UNDO_LIMIT = 100;
 
@@ -83,7 +76,7 @@ export default function GameBoard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
+  const [selectedCard, setSelectedCard] = useState<LocatedCard | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -187,27 +180,29 @@ export default function GameBoard() {
     setSelectedCard(null);
     if (!gameState) return;
 
-    let newState = JSON.parse(JSON.stringify(gameState));
+    const newState = { ...gameState };
     
     if (newState.gameType === 'Solitaire') {
-      if (newState.stock.length > 0) {
-        const numToDraw = Math.min(newState.drawCount, newState.stock.length);
+      const solState = newState as SolitaireGameState;
+      if (solState.stock.length > 0) {
+        const numToDraw = Math.min(solState.drawCount, solState.stock.length);
         const drawnCards = [];
         for (let i = 0; i < numToDraw; i++) {
-          const card = newState.stock.pop()!;
+          const card = solState.stock.pop()!;
           card.faceUp = true;
           drawnCards.push(card);
         }
-        newState.waste.push(...drawnCards.reverse());
-      } else if (newState.waste.length > 0) {
-        newState.stock = newState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
-        newState.waste = [];
+        solState.waste.push(...drawnCards.reverse());
+      } else if (solState.waste.length > 0) {
+        solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
+        solState.waste = [];
       }
-      newState.moves++;
+      solState.moves++;
     } 
     else if (newState.gameType === 'Spider') {
-      if (newState.stock.length > 0) {
-        const hasEmptyPile = newState.tableau.some((pile: CardType[]) => pile.length === 0);
+      const spiderState = newState as SpiderGameState;
+      if (spiderState.stock.length > 0) {
+        const hasEmptyPile = spiderState.tableau.some((pile: CardType[]) => pile.length === 0);
         if (hasEmptyPile) {
             toast({
                 variant: "destructive",
@@ -216,33 +211,28 @@ export default function GameBoard() {
             });
             return;
         }
-        const dealCount = newState.tableau.length;
-        if(newState.stock.length >= dealCount) {
+        const dealCount = spiderState.tableau.length;
+        if(spiderState.stock.length >= dealCount) {
           for(let i = 0; i < dealCount; i++) {
-            const card = newState.stock.pop()!;
+            const card = spiderState.stock.pop()!;
             card.faceUp = true;
-            newState.tableau[i].push(card);
+            spiderState.tableau[i].push(card);
           }
-          newState.moves++;
+          spiderState.moves++;
         }
       }
     }
     updateState(newState);
   }, [gameState, toast, updateState]);
 
-  const handleCardClick = (
-    type: ClickSource['type'],
-    pileIndex: number,
-    cardIndex: number
-  ) => {
+  const handleCardClick = (card: CardType | undefined, location: ClickSource) => {
     if (!gameState || isDragging) return;
   
-    const clickInfo: ClickSource = { type, pileIndex, cardIndex };
-    
     const result = processCardClick({
         gameState,
         selectedCard,
-        clickSource: clickInfo,
+        clickSource: location,
+        clickedCard: card,
         settings,
         toast,
     });
@@ -262,17 +252,17 @@ export default function GameBoard() {
     onOpenSettings: () => setIsSettingsOpen(true)
   });
   
-  const startDrag = (clientX: number, clientY: number, info: SelectedCardInfo) => {
+  const startDrag = (clientX: number, clientY: number, card: CardType, location: CardLocation) => {
     if (!gameState) return;
     setIsDragging(true);
     setSelectedCard(null);
   
     let cards: CardType[];
-    switch (info.type) {
-        case 'tableau': cards = gameState.tableau[info.pileIndex].slice(info.cardIndex); break;
+    switch (location.type) {
+        case 'tableau': cards = gameState.tableau[location.pileIndex].slice(location.cardIndex); break;
         case 'waste': cards = (gameState.gameType === 'Solitaire') ? [(gameState as SolitaireGameState).waste.slice(-1)[0]] : []; break;
-        case 'foundation': cards = (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') ? [gameState.foundation[info.pileIndex].slice(-1)[0]] : []; break;
-        case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[info.pileIndex]!] : []; break;
+        case 'foundation': cards = (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') ? [gameState.foundation[location.pileIndex].slice(-1)[0]] : []; break;
+        case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[location.pileIndex]!] : []; break;
         default: cards = [];
     }
     
@@ -281,28 +271,19 @@ export default function GameBoard() {
 
     setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
     setDragPosition({ x: rect.left, y: rect.top });
-    setDraggedCardInfo({ ...info, cards });
+    setDraggedCardInfo({ ...card, location, cards });
 };
     
-const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
+const handleMouseDown = (e: MouseEvent, card: CardType, location: CardLocation) => {
     e.stopPropagation();
-    startDrag(e.clientX, e.clientY, info);
+    startDrag(e.clientX, e.clientY, card, location);
 };
 
-const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
+const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation) => {
     e.stopPropagation();
     const touch = e.touches[0];
-    startDrag(touch.clientX, touch.clientY, info);
+    startDrag(touch.clientX, touch.clientY, card, location);
 };
-  
-  const handleDragMove = (clientX: number, clientY: number) => {
-    if (isDragging) {
-      setDragPosition({
-        x: clientX - dragOffset.x,
-        y: clientY - dragOffset.y,
-      });
-    }
-  };
   
   const handleDrop = (clientX: number, clientY: number) => {
     if (!isDragging || !draggedCardInfo || !gameState) return;
@@ -336,9 +317,8 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
         }
         
         if (targetType && targetPileIndex !== null) {
-            // A pile was dropped on. A cardIndex of -1 signifies dropping on the pile itself.
             const clickInfo: ClickSource = { type: targetType, pileIndex: targetPileIndex, cardIndex: -1 };
-            const result = processCardClick({ gameState, selectedCard: draggedCardInfo, clickSource: clickInfo, settings, toast });
+            const result = processCardClick({ gameState, selectedCard: draggedCardInfo, clickSource: clickInfo, clickedCard: undefined, settings, toast });
             if (result.newState) {
                 updateState(result.newState, result.saveHistory);
             }

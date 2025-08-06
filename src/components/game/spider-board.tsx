@@ -3,18 +3,20 @@
 
 import type { MouseEvent, TouchEvent } from 'react';
 import type { GameState as SpiderGameState } from '@/lib/spider';
+import { Card as CardType } from '@/lib/solitaire';
 import { Card } from './card';
-import type { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 import Tableau from './tableau';
+import { LocatedCard, CardLocation } from '@/lib/game-logic';
 
 interface SpiderBoardProps {
   gameState: SpiderGameState;
-  selectedCard: SelectedCardInfo | null;
+  selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
-  handleCardClick: (type: 'tableau', pileIndex: number, cardIndex: number) => void;
-  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
-  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
+  handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
+  handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
   handleDraw: () => void;
 }
 

@@ -1,8 +1,7 @@
 
 
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck, getCardColor, last } from './solitaire';
-import type { GameMove } from './game-logic';
-import type { SelectedCardInfo } from '@/components/game/game-board';
+import { GameMove, LocatedCard } from './game-logic';
 
 export type { Card, Suit, Rank };
 
@@ -106,8 +105,8 @@ export function getMovableCardCount(state: GameState, isDestinationEmpty: boolea
  * Finds the highest-priority valid auto-move for a given card/stack in Freecell.
  * Priority: Foundation -> Tableau -> Freecell.
  */
-export function findAutoMoveForFreecell(gs: GameState, source: SelectedCardInfo): GameMove | null {
-    const cardsToMove = getCardsToMoveFromSource(gs, source);
+export function findAutoMoveForFreecell(gs: GameState, selectedCard: LocatedCard): GameMove | null {
+    const cardsToMove = getCardsToMoveFromSource(gs, selectedCard.location);
     if (cardsToMove.length === 0) return null;
     const cardToMove = cardsToMove[0];
 
@@ -115,19 +114,19 @@ export function findAutoMoveForFreecell(gs: GameState, source: SelectedCardInfo)
     if (cardsToMove.length === 1) {
         for (let i = 0; i < gs.foundation.length; i++) {
             if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
-                return { source, destination: { type: 'foundation', pileIndex: i } };
+                return { source: selectedCard.location, destination: { type: 'foundation', pileIndex: i } };
             }
         }
     }
 
     // Priority 2: Try to move the stack to any other tableau pile.
     for (let i = 0; i < gs.tableau.length; i++) {
-        if (source.type === 'tableau' && source.pileIndex === i) continue;
+        if (selectedCard.location.type === 'tableau' && selectedCard.location.pileIndex === i) continue;
         if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             const isDestEmpty = gs.tableau[i].length === 0;
             const maxMove = getMovableCardCount(gs, isDestEmpty);
             if(cardsToMove.length <= maxMove) {
-                return { source, destination: { type: 'tableau', pileIndex: i } };
+                return { source: selectedCard.location, destination: { type: 'tableau', pileIndex: i } };
             }
         }
     }
@@ -136,14 +135,14 @@ export function findAutoMoveForFreecell(gs: GameState, source: SelectedCardInfo)
     if (cardsToMove.length === 1) {
         const emptyCellIndex = gs.freecells.findIndex(cell => cell === null);
         if (emptyCellIndex !== -1) {
-            return { source, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
+            return { source: selectedCard.location, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
         }
     }
 
     return null;
 }
 
-function getCardsToMoveFromSource(gs: GameState, source: SelectedCardInfo): Card[] {
+function getCardsToMoveFromSource(gs: GameState, source: LocatedCard['location']): Card[] {
     if (source.type === 'tableau') {
         return gs.tableau[source.pileIndex]?.slice(source.cardIndex) || [];
     }

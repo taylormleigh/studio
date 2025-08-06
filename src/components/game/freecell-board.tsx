@@ -4,18 +4,19 @@
 import type { MouseEvent, TouchEvent } from 'react';
 import type { GameState as FreecellGameState } from '@/lib/freecell';
 import { Card } from './card';
-import type { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 import Tableau from './tableau';
-import { last } from '@/lib/solitaire';
+import { last, Card as CardType } from '@/lib/solitaire';
+import { LocatedCard, CardLocation } from '@/lib/game-logic';
 
 interface FreecellBoardProps {
   gameState: FreecellGameState;
-  selectedCard: SelectedCardInfo | null;
+  selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
-  handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
-  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
-  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
+  handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
+  handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
 }
 
 export default function FreecellBoard(props: FreecellBoardProps) {
@@ -43,9 +44,9 @@ const FreecellPiles = ({ gameState, highlightedPile, handleCardClick, handleMous
           card={card || undefined} 
           data-testid={card ? `card-${card.suit}-${card.rank}` : `card-freecell-empty-${i}`}
           isHighlighted={highlightedPile?.type === 'freecell' && highlightedPile?.pileIndex === i}
-          onMouseDown={(e) => card && handleMouseDown(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-          onTouchStart={(e) => card && handleTouchStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-          onClick={() => handleCardClick('freecell', i, 0)}
+          onMouseDown={(e) => card && handleMouseDown(e, card, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+          onTouchStart={(e) => card && handleTouchStart(e, card, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+          onClick={() => handleCardClick(card, {type: 'freecell', pileIndex: i, cardIndex: 0})}
         />
       </div>
     ))}
@@ -59,7 +60,7 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick }: Freece
         key={`foundation-${i}`} 
         data-testid={`foundation-pile-${i}`}
         className="w-full max-w-[96px]"
-        onClick={() => handleCardClick('foundation', i, pile.length - 1)}
+        onClick={() => handleCardClick(last(pile), { type: 'foundation', pileIndex: i, cardIndex: pile.length - 1})}
       >
         <Card 
           card={last(pile)} 

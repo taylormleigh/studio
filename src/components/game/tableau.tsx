@@ -3,21 +3,21 @@
 
 import type { MouseEvent, TouchEvent } from 'react';
 import type { Card as CardType } from '@/lib/solitaire';
-import { canMoveToTableau as canMoveSpiderToTableau, isRun as isSpiderRun } from '@/lib/spider';
 import { isRun as isFreecellRun, getMovableCardCount } from '@/lib/freecell';
 import { isRun as isSolitaireRun } from '@/lib/solitaire';
-import { GameState } from '@/lib/game-logic';
+import { isRun as isSpiderRun } from '@/lib/spider';
+import { GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
 import { Card } from './card';
-import type { SelectedCardInfo, HighlightedPile } from './game-board';
+import type { HighlightedPile } from './game-board';
 
 interface TableauProps {
   gameState: GameState;
   gridCols: string;
-  selectedCard: SelectedCardInfo | null;
+  selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
-  handleCardClick: (type: 'tableau', pileIndex: number, cardIndex: number) => void;
-  handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
-  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
+  handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
+  handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
 }
 
 export default function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart }: TableauProps) {
@@ -59,7 +59,7 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
           key={pileIndex} 
           data-testid={`tableau-pile-${pileIndex}`}
           className="relative"
-          onClick={() => pile.length === 0 && handleCardClick('tableau', pileIndex, -1)}
+          onClick={() => pile.length === 0 && handleCardClick(undefined, { type: 'tableau', pileIndex, cardIndex: -1 })}
         >
           <div className="absolute top-0 left-0 w-full h-full">
             {pile.length === 0 ? (
@@ -72,6 +72,7 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
                 const isTopCard = cardIndex === pile.length - 1;
                 const draggable = isCardDraggable(pile, cardIndex);
                 const yOffset = getCardYOffset(pile, cardIndex);
+                const location: CardLocation = { type: 'tableau', pileIndex, cardIndex };
                 
                 return (
                   <div 
@@ -85,11 +86,11 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
                         isHighlighted={isTopCard && highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}
                         isStacked={card.faceUp && !isTopCard}
                         className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
-                        onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
-                        onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        onMouseDown={(e) => draggable && handleMouseDown(e, card, location)}
+                        onTouchStart={(e) => draggable && handleTouchStart(e, card, location)}
                         onClick={(e) => {
                             e.stopPropagation();
-                            handleCardClick('tableau', pileIndex, cardIndex);
+                            handleCardClick(card, location);
                         }}
                       />
                   </div>

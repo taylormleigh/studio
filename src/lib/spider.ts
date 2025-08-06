@@ -1,6 +1,6 @@
+
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck } from './solitaire';
-import type { GameMove } from './game-logic';
-import type { SelectedCardInfo } from '@/components/game/game-board';
+import { GameMove, LocatedCard } from './game-logic';
 
 export type { Card, Suit, Rank };
 
@@ -108,11 +108,11 @@ export function canMoveToTableau(cardsToMove: Card[], destinationCard: Card | un
 export function checkForCompletedSet(state: GameState): GameState {
     if (state.gameType !== 'Spider') return state;
 
-    let newState = state;
+    let newState = { ...state, tableau: state.tableau.map(p => [...p]), foundation: state.foundation.map(p => [...p]) };
     let setsFoundInIteration: boolean;
     do {
         setsFoundInIteration = false;
-        let tempState = JSON.parse(JSON.stringify(newState)) as SpiderGameState;
+        let tempState = { ...newState, tableau: newState.tableau.map(p => [...p]), foundation: newState.foundation.map(p => [...p]) };
 
         for (let i = 0; i < tempState.tableau.length; i++) {
             const pile = tempState.tableau[i];
@@ -148,14 +148,14 @@ export function isGameWon(state: GameState): boolean {
  * Finds the highest-priority valid auto-move for a given card/stack in Spider.
  * Priority is only to another Tableau pile.
  */
-export function findAutoMoveForSpider(gs: GameState, source: SelectedCardInfo): GameMove | null {
-    const cardsToMove = gs.tableau[source.pileIndex].slice(source.cardIndex);
+export function findAutoMoveForSpider(gs: GameState, selectedCard: LocatedCard): GameMove | null {
+    const cardsToMove = gs.tableau[selectedCard.location.pileIndex].slice(selectedCard.location.cardIndex);
     
     // Try to move the stack to any other tableau pile.
     for (let i = 0; i < gs.tableau.length; i++) {
-        if (source.pileIndex === i) continue; // Cannot move to the same pile.
+        if (selectedCard.location.pileIndex === i) continue; // Cannot move to the same pile.
         if (canMoveToTableau(cardsToMove, gs.tableau[i][gs.tableau[i].length - 1])) {
-            return { source, destination: { type: 'tableau', pileIndex: i } };
+            return { source: selectedCard.location, destination: { type: 'tableau', pileIndex: i } };
         }
     }
 
