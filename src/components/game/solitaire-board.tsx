@@ -30,41 +30,47 @@ export default function SolitaireBoard({
     handleCardClick('tableau', pileIndex, cardIndex);
   };
 
+  const CardStock = () => (
+      <Card onClick={handleDraw} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
+  );
+  const StockPileCard = () =>(
+    <>
+      <Card 
+        card={last(gameState.waste)} 
+        data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
+        onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+        onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
+        onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
+      />
+    </>
+  );
+  const WastePileCards = () => (
+    <>
+      {gameState.waste.length > 0 ? (<StockPileCard />) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
+    </>
+  );
+  const WastePile = () => (
+    <div data-testid="waste-pile">
+      <WastePileCards />
+    </div>
+  );
+  const StockPile = () => (
+    <div className="cursor-pointer" data-testid="stock-pile">
+      <CardStock />
+    </div>
+  );
+
   const StockAndWaste = () => (
     <>
       {settings.leftHandMode ? (
         <>
-          <div onClick={handleDraw} className="cursor-pointer" data-testid="stock-pile">
-            <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
-          </div>
-          <div data-testid="waste-pile">
-            {gameState.waste.length > 0 ? (
-              <Card 
-                card={last(gameState.waste)} 
-                data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
-                onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
-              />
-            ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
-          </div>
+          <StockPile />
+          <WastePile />
         </>
       ) : (
          <>
-          <div data-testid="waste-pile">
-            {gameState.waste.length > 0 ? (
-              <Card 
-                card={last(gameState.waste)} 
-                data-testid={`card-${last(gameState.waste)?.suit}-${last(gameState.waste)?.rank}`}
-                onMouseDown={(e) => handleMouseDown(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                onTouchStart={(e) => handleTouchStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
-                onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
-              />
-            ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
-          </div>
-          <div onClick={handleDraw} className="cursor-pointer" data-testid="stock-pile">
-            <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
-          </div>
+          <WastePile />
+          <StockPile />
         </>
       )}
     </>
