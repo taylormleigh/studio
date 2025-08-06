@@ -2,7 +2,7 @@
 "use client";
 
 import type { MouseEvent, TouchEvent } from 'react';
-import type { GameState as FreecellGameState } from '@/lib/freecell';
+import type { GameState as FreecellGameState, Card as CardType } from '@/lib/freecell';
 import { getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -69,13 +69,9 @@ export default function FreecellBoard({
       ))}
     </div>
   );
-  
-  return (
-    <>
-      <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
-        {settings.leftHandMode ? <><FoundationPiles /><FreecellPiles /></> : <><FreecellPiles /><FoundationPiles /></>}
-      </div>
-      <div className="grid grid-cols-8 gap-x-[2px] min-h-[28rem]" data-testid="tableau-piles">
+
+  const TableauPiles = () => (
+    <div className="grid grid-cols-8 gap-x-[2px] min-h-[28rem]" data-testid="tableau-piles">
         {gameState.tableau.map((pile, pileIndex) => (
           <div 
             key={pileIndex} 
@@ -123,6 +119,14 @@ export default function FreecellBoard({
           </div>
         ))}
       </div>
+  );
+  
+  return (
+    <>
+      <div className="grid grid-cols-8 gap-x-0 mb-4" data-testid="top-piles">
+        {settings.leftHandMode ? <><FoundationPiles /><FreecellPiles /></> : <><FreecellPiles /><FoundationPiles /></>}
+      </div>
+      <TableauPiles />
     </>
   );
 }
