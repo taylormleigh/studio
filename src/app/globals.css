@@ -48,7 +48,7 @@
   
   .dark {
     --background: 0 0% 0%; /* Black */
-    --header-background: 0 0% 6%; /* #262626 */
+    --header-background: 0 0% 6%;
     --foreground: 0 0% 98%; /* #fafafa - White */
     --card: 0 0% 100%; /* White cards */
     --card-foreground: 0 0% 13%; /* Dark gray text on cards */
