@@ -87,7 +87,6 @@ export default function FreecellBoard({
           key={`freecell-${i}`}
           data-testid={`freecell-pile-${i}`}
           className="w-full max-w-[96px]"
-          onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'freecell', i)}
           onClick={() => handleFreecellClick(i)}
         >
@@ -111,7 +110,6 @@ export default function FreecellBoard({
           key={`foundation-${i}`} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'foundation', i)}
           onClick={() => handleFoundationClick(i)}
         >
@@ -147,7 +145,6 @@ export default function FreecellBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >

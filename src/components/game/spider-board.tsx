@@ -76,7 +76,6 @@ export default function SpiderBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             onClick={() => pile.length === 0 && handleTableauClick(pileIndex, 0)}
           >
