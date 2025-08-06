@@ -12,7 +12,7 @@ type GameHeaderProps = {
   onGameMenuOpen: () => void;
 };
 
-const iconSize = 48;
+const iconSize = 24;
 const iconStrokeWidth = 1.85;
 
 export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
@@ -42,7 +42,7 @@ export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: Ga
         <Settings />
       </div>
 
-      <div className="text-center">
+      <div className="text-center self-center">
         <h1 id="game-title" onClick={onGameMenuOpen} className="font-headline text-primary cursor-pointer" data-testid="game-title">
           {settings.gameType}
         </h1>
