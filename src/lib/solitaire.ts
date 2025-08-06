@@ -24,11 +24,6 @@ export interface GameState {
   drawCount: 1 | 3;
   score: number;
   moves: number;
-  // Add methods to the prototype
-  canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean;
-  canMoveToFoundation(cardToMove: Card, foundationPile: Pile): boolean;
-  isGameWon(): boolean;
-  isRun(cards: Card[]): boolean;
 }
 
 export const SUITS: Suit[] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
@@ -77,25 +72,23 @@ export function shuffleDeck(array: any[]) {
  * @param drawCount The number of cards to draw from the stock at a time (1 or 3).
  * @returns A new GameState object.
  */
-export function createInitialState(drawCount: 1 | 3 = 1): SolitaireGameState {
+export function createInitialState(drawCount: 1 | 3 = 1): GameState {
   const deck = shuffleDeck(createDeck());
   const tableau: Pile[] = Array.from({ length: 7 }, () => []);
   
-  // Deal cards to the tableau piles according to Solitaire rules.
   for (let i = 0; i < 7; i++) {
     for (let j = i; j < 7; j++) {
       tableau[j].push(deck.pop()!);
     }
   }
 
-  // Flip the top card of each tableau pile face-up.
   tableau.forEach(pile => {
     if (last(pile)) {
       last(pile)!.faceUp = true;
     }
   });
 
-  const gameState: Omit<SolitaireGameState, 'canMoveToTableau' | 'canMoveToFoundation' | 'isGameWon' | 'isRun'> = {
+  return {
     gameType: 'Solitaire',
     tableau,
     foundation: [[], [], [], []],
@@ -105,16 +98,6 @@ export function createInitialState(drawCount: 1 | 3 = 1): SolitaireGameState {
     score: 0,
     moves: 0,
   };
-  
-  // We can't assign methods directly in the object literal if we want to use `this`
-  // so we create an object and then assign the methods to its prototype.
-  const stateWithMethods = Object.create(gameState) as SolitaireGameState;
-  stateWithMethods.canMoveToTableau = canMoveToTableau;
-  stateWithMethods.canMoveToFoundation = canMoveToFoundation;
-  stateWithMethods.isGameWon = isGameWon;
-  stateWithMethods.isRun = isRun;
-
-  return stateWithMethods;
 }
 
 /**
@@ -128,9 +111,8 @@ export function getCardColor(card: Card): 'red' | 'black' {
 
 /**
  * Checks if a card can be legally moved to a tableau pile.
- * This function is bound to the GameState prototype.
  */
-export function canMoveToTableau(this: SolitaireGameState, cardToMove: Card, destinationCard: Card | undefined): boolean {
+export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
   if (!destinationCard) {
     return cardToMove.rank === 'K';
   }
@@ -142,12 +124,10 @@ export function canMoveToTableau(this: SolitaireGameState, cardToMove: Card, des
   return !colorsMatch && ranksCorrect;
 }
 
-
 /**
  * Checks if a card can be legally moved to a foundation pile.
- * This function is bound to the GameState prototype.
  */
-export function canMoveToFoundation(this: SolitaireGameState, cardToMove: Card, foundationPile: Card[]): boolean {
+export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = last(foundationPile);
   if (!topCard) {
     return cardToMove.rank === 'A';
@@ -157,20 +137,17 @@ export function canMoveToFoundation(this: SolitaireGameState, cardToMove: Card, 
   return suitsMatch && ranksCorrect;
 }
 
-
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
- * This function is bound to the GameState prototype.
  */
-export function isGameWon(this: SolitaireGameState): boolean {
-  return this.foundation.every(pile => pile.length === 13);
+export function isGameWon(state: GameState): boolean {
+  return state.foundation.every(pile => pile.length === 13);
 }
 
 /**
  * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
- * This function is bound to the GameState prototype.
  */
-export function isRun(this: SolitaireGameState, cards: Card[]): boolean {
+export function isRun(cards: Card[]): boolean {
   if (cards.length <= 1) return true;
   for (let i = 0; i < cards.length - 1; i++) {
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
@@ -183,24 +160,15 @@ export function isRun(this: SolitaireGameState, cards: Card[]): boolean {
  * Finds the highest-priority valid auto-move for a given card/stack in Solitaire.
  * Priority: Foundation -> Tableau.
  */
-export function findAutoMoveForSolitaire(gs: SolitaireGameState, source: SelectedCardInfo): GameMove | null {
-    let cardsToMove: Card[] = [];
-
-    // Correctly get the card(s) to move based on the source type.
-    if (source.type === 'tableau') {
-        cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
-    } else if (source.type === 'waste') {
-        cardsToMove = gs.waste.length > 0 ? [last(gs.waste)!] : [];
-    }
-    
-    // If there's no card to move, exit.
+export function findAutoMoveForSolitaire(gs: GameState, source: SelectedCardInfo): GameMove | null {
+    const cardsToMove = getCardsToMoveFromSource(gs, source);
     if (cardsToMove.length === 0) return null;
     const cardToMove = cardsToMove[0];
     
     // Priority 1: Try to move a single card to any foundation pile.
     if (cardsToMove.length === 1) {
         for (let i = 0; i < gs.foundation.length; i++) {
-            if (gs.canMoveToFoundation(cardToMove, gs.foundation[i])) {
+            if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
                 return { source, destination: { type: 'foundation', pileIndex: i } };
             }
         }
@@ -209,12 +177,22 @@ export function findAutoMoveForSolitaire(gs: SolitaireGameState, source: Selecte
     // Priority 2: Try to move the stack to any other tableau pile.
     for (let i = 0; i < gs.tableau.length; i++) {
         if (source.type === 'tableau' && source.pileIndex === i) continue;
-        if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+        if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
     }
     
     return null;
+}
+
+function getCardsToMoveFromSource(gs: GameState, source: SelectedCardInfo): Card[] {
+    if (source.type === 'tableau') {
+        return gs.tableau[source.pileIndex]?.slice(source.cardIndex) || [];
+    }
+    if (source.type === 'waste') {
+        return gs.waste.length > 0 ? [last(gs.waste)!] : [];
+    }
+    return [];
 }
 
 
@@ -236,5 +214,6 @@ export function last(pile: Pile): Card | undefined {
     return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
     
+
 
 

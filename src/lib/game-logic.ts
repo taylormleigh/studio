@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview This file acts as the central controller for all card game interactions.
  * It is designed as a dispatcher, delegating game-specific rule validation and
@@ -13,10 +12,9 @@ import type { useToast } from '@/hooks/use-toast';
 import type { SelectedCardInfo, HighlightedPile } from '@/components/game/game-board';
 
 // Game-specific type and function imports
-import { GameState as SolitaireGameState, Card as CardType, findAutoMoveForSolitaire } from './solitaire';
-import { GameState as FreecellGameState, getMovableCardCount, findAutoMove as findAutoMoveForFreecell } from './freecell';
-import { GameState as SpiderGameState, checkForCompletedSet as checkForSpiderCompletedSet, findAutoMove as findAutoMoveForSpider } from './spider';
-
+import { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, canMoveToFoundation as canMoveToFoundationSolitaire, canMoveToTableau as canMoveToTableauSolitaire, isGameWon as isSolitaireGameWon, findAutoMoveForSolitaire } from './solitaire';
+import { GameState as FreecellGameState, isRun as isFreecellRun, canMoveToFoundation as canMoveToFoundationFreecell, canMoveToTableau as canMoveToTableauFreecell, getMovableCardCount, isGameWon as isFreecellGameWon, findAutoMoveForFreecell } from './freecell';
+import { GameState as SpiderGameState, isRun as isSpiderRun, canMoveToTableau as canMoveToTableauSpider, checkForCompletedSet as checkForSpiderCompletedSet, isGameWon as isSpiderGameWon, findAutoMoveForSpider } from './spider';
 
 // ================================================================================================
 // Type Definitions
@@ -115,11 +113,11 @@ const getCardsToMove = (gs: GameState, src: SelectedCardInfo): CardType[] => {
  */
 export const isGameWon = (state: GameState): boolean => {
     const dispatch = {
-        Solitaire: (s: GameState) => (s as SolitaireGameState).foundation.every(p => p.length === 13),
-        Freecell: (s: GameState) => (s as FreecellGameState).foundation.every(p => p.length === 13),
-        Spider: (s: GameState) => (s as SpiderGameState).completedSets === 8,
+        Solitaire: isSolitaireGameWon,
+        Freecell: isFreecellGameWon,
+        Spider: isSpiderGameWon,
     };
-    return dispatch[state.gameType](state);
+    return dispatch[state.gameType](state as any);
 };
 
 /**
@@ -132,7 +130,6 @@ const findAutoMove = (gs: GameState, source: SelectedCardInfo): GameMove | null 
         Freecell: findAutoMoveForFreecell,
         Spider: findAutoMoveForSpider,
     };
-    // The `as any` is used here because TypeScript cannot infer the correct GameState subtype for each dispatched function.
     return dispatch[gs.gameType](gs as any, source);
 };
 
@@ -144,11 +141,10 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
     const cards = getCardsToMove(gs, move.source);
     if (cards.length === 0) return false;
 
-    // This is a dispatch table that calls the appropriate validation logic based on game type.
     const dispatch = {
         Solitaire: (g: SolitaireGameState) => {
-            if (move.destination.type === 'foundation') return cards.length === 1 && g.canMoveToFoundation(cards[0], g.foundation[move.destination.pileIndex]);
-            if (move.destination.type === 'tableau') return g.canMoveToTableau(cards[0], last(g.tableau[move.destination.pileIndex]));
+            if (move.destination.type === 'foundation') return cards.length === 1 && canMoveToFoundationSolitaire(cards[0], g.foundation[move.destination.pileIndex]);
+            if (move.destination.type === 'tableau') return canMoveToTableauSolitaire(cards[0], last(g.tableau[move.destination.pileIndex]));
             return false;
         },
         Freecell: (g: FreecellGameState) => {
@@ -158,21 +154,18 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
                 if (tst) tst({ variant: "destructive", title: "Invalid Move", description: `Cannot move ${cards.length} cards. Only ${maxMove} are movable.` });
                 return false;
             }
-            if (move.destination.type === 'foundation') return cards.length === 1 && g.canMoveToFoundation(cards[0], g.foundation[move.destination.pileIndex]);
-            if (move.destination.type === 'tableau') return g.canMoveToTableau(cards[0], last(g.tableau[move.destination.pileIndex]));
+            if (move.destination.type === 'foundation') return cards.length === 1 && canMoveToFoundationFreecell(cards[0], g.foundation[move.destination.pileIndex]);
+            if (move.destination.type === 'tableau') return canMoveToTableauFreecell(cards[0], last(g.tableau[move.destination.pileIndex]));
             if (move.destination.type === 'freecell') return cards.length === 1 && g.freecells[move.destination.pileIndex] === null;
             return false;
         },
         Spider: (g: SpiderGameState) => {
-            if (move.destination.type === 'tableau') return g.canMoveToTableau(cards, last(g.tableau[move.destination.pileIndex]));
+            if (move.destination.type === 'tableau') return canMoveToTableauSpider(cards, last(g.tableau[move.destination.pileIndex]));
             return false;
         },
     };
     
-    // The validation functions in each game file are bound to the GameState prototype.
-    // So, we create a temporary prototype chain to call them.
-    const tempGameState = Object.create(gs);
-    return dispatch[gs.gameType](tempGameState);
+    return dispatch[gs.gameType](gs as any);
 };
 
 /**
@@ -180,7 +173,6 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
  * This function modifies the game state based on a valid move.
  */
 const executeMove = (gs: GameState, move: GameMove): GameState => {
-    // Creates a deep copy of the game state to ensure immutability.
     let newState = JSON.parse(JSON.stringify(gs)) as GameState;
     const cards = getCardsToMove(newState, move.source);
 
@@ -189,7 +181,6 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
         case 'tableau':
             const srcPile = newState.tableau[move.source.pileIndex];
             srcPile.splice(move.source.cardIndex);
-            // Flip the new top card in Solitaire/Spider.
             if (newState.gameType !== 'Freecell' && srcPile.length > 0) last(srcPile)!.faceUp = true;
             break;
         case 'waste':      (newState as SolitaireGameState).waste.pop(); break;
@@ -235,13 +226,12 @@ const isClickSourceMovable = (gs: GameState, clickInfo: ClickSource): boolean =>
     if (clickInfo.type === 'tableau') {
         const stack = getCardsToMove(gs, {type: 'tableau', pileIndex: clickInfo.pileIndex, cardIndex: clickInfo.cardIndex });
         const dispatch = {
-            Solitaire: (s: GameState) => (Object.create(s) as SolitaireGameState).isRun(stack),
-            Freecell: (s: GameState) => (Object.create(s) as FreecellGameState).isRun(stack),
-            Spider: (s: GameState) => (Object.create(s) as SpiderGameState).isRun(stack),
+            Solitaire: isSolitaireRun,
+            Freecell: isFreecellRun,
+            Spider: isSpiderRun,
         };
-        return dispatch[gs.gameType](gs);
+        return dispatch[gs.gameType](stack);
     }
-    // Cards from Waste, Foundation, or Freecells are always individually movable if face-up.
     return true; 
 };
 
@@ -259,15 +249,12 @@ const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult =>
     } else {
         sourceCardInfo = clickInfo;
     }
-
-    // Find the highest-priority move for the selected card.
+    
     const move = findAutoMove(gs, sourceCardInfo);
 
     if (move) {
-        // If a valid move is found, execute it and highlight the destination.
         return { newState: executeMove(gs, move), newSelectedCard: null, highlightedPile: move.destination, saveHistory: true };
     }
-    // If no move is found, do nothing.
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
@@ -278,26 +265,21 @@ const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult =>
 const handleSubsequentClick = (params: ProcessClickParams): ProcessResult => {
     const { gameState, selectedCard, clickSource, toast } = params;
 
-    // If the user re-clicks the same card, deselect it.
     if (selectedCard && selectedCard.type === clickSource.type && selectedCard.pileIndex === clickSource.pileIndex && selectedCard.cardIndex === clickSource.cardIndex) {
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
     
-    const destinationCard = getClickedCard(gameState, clickSource);
-    const destinationType = clickSource.type as 'tableau' | 'foundation' | 'freecell'; // Cast because 'stock' and 'waste' are not valid destinations.
+    const destinationType = clickSource.type as 'tableau' | 'foundation' | 'freecell'; 
     const move: GameMove = { source: selectedCard!, destination: { type: destinationType, pileIndex: clickSource.pileIndex } };
     
-    // If the attempted move is valid, execute it and clear selection.
     if (isValidMove(gameState, move, toast)) {
         return { newState: executeMove(gameState, move), newSelectedCard: null, highlightedPile: move.destination, saveHistory: true };
     }
     
-    // If the move is invalid, but the user clicked on another movable card, switch the selection.
     if (isClickSourceMovable(gameState, clickSource)) {
         return { newState: null, newSelectedCard: clickSource, highlightedPile: null, saveHistory: false };
     }
 
-    // If the second click was on an invalid and unselectable spot, clear the selection.
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 }
 
@@ -309,9 +291,7 @@ const handleSubsequentClick = (params: ProcessClickParams): ProcessResult => {
 const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
     const { gameState, clickSource, settings } = params;
     
-    // First, check if the clicked card or stack can be moved at all.
     if (!isClickSourceMovable(gameState, clickSource)) {
-        // Special case for flipping face-down cards in Solitaire.
         const clickedCard = getClickedCard(gameState, clickSource);
         if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
              let newState = JSON.parse(JSON.stringify(gameState)) as SolitaireGameState;
@@ -322,12 +302,10 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
 
-    // Branch based on the auto-move setting.
     if (settings.autoMove) {
         return handleAutoMove(gameState, clickSource);
     } 
     
-    // If auto-move is off, this first click just selects the card.
     return { newState: null, newSelectedCard: clickSource, highlightedPile: null, saveHistory: false };
 };
 
@@ -343,10 +321,8 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
  * @returns {ProcessResult} The result of the operation, including any state changes and UI hints.
  */
 export const processCardClick = (params: ProcessClickParams): ProcessResult => {
-    // If a card is already selected, this is the second click of a two-click move.
     if (params.selectedCard) {
         return handleSubsequentClick(params);
     }
-    // Otherwise, this is the initial click of a potential move.
     return handleInitialClick(params);
 };

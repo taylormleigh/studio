@@ -13,11 +13,6 @@ export interface GameState {
   freecells: (Card | null)[];
   moves: number;
   score: number;
-  // Methods
-  canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean;
-  canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean;
-  isGameWon(): boolean;
-  isRun(cards: Card[]): boolean;
 }
 
 // Map card ranks to numerical values for comparison.
@@ -30,7 +25,7 @@ const RANK_VALUES: Record<Rank, number> = {
  * All 52 cards are dealt face-up into the 8 tableau piles.
  * @returns A new GameState object.
  */
-export function createInitialState(): FreecellGameState {
+export function createInitialState(): GameState {
   const deck = shuffleDeck(createDeck()).map(c => ({ ...c, faceUp: true }));
   const tableau: Card[][] = Array.from({ length: 8 }, () => []);
   
@@ -39,7 +34,7 @@ export function createInitialState(): FreecellGameState {
     tableau[index % 8].push(card);
   });
 
-  const gameState: Omit<GameState, 'canMoveToTableau' | 'canMoveToFoundation' | 'isGameWon' | 'isRun'> = {
+  return {
     gameType: 'Freecell',
     tableau,
     foundation: [[], [], [], []],
@@ -47,20 +42,12 @@ export function createInitialState(): FreecellGameState {
     moves: 0,
     score: 0,
   };
-
-  const stateWithMethods = Object.create(gameState) as GameState;
-  stateWithMethods.canMoveToTableau = canMoveToTableau;
-  stateWithMethods.canMoveToFoundation = canMoveToFoundation;
-  stateWithMethods.isGameWon = isGameWon;
-  stateWithMethods.isRun = isRun;
-
-  return stateWithMethods;
 }
 
 /**
  * Checks if a card can be legally moved to a tableau pile.
  */
-export function canMoveToTableau(this: FreecellGameState, cardToMove: Card, destinationCard: Card | undefined): boolean {
+export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
   if (!destinationCard) {
     return true; 
   }
@@ -72,7 +59,7 @@ export function canMoveToTableau(this: FreecellGameState, cardToMove: Card, dest
 /**
  * Checks if a card can be legally moved to a foundation pile.
  */
-export function canMoveToFoundation(this: FreecellGameState, cardToMove: Card, foundationPile: Card[]): boolean {
+export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
   const topCard = last(foundationPile);
   if (!topCard) {
     return cardToMove.rank === 'A';
@@ -85,14 +72,14 @@ export function canMoveToFoundation(this: FreecellGameState, cardToMove: Card, f
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
  */
-export function isGameWon(this: FreecellGameState): boolean {
-  return this.foundation.every(pile => pile.length === 13);
+export function isGameWon(state: GameState): boolean {
+  return state.foundation.every(pile => pile.length === 13);
 }
 
 /**
  * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
  */
-export function isRun(this: FreecellGameState, cards: Card[]): boolean {
+export function isRun(cards: Card[]): boolean {
   if (cards.length <= 1) return true;
   for (let i = 0; i < cards.length - 1; i++) {
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
@@ -106,7 +93,7 @@ export function isRun(this: FreecellGameState, cards: Card[]): boolean {
  * Calculates how many cards can be moved at once based on the number of available
  * empty freecells and empty tableau piles.
  */
-export function getMovableCardCount(state: FreecellGameState, isDestinationEmpty: boolean): number {
+export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean): number {
     const emptyFreecells = state.freecells.filter(c => c === null).length;
     let emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
     if (isDestinationEmpty && emptyTableauPiles > 0) {
@@ -119,15 +106,15 @@ export function getMovableCardCount(state: FreecellGameState, isDestinationEmpty
  * Finds the highest-priority valid auto-move for a given card/stack in Freecell.
  * Priority: Foundation -> Tableau -> Freecell.
  */
-export function findAutoMove(gs: FreecellGameState, source: SelectedCardInfo): GameMove | null {
-    const cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
-    if(cardsToMove.length === 0) return null;
+export function findAutoMoveForFreecell(gs: GameState, source: SelectedCardInfo): GameMove | null {
+    const cardsToMove = getCardsToMoveFromSource(gs, source);
+    if (cardsToMove.length === 0) return null;
     const cardToMove = cardsToMove[0];
 
     // Priority 1: Try to move a single card to any foundation pile.
     if (cardsToMove.length === 1) {
         for (let i = 0; i < gs.foundation.length; i++) {
-            if (gs.canMoveToFoundation(cardToMove, gs.foundation[i])) {
+            if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
                 return { source, destination: { type: 'foundation', pileIndex: i } };
             }
         }
@@ -136,7 +123,7 @@ export function findAutoMove(gs: FreecellGameState, source: SelectedCardInfo): G
     // Priority 2: Try to move the stack to any other tableau pile.
     for (let i = 0; i < gs.tableau.length; i++) {
         if (source.type === 'tableau' && source.pileIndex === i) continue;
-        if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+        if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             const isDestEmpty = gs.tableau[i].length === 0;
             const maxMove = getMovableCardCount(gs, isDestEmpty);
             if(cardsToMove.length <= maxMove) {
@@ -154,4 +141,15 @@ export function findAutoMove(gs: FreecellGameState, source: SelectedCardInfo): G
     }
 
     return null;
+}
+
+function getCardsToMoveFromSource(gs: GameState, source: SelectedCardInfo): Card[] {
+    if (source.type === 'tableau') {
+        return gs.tableau[source.pileIndex]?.slice(source.cardIndex) || [];
+    }
+    if (source.type === 'freecell') {
+        const card = gs.freecells[source.pileIndex];
+        return card ? [card] : [];
+    }
+    return [];
 }
