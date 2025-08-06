@@ -178,47 +178,56 @@ export function isRun(cards: Card[]): boolean {
 }
 
 /**
- * Finds the highest-priority valid auto-move for a given clicked card in Solitaire.
- * The logic prioritizes moving to a foundation pile over moving to a tableau pile.
+ * Finds the highest-priority valid auto-move for a clicked card or stack in Solitaire.
  * @param gs The current game state.
- * @param source The information about the clicked card (source of the potential move).
+ * @param source The information about the clicked card.
  * @returns A valid GameMove object if a move is found, otherwise null.
  */
 export function findAutoMoveForSolitaire(gs: GameState, source: SelectedCardInfo): GameMove | null {
-    // Determine the actual card to be moved based on the source of the click.
-    const cardToMove = source.type === 'waste'
-        ? last(gs.waste)
-        : gs.tableau[source.pileIndex]?.[source.cardIndex];
-
-    // If no card was found at the source, no move is possible.
-    if (!cardToMove) return null;
-
-    // Priority 1: Check all foundation piles for a valid move.
-    for (let i = 0; i < gs.foundation.length; i++) {
-        // If the card can be moved to the current foundation pile...
-        if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
-            // ...return this as the highest-priority move.
-            return { source, destination: { type: 'foundation', pileIndex: i } };
+    // 1. Identify the card or stack to be moved.
+    let cardsToMove: Card[] = [];
+    if (source.type === 'waste') {
+        const wasteCard = last(gs.waste);
+        if (wasteCard) cardsToMove = [wasteCard];
+    } else if (source.type === 'tableau') {
+        const sourcePile = gs.tableau[source.pileIndex];
+        const stack = sourcePile.slice(source.cardIndex);
+        // A stack can only be moved if it forms a valid run.
+        if (isRun(stack)) {
+            cardsToMove = stack;
         }
     }
 
-    // Priority 2: If no foundation move was found, check all tableau piles.
-    const cardsToMove = source.type === 'tableau' 
-      ? gs.tableau[source.pileIndex].slice(source.cardIndex) 
-      : [cardToMove];
-      
+    // If there are no movable cards, exit.
+    if (cardsToMove.length === 0) {
+        return null;
+    }
+
+    const cardToMove = cardsToMove[0];
+
+    // 2. Priority 1: Check foundation piles (only for single-card moves).
+    if (cardsToMove.length === 1) {
+        for (let i = 0; i < gs.foundation.length; i++) {
+            if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
+                return { source, destination: { type: 'foundation', pileIndex: i } };
+            }
+        }
+    }
+
+    // 3. Priority 2: Check tableau piles.
     for (let i = 0; i < gs.tableau.length; i++) {
         // A card/stack cannot be moved to its own pile.
-        if (source.type === 'tableau' && source.pileIndex === i) continue;
+        if (source.type === 'tableau' && source.pileIndex === i) {
+            continue;
+        }
         
-        // Check if the card/stack can be legally moved to the current tableau pile.
-        if (canMoveToTableau(cardsToMove[0], last(gs.tableau[i]))) {
-            // If it's a valid move, return it.
+        // Check if the base card of the stack can be legally moved.
+        if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
     }
     
-    // If no valid move was found in either foundations or tableaus, return null.
+    // 4. If no valid move is found, return null.
     return null;
 }
 
