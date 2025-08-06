@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, ClickSource, GameState, last } from '@/lib/game-logic';
+import { processCardClick, ClickSource, isGameWon, checkForCompletedSet } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -24,7 +24,7 @@ import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
-import { isGameWon, checkForCompletedSet } from '@/lib/game-logic';
+import { last } from '@/lib/solitaire';
 
 
 export type SelectedCardInfo = {
@@ -201,6 +201,7 @@ export default function GameBoard() {
   
     checkWinCondition(nextState);
     setGameState(nextState);
+    setSelectedCard(null); // Clear selection after every successful move.
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
@@ -278,8 +279,10 @@ export default function GameBoard() {
 
     if (result.newState) {
       updateState(result.newState, result.saveHistory);
+    } else {
+        setSelectedCard(result.newSelectedCard);
     }
-    setSelectedCard(result.newSelectedCard);
+
     if (result.highlightedPile) {
       setHighlightedPile(result.highlightedPile);
     }

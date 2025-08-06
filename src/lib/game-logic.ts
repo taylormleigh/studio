@@ -262,6 +262,7 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
 // Main Click Handler Logic
 // ================================================================================================
 
+/** Handles flipping a face-down card in Solitaire. */
 const handleSolitaireTableauFlip = (gs: SolitaireGameState, clickInfo: ClickSource): ProcessResult => {
     const isTopCard = clickInfo.cardIndex === gs.tableau[clickInfo.pileIndex].length - 1;
     if (isTopCard) {
@@ -273,6 +274,7 @@ const handleSolitaireTableauFlip = (gs: SolitaireGameState, clickInfo: ClickSour
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 }
 
+/** Attempts an auto-move when a card is clicked. */
 const handleInitialClickWithAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult => {
     const autoMove = attemptAutoMove(gs, clickInfo);
     if (autoMove) {
@@ -280,6 +282,7 @@ const handleInitialClickWithAutoMove = (gs: GameState, clickInfo: ClickSource): 
         const highlightedPile = { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex };
         return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
     }
+    // If no auto-move is found, just select the card.
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 };
 
@@ -288,7 +291,6 @@ const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: Gam
     const clickedCard = getClickedCard(gs, clickInfo);
 
     if (!clickedCard || !clickedCard.faceUp) {
-        // Special case for Solitaire: flipping a face-down card in the tableau.
         if (gs.gameType === 'Solitaire' && clickInfo.type === 'tableau' && clickedCard && !clickedCard.faceUp) {
             return handleSolitaireTableauFlip(gs as SolitaireGameState, clickInfo);
         }
@@ -305,23 +307,25 @@ const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: Gam
 
 /** Handles a click when a card is already selected. */
 const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click: ClickSource, toast: ReturnType<typeof useToast>['toast']): ProcessResult => {
+    const clickedCard = getClickedCard(gs, click);
+
     // Deselect if clicking the same card
     if (sel.type === click.type && sel.pileIndex === click.pileIndex && sel.cardIndex === click.cardIndex) {
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
     
+    // Construct the potential move.
     const move: GameMove = { source: sel, destination: { type: click.type as any, pileIndex: click.pileIndex } };
 
     if (isValidMove(gs, move, toast)) {
         const newState = executeMove(gs, move);
-        return { newState, newSelectedCard: null, highlightedPile: { type: move.destination.type, pileIndex: move.destination.pileIndex }, saveHistory: true };
+        const highlightedPile = { type: move.destination.type, pileIndex: move.destination.pileIndex };
+        return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
+    } else if (clickedCard && clickedCard.faceUp) {
+        // If the move is invalid, but the user clicked another valid, face-up card, switch selection.
+        return { newState: null, newSelectedCard: click, highlightedPile: null, saveHistory: false };
     } else {
-        const newClickedCard = getClickedCard(gs, click);
-        // If clicking on another valid, face-up card, select it instead of deselecting.
-        if (newClickedCard && newClickedCard.faceUp) {
-             return { newState: null, newSelectedCard: click, highlightedPile: null, saveHistory: false };
-        }
-        // Otherwise, deselect.
+        // Otherwise, the move is invalid and no new card was clicked, so deselect.
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
 };
