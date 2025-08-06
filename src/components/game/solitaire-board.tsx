@@ -10,6 +10,7 @@ import { useSettings } from '@/hooks/use-settings';
 
 interface SolitaireBoardProps {
   gameState: SolitaireGameState;
+  selectedCard: SelectedCardInfo | null;
   highlightedPile: HighlightedPile | null;
   handleCardClick: (type: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
@@ -86,6 +87,7 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+            onClick={() => handleCardClick('foundation', i, pile.length - 1)}
           />
         </div>
       ))}
@@ -115,10 +117,6 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                   key={`${card.suit}-${card.rank}-${cardIndex}`} 
                   className="absolute w-full"
                   style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
-                  onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardClick('tableau', pileIndex, cardIndex);
-                  }}
                 >
                   <Card
                     card={card}
@@ -128,6 +126,10 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                     className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                     onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
                     onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardClick('tableau', pileIndex, cardIndex);
+                    }}
                   />
                 </div>
               )
