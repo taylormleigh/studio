@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent, MouseEvent, TouchEvent } from 'react';
+import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -519,12 +519,11 @@ export default function GameBoard() {
     setSelectedCard({ type: sourceType, pileIndex, cardIndex });
   };
   
-    
-  const handleDragStart = (e: MouseEvent, info: SelectedCardInfo) => {
+  const startDrag = (clientX: number, clientY: number, info: SelectedCardInfo) => {
     if (!gameState) return;
     setIsDragging(true);
     setSelectedCard(null);
-
+  
     let cards: CardType[];
     switch (info.type) {
         case 'tableau': cards = gameState.tableau[info.pileIndex].slice(info.cardIndex); break;
@@ -533,24 +532,30 @@ export default function GameBoard() {
         case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[info.pileIndex]!] : []; break;
         default: cards = [];
     }
-
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    setDragPosition({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
-    setDraggedCardInfo({ ...info, cards, initialX: e.clientX, initialY: e.clientY });
+    
+    const targetElement = document.querySelector(`[data-testid="card-${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
+    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: 0, top: 0 };
+    
+    setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
+    setDragPosition({ x: clientX - (clientX - rect.left), y: clientY - (clientY - rect.top) });
+    setDraggedCardInfo({ ...info, cards, initialX: clientX, initialY: clientY });
   };
-
+    
+  const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
+    startDrag(e.clientX, e.clientY, info);
+  };
+  
   const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
-      const touch = e.touches[0];
-      handleDragStart(touch as any, info);
+    const touch = e.touches[0];
+    startDrag(touch.clientX, touch.clientY, info);
   };
   
   const handleDragMove = (clientX: number, clientY: number) => {
     if (isDragging) {
-        setDragPosition({
-            x: clientX - dragOffset.x,
-            y: clientY - dragOffset.y,
-        });
+      setDragPosition({
+        x: clientX - dragOffset.x,
+        y: clientY - dragOffset.y,
+      });
     }
   };
   
@@ -560,48 +565,47 @@ export default function GameBoard() {
       if (draggedEl) {
         (draggedEl as HTMLElement).style.display = 'none';
       }
-
+  
       const dropTarget = document.elementFromPoint(clientX, clientY);
       
       if (draggedEl) {
         (draggedEl as HTMLElement).style.display = '';
       }
-
+  
       if (dropTarget) {
-          let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
-          let targetPileIndex: number | null = null;
-
-          let currentEl: HTMLElement | null = dropTarget as HTMLElement;
-          while (currentEl) {
-              const testId = currentEl.dataset.testid;
-              if (testId) {
-                  if (testId.startsWith('tableau-pile-')) {
-                      targetType = 'tableau';
-                      targetPileIndex = parseInt(testId.replace('tableau-pile-', ''), 10);
-                      break;
-                  }
-                  if (testId.startsWith('foundation-pile-')) {
-                      targetType = 'foundation';
-                      targetPileIndex = parseInt(testId.replace('foundation-pile-', ''), 10);
-                      break;
-                  }
-                  if (testId.startsWith('freecell-pile-')) {
-                    targetType = 'freecell';
-                    targetPileIndex = parseInt(testId.replace('freecell-pile-', ''), 10);
-                    break;
-                }
-              }
-              currentEl = currentEl.parentElement;
+        let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
+        let targetPileIndex: number | null = null;
+  
+        let currentEl: HTMLElement | null = dropTarget as HTMLElement;
+        while (currentEl) {
+          const testId = currentEl.dataset.testid;
+          if (testId) {
+            if (testId.startsWith('tableau-pile-') || testId.startsWith('card-tableau-empty-')) {
+              targetType = 'tableau';
+              targetPileIndex = parseInt(testId.replace(/tableau-pile-|card-tableau-empty-/, ''), 10);
+              break;
+            }
+            if (testId.startsWith('foundation-pile-') || testId.startsWith('card-foundation-empty-')) {
+              targetType = 'foundation';
+              targetPileIndex = parseInt(testId.replace(/foundation-pile-|card-foundation-empty-/, ''), 10);
+              break;
+            }
+            if (testId.startsWith('freecell-pile-') || testId.startsWith('card-freecell-empty-')) {
+              targetType = 'freecell';
+              targetPileIndex = parseInt(testId.replace(/freecell-pile-|card-freecell-empty-/, ''), 10);
+              break;
+            }
           }
-          if (targetType && targetPileIndex !== null) {
-              moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, targetType, targetPileIndex);
-          }
+          currentEl = currentEl.parentElement;
+        }
+        if (targetType && targetPileIndex !== null) {
+          moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, targetType, targetPileIndex);
+        }
       }
     }
     setIsDragging(false);
     setDraggedCardInfo(null);
   };
-
   
   const renderLoader = () => (
     <div className="flex flex-col min-h-screen">
@@ -648,8 +652,8 @@ export default function GameBoard() {
       data-testid="game-board"
       onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
       onMouseUp={(e) => handleDragEnd(e.clientX, e.clientY)}
-      onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
+      onTouchMove={(e) => e.touches[0] && handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchEnd={(e) => e.changedTouches[0] && handleDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
