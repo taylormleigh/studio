@@ -85,10 +85,6 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                   key={`${card.suit}-${card.rank}-${cardIndex}`} 
                   className="absolute w-full"
                   style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
-                  onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardClick('tableau', pileIndex, cardIndex);
-                  }}
                 >
                     <Card
                       card={card}
@@ -98,6 +94,10 @@ const TableauPiles = ({ gameState, highlightedPile, handleCardClick, handleMouse
                       className={isTopCard ? '' : (card.faceUp ? 'pb-5 sm:pb-6' : 'pb-3')}
                       onMouseDown={(e) => draggable && handleMouseDown(e, { type: 'tableau', pileIndex, cardIndex })}
                       onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          handleCardClick('tableau', pileIndex, cardIndex);
+                      }}
                     />
                 </div>
               )
