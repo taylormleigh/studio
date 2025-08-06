@@ -284,6 +284,15 @@ const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation)
     const touch = e.touches[0];
     startDrag(touch.clientX, touch.clientY, card, location);
 };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (isDragging) {
+      setDragPosition({
+        x: clientX - dragOffset.x,
+        y: clientY - dragOffset.y,
+      });
+    }
+  };
   
   const handleDrop = (clientX: number, clientY: number) => {
     if (!isDragging || !draggedCardInfo || !gameState) return;
