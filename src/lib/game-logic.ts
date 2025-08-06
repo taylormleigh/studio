@@ -317,9 +317,12 @@ const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click:
         return { newState, newSelectedCard: null, highlightedPile: { type: move.destination.type, pileIndex: move.destination.pileIndex }, saveHistory: true };
     } else {
         const newClickedCard = getClickedCard(gs, click);
-        // If clicking on another valid card, select it. Otherwise, deselect.
-        const newSelected = newClickedCard && newClickedCard.faceUp ? click : null;
-        return { newState: null, newSelectedCard: newSelected, highlightedPile: null, saveHistory: false };
+        // If clicking on another valid, face-up card, select it instead of deselecting.
+        if (newClickedCard && newClickedCard.faceUp) {
+             return { newState: null, newSelectedCard: click, highlightedPile: null, saveHistory: false };
+        }
+        // Otherwise, deselect.
+        return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
 };
 
@@ -331,5 +334,3 @@ export const processCardClick = (gs: GameState, sel: SelectedCardInfo | null, se
         return handleInitialClick(gs, click, set);
     }
 };
-
-    
