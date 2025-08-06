@@ -80,17 +80,26 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
+          onClick={() => handleCardClick('foundation', i, pile.length - 1)}
         >
           <Card 
             card={last(pile)}
             data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-            onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-            onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-            onClick={() => handleCardClick('foundation', i, pile.length - 1)}
+            onMouseDown={(e) => {
+                e.stopPropagation(); // prevent parent onClick from firing
+                if(pile.length > 0) handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})
+            }}
+            onTouchStart={(e) => {
+                e.stopPropagation();
+                if(pile.length > 0) handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                handleCardClick('foundation', i, pile.length - 1)
+            }}
           />
         </div>
       ))}
     </div>
 );
-
