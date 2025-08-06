@@ -18,10 +18,12 @@ interface SolitaireBoardProps {
   handleDraw: () => void;
   moveCards: (sourceType: 'tableau' | 'waste' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'foundation', destPileIndex: number) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  draggedCardInfo: SelectedCardInfo | null;
+  draggedCardPosition: { x: number; y: number } | null;
 }
 
 export default function SolitaireBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, moveCards, handleTouchStart
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, moveCards, handleTouchStart, draggedCardInfo, draggedCardPosition
 }: SolitaireBoardProps) {
   const { settings } = useSettings();
 
@@ -143,13 +145,24 @@ export default function SolitaireBoard({
                   const isTopCard = cardIndex === pile.length - 1;
                   const isSelected = selectedCard?.type === 'tableau' && selectedCard?.pileIndex === pileIndex && selectedCard?.cardIndex <= cardIndex;
                   const draggable = card.faceUp && isSolitaireRun(pile.slice(cardIndex));
-                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0)
+                  const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
+                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0);
                   
+                  const style = isBeingDragged && draggedCardPosition ? {
+                    transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
+                    zIndex: 100 + cardIndex,
+                    pointerEvents: 'none',
+                    position: 'fixed'
+                  } : {
+                    transform: `translateY(${yOffset}px)`,
+                    zIndex: cardIndex
+                  };
+
                   return (
                     <div 
                       key={`${card.suit}-${card.rank}-${cardIndex}`} 
                       className="absolute w-full"
-                      style={{ transform: `translateY(${yOffset}px)`, zIndex: cardIndex }}
+                      style={style}
                     >
                       <Card
                         card={card}
@@ -165,6 +178,7 @@ export default function SolitaireBoard({
                             handleCardClick('tableau', pileIndex, cardIndex);
                         }}
                         onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                        isDragging={isBeingDragged}
                       />
                     </div>
                   )

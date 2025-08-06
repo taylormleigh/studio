@@ -490,12 +490,10 @@ export default function GameBoard() {
   const handleTouchEnd = (e: TouchEvent) => {
     if (draggedCardInfo && draggedCardPosition) {
         const touch = e.changedTouches[0];
-        const draggedCardDiv = document.getElementById('dragged-card');
-        if (draggedCardDiv) draggedCardDiv.style.display = 'none';
-
+        
+        // Find the element under the touch point
         const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (draggedCardDiv) draggedCardDiv.style.display = 'block';
-
+        
         if (dropTarget) {
             let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
             let destPileIndex: number | null = null;
@@ -665,36 +663,6 @@ export default function GameBoard() {
     </div>
   );
 
-  const renderDraggedCard = () => {
-    if (!draggedCardInfo || !draggedCardPosition || !gameState) return null;
-
-    let card;
-    if (draggedCardInfo.type === 'tableau') {
-        card = gameState.tableau[draggedCardInfo.pileIndex][draggedCardInfo.cardIndex];
-    } else if (draggedCardInfo.type === 'freecell' && gameState.gameType === 'Freecell') {
-        card = (gameState as FreecellGameState).freecells[draggedCardInfo.pileIndex];
-    } else if (draggedCardInfo.type === 'waste' && gameState.gameType === 'Solitaire') {
-        card = last((gameState as SolitaireGameState).waste);
-    }
-
-    if (!card) return null;
-
-    return (
-        <div
-            id="dragged-card"
-            className="pointer-events-none absolute"
-            style={{
-                left: draggedCardPosition.x,
-                top: draggedCardPosition.y,
-                transform: 'translate(-50%, -50%)', // Center on cursor/finger
-                zIndex: 1000,
-                width: '96px'
-            }}
-        >
-            <Card card={card} isSelected={true}/>
-        </div>
-    );
-};
   
   // Show loader until the component has mounted and game state is initialized.
   if (!isClient || !gameState) {
@@ -716,6 +684,8 @@ export default function GameBoard() {
     handleDraw,
     moveCards,
     handleTouchStart,
+    draggedCardInfo,
+    draggedCardPosition,
   };
 
   return (
@@ -737,7 +707,6 @@ export default function GameBoard() {
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
 
-      {renderDraggedCard()}
       <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
       
       <GameFooter 

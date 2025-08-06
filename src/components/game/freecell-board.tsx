@@ -16,10 +16,12 @@ interface FreecellBoardProps {
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  draggedCardInfo: SelectedCardInfo | null;
+  draggedCardPosition: { x: number; y: number } | null;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart, draggedCardInfo, draggedCardPosition
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
@@ -51,15 +53,24 @@ export default function FreecellBoard({
     
     // A stack is draggable if it's a valid run and its length is within the movable limit.
     const isDraggable = isValidRun && stackToTest.length <= maxMovable;
+    const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
+    const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
+
+    const style = isBeingDragged && draggedCardPosition ? {
+      transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
+      zIndex: 100 + cardIndex,
+      pointerEvents: 'none',
+      position: 'fixed'
+    } : {
+      transform: `translateY(${yOffset}px)`,
+      zIndex: cardIndex
+    };
     
     return (
         <div 
           key={`${card.suit}-${card.rank}-${cardIndex}`} 
           className="absolute w-full"
-          style={{
-            transform: `translateY(${cardIndex * (window.innerWidth < 640 ? 22 : 24)}px)`,
-            zIndex: cardIndex
-          }}
+          style={style}
         >
             <Card
               card={card}
@@ -74,6 +85,7 @@ export default function FreecellBoard({
                   handleTableauClick(pileIndex, cardIndex);
               }}
               onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+              isDragging={isBeingDragged}
             />
         </div>
     )

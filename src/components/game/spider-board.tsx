@@ -17,10 +17,12 @@ interface SpiderBoardProps {
   handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
+  draggedCardInfo: SelectedCardInfo | null;
+  draggedCardPosition: { x: number; y: number } | null;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, draggedCardInfo, draggedCardPosition
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -87,17 +89,25 @@ export default function SpiderBoard({
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
-                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
                   const draggable = card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true);
+                  const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
+                  const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
+
+                  const style = isBeingDragged && draggedCardPosition ? {
+                    transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
+                    zIndex: 100 + cardIndex,
+                    pointerEvents: 'none',
+                    position: 'fixed'
+                  } : {
+                    transform: `translateY(${yOffset}px)`,
+                    zIndex: cardIndex
+                  };
 
                   return (
                     <div 
                       key={`${card.suit}-${card.rank}-${cardIndex}`} 
                       className="absolute w-full"
-                      style={{
-                        transform: `translateY(${yOffset}px)`,
-                        zIndex: cardIndex
-                      }}
+                      style={style}
                     >
                         <Card
                           card={card}
@@ -113,6 +123,7 @@ export default function SpiderBoard({
                               handleTableauClick(pileIndex, cardIndex);
                           }}
                           onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
+                          isDragging={isBeingDragged}
                         />
                     </div>
                   )
