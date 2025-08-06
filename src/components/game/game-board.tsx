@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, ClickSource, isGameWon, checkForCompletedSet } from '@/lib/game-logic';
+import { processCardClick, ClickSource, isGameWon } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -24,7 +24,6 @@ import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
-import { last } from '@/lib/solitaire';
 
 
 export type SelectedCardInfo = {
@@ -176,32 +175,9 @@ export default function GameBoard() {
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
     }
     
-    let nextState = { ...newState };
-  
-    if (nextState.gameType === 'Spider') {
-      let setsCompletedThisMove = 0;
-      let scoreBonus = 0;
-      (nextState as SpiderGameState).tableau.forEach((pile, index) => {
-        const result = checkForCompletedSet(pile);
-        if (result.setsCompleted > 0 && result.completedSet) {
-          (nextState as SpiderGameState).foundation.push(result.completedSet);
-          (nextState as SpiderGameState).tableau[index] = result.updatedPile;
-          setsCompletedThisMove++;
-          scoreBonus += 100;
-          if ((nextState as SpiderGameState).tableau[index].length > 0 && !(last((nextState as SpiderGameState).tableau[index])!.faceUp)) {
-            last((nextState as SpiderGameState).tableau[index])!.faceUp = true;
-          }
-        }
-      });
-      if (setsCompletedThisMove > 0) {
-        nextState.completedSets += setsCompletedThisMove;
-        nextState.score += scoreBonus;
-      }
-    }
-  
-    checkWinCondition(nextState);
-    setGameState(nextState);
-    setSelectedCard(null); // Clear selection after every successful move.
+    checkWinCondition(newState);
+    setGameState(newState);
+    setSelectedCard(null);
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
@@ -266,23 +242,24 @@ export default function GameBoard() {
     cardIndex: number
   ) => {
     if (!gameState || isDragging) return;
-
+  
     const clickInfo: ClickSource = { type, pileIndex, cardIndex };
     
-    const result = processCardClick(
-      gameState,
-      selectedCard,
-      settings,
-      clickInfo,
-      toast
-    );
-
+    const result = processCardClick({
+        gameState,
+        selectedCard,
+        clickSource: clickInfo,
+        settings,
+        toast,
+    });
+  
     if (result.newState) {
       updateState(result.newState, result.saveHistory);
-    } else {
-        setSelectedCard(result.newSelectedCard);
     }
-
+  
+    // Always update selection state from the result
+    setSelectedCard(result.newSelectedCard);
+  
     if (result.highlightedPile) {
       setHighlightedPile(result.highlightedPile);
     }
@@ -391,7 +368,7 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
           currentEl = currentEl.parentElement;
         }
         if (targetType && targetPileIndex !== null) {
-          const result = processCardClick(gameState!, draggedCardInfo, settings, { type: targetType, pileIndex: targetPileIndex, cardIndex: 0 }, toast);
+          const result = processCardClick({gameState, selectedCard: draggedCardInfo, clickSource: { type: targetType, pileIndex: targetPileIndex, cardIndex: 0 }, settings, toast});
           if (result.newState) {
             updateState(result.newState, result.saveHistory);
           }

@@ -6,9 +6,9 @@
  * function having a single, clear responsibility.
  */
 
-import { GameSettings } from '@/hooks/use-settings';
-import { useToast } from '@/hooks/use-toast';
-import { SelectedCardInfo, HighlightedPile } from '@/components/game/game-board';
+import type { GameSettings } from '@/hooks/use-settings';
+import type { useToast } from '@/hooks/use-toast';
+import type { SelectedCardInfo, HighlightedPile } from '@/components/game/game-board';
 
 // Game-specific logic imports
 import {
@@ -45,13 +45,20 @@ export type ClickSource = {
   pileIndex: number;
   cardIndex: number;
 }
-export type GameMove = {
+type GameMove = {
   source: SelectedCardInfo;
   destination: {
     type: 'tableau' | 'foundation' | 'freecell';
     pileIndex: number;
   };
 };
+type ProcessClickParams = {
+    gameState: GameState,
+    selectedCard: SelectedCardInfo | null,
+    clickSource: ClickSource,
+    settings: GameSettings,
+    toast: ReturnType<typeof useToast>['toast']
+}
 type ProcessResult = {
     newState: GameState | null;
     newSelectedCard: SelectedCardInfo | null;
@@ -91,24 +98,30 @@ const getClickedCard = (gameState: GameState, clickInfo: ClickSource): CardType 
 // ================================================================================================
 
 const isGameWonDispatch = { Solitaire: isSolitaireWon, Freecell: isFreecellWon, Spider: isSpiderWon };
-export const isGameWon = (state: GameState): boolean => isGameWonDispatch[state.gameType](state as any);
-
-export const checkForCompletedSet = (state: GameState): GameState => {
-    if (state.gameType !== 'Spider') return state;
-    let newState = JSON.parse(JSON.stringify(state)) as SpiderGameState;
-    let setsFoundInMove = false;
-    for (let i = 0; i < newState.tableau.length; i++) {
-        const result = checkForSpiderCompletedSet(newState.tableau[i]);
-        if (result.setsCompleted > 0) {
-            setsFoundInMove = true;
-            newState.tableau[i] = result.updatedPile;
-            if (result.completedSet) newState.foundation.push(result.completedSet);
-            newState.completedSets += result.setsCompleted;
-            newState.score += result.setsCompleted * 100;
-            if (newState.tableau[i].length > 0) last(newState.tableau[i])!.faceUp = true;
-        }
+export const isGameWon = (state: GameState): boolean => {
+    // Before checking the final win condition, first check for completed sets in Spider
+    if (state.gameType === 'Spider') {
+        let tempState = state;
+        let setsFound;
+        do {
+            setsFound = false;
+            let nextState = JSON.parse(JSON.stringify(tempState)) as SpiderGameState;
+            for (let i = 0; i < nextState.tableau.length; i++) {
+                const result = checkForSpiderCompletedSet(nextState.tableau[i]);
+                if (result.setsCompleted > 0) {
+                    setsFound = true;
+                    nextState.tableau[i] = result.updatedPile;
+                    if (result.completedSet) nextState.foundation.push(result.completedSet);
+                    nextState.completedSets += result.setsCompleted;
+                    nextState.score += result.setsCompleted * 100;
+                    if (nextState.tableau[i].length > 0) last(nextState.tableau[i])!.faceUp = true;
+                }
+            }
+            if (setsFound) tempState = nextState;
+        } while (setsFound);
+        return isSpiderWon(tempState as any);
     }
-    return setsFoundInMove ? newState : state;
+    return isGameWonDispatch[state.gameType](state as any);
 }
 
 // ================================================================================================
@@ -157,11 +170,6 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
 // Auto-Move Logic: Finders (Game Specific Implementations & Dispatcher)
 // ================================================================================================
 
-const findSolitaireAutoMove = (gs: SolitaireGameState, src: SelectedCardInfo): GameMove | null => {
-    const toFoundation = findSolitaireAutoMoveToFoundation(gs, src);
-    if (toFoundation) return toFoundation;
-    return findSolitaireAutoMoveToTableau(gs, src);
-}
 const findSolitaireAutoMoveToFoundation = (gs: SolitaireGameState, src: SelectedCardInfo): GameMove | null => {
     const cards = getCardsToMove(gs, src);
     if (cards.length !== 1) return null;
@@ -176,14 +184,12 @@ const findSolitaireAutoMoveToTableau = (gs: SolitaireGameState, src: SelectedCar
     }
     return null;
 };
+const findSolitaireAutoMove = (gs: SolitaireGameState, src: SelectedCardInfo): GameMove | null => {
+    const toFoundation = findSolitaireAutoMoveToFoundation(gs, src);
+    if (toFoundation) return toFoundation;
+    return findSolitaireAutoMoveToTableau(gs, src);
+}
 
-const findFreecellAutoMoveFromTableau = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToFreecell(gs, src) || findFreecellAutoMoveToTableau(gs, src);
-const findFreecellAutoMoveFromFreecell = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src);
-const findFreecellAutoMove = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
-    if (src.type === 'tableau') return findFreecellAutoMoveFromTableau(gs, src);
-    if (src.type === 'freecell') return findFreecellAutoMoveFromFreecell(gs, src);
-    return null;
-};
 const findFreecellAutoMoveToFoundation = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
     if (getCardsToMove(gs, src).length !== 1) return null;
     for (let i = 0; i < gs.foundation.length; i++) if (isValidMove(gs, { source: src, destination: { type: 'foundation', pileIndex: i } }, () => {})) return { source: src, destination: { type: 'foundation', pileIndex: i } };
@@ -205,6 +211,13 @@ const findFreecellAutoMoveToFreecell = (gs: FreecellGameState, src: SelectedCard
     }
     return null;
 }
+const findFreecellAutoMoveFromTableau = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToFreecell(gs, src) || findFreecellAutoMoveToTableau(gs, src);
+const findFreecellAutoMoveFromFreecell = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src);
+const findFreecellAutoMove = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
+    if (src.type === 'tableau') return findFreecellAutoMoveFromTableau(gs, src);
+    if (src.type === 'freecell') return findFreecellAutoMoveFromFreecell(gs, src);
+    return null;
+};
 
 const findSpiderAutoMove = (gs: SpiderGameState, src: SelectedCardInfo): GameMove | null => {
     if (!isSpiderRun(getCardsToMove(gs, src))) return null;
@@ -252,7 +265,7 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
 };
 
 // ================================================================================================
-// Main Click Handler Logic: Sub-functions for clarity
+// Click Handler Sub-functions
 // ================================================================================================
 
 /** Handles flipping a face-down card in Solitaire. */
@@ -263,30 +276,31 @@ const handleSolitaireTableauFlip = (gs: SolitaireGameState, clickInfo: ClickSour
     return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
 }
 
+/** Handles the first click on a card when auto-move is enabled. */
 const handleInitialClickAutoMoveTrue = (gs: GameState, clickInfo: ClickSource): ProcessResult => {
     const autoMove = attemptAutoMove(gs, clickInfo);
     if (autoMove) {
         const newState = executeMove(gs, autoMove);
-        const highlightedPile = { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex };
+        const highlightedPile: HighlightedPile = { type: autoMove.destination.type, pileIndex: autoMove.destination.pileIndex };
         return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
     }
     // If no auto-move found, just select the card
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 }
 
+/** Handles the first click on a card when auto-move is disabled. */
 const handleInitialClickAutoMoveFalse = (clickInfo: ClickSource): ProcessResult => {
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 }
 
-/** Handles a click when no card is currently selected. */
+/** Determines the action for the first click on a card. */
 const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: GameSettings): ProcessResult => {
     const clickedCard = getClickedCard(gs, clickInfo);
     if (!clickedCard) return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 
     if (!clickedCard.faceUp) {
-        if (gs.gameType === 'Solitaire' && clickInfo.type === 'tableau' && clickInfo.cardIndex === gs.tableau[clickInfo.pileIndex].length - 1) {
-            return handleSolitaireTableauFlip(gs as SolitaireGameState, clickInfo);
-        }
+        const isTopTableau = gs.gameType === 'Solitaire' && clickInfo.type === 'tableau' && clickInfo.cardIndex === gs.tableau[clickInfo.pileIndex].length - 1;
+        if (isTopTableau) return handleSolitaireTableauFlip(gs as SolitaireGameState, clickInfo);
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
     
@@ -294,25 +308,23 @@ const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: Gam
 };
 
 /** Handles a click when a card is already selected. */
-const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click: ClickSource, tst: ReturnType<typeof useToast>['toast']): ProcessResult => {
+const handleSubsequentClick = (gs: GameState, sel: SelectedCardInfo, click: ClickSource, tst: ReturnType<typeof useToast>['toast']): ProcessResult => {
     const destinationType = click.type as 'tableau' | 'foundation' | 'freecell';
     const move: GameMove = { source: sel, destination: { type: destinationType, pileIndex: click.pileIndex } };
     
-    // First, check if the attempted move is valid and execute if so.
     if (isValidMove(gs, move, tst)) {
         const newState = executeMove(gs, move);
         const highlightedPile = { type: move.destination.type, pileIndex: move.destination.pileIndex };
         return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
     }
 
-    // If the move is invalid, check if the user clicked on a different selectable card.
+    // If move is invalid, check if the user clicked on a different selectable card to change selection.
     const newlyClickedCard = getClickedCard(gs, click);
     if (newlyClickedCard && newlyClickedCard.faceUp) {
-        // Switch selection to the new card
         return { newState: null, newSelectedCard: click, highlightedPile: null, saveHistory: false };
     }
 
-    // If the move is invalid and the click was not on a selectable card, deselect.
+    // If the move is invalid and the click was not on a valid new card, deselect.
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
@@ -321,19 +333,19 @@ const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click:
 // Main Exported Controller
 // ================================================================================================
 
-export const processCardClick = (gs: GameState, sel: SelectedCardInfo | null, set: GameSettings, click: ClickSource, tst: ReturnType<typeof useToast>['toast']): ProcessResult => {
-    // If a card is already selected, try to move it or change selection.
-    if (sel) {
-        // Deselect if clicking the same card again
-        if (sel.type === click.type && sel.pileIndex === click.pileIndex && sel.cardIndex === click.cardIndex) {
+export const processCardClick = ({ gameState, selectedCard, clickSource, settings, toast }: ProcessClickParams): ProcessResult => {
+    // Case 1: A card is already selected.
+    if (selectedCard) {
+        // Deselect if clicking the same card again.
+        const isSameCard = selectedCard.type === clickSource.type && selectedCard.pileIndex === clickSource.pileIndex && selectedCard.cardIndex === clickSource.cardIndex;
+        if (isSameCard) {
             return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
         }
-        return handleMoveWithSelectedCard(gs, sel, click, tst);
+        return handleSubsequentClick(gameState, selectedCard, clickSource, toast);
     } 
-    // If no card is selected, handle the first click.
+    // Case 2: No card is selected yet. This is the first click.
     else {
-        return handleInitialClick(gs, click, set);
+        return handleInitialClick(gameState, clickSource, settings);
     }
 };
 
-    
