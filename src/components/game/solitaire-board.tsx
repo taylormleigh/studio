@@ -79,6 +79,7 @@ export default function SolitaireBoard({
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
+          onClick={() => handleFoundationClick(i)}
         >
           <Card 
             card={last(pile)}

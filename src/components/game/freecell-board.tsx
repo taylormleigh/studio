@@ -93,13 +93,13 @@ export default function FreecellBoard({
           key={`foundation-${i}`} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onClick={() => handleFoundationClick(i)}
         >
           <Card 
             card={pile[pile.length - 1]} 
             data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
+            onClick={() => handleFoundationClick(i)}
           />
         </div>
       ))}
