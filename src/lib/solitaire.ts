@@ -180,13 +180,24 @@ export function isRun(this: SolitaireGameState, cards: Card[]): boolean {
 }
 
 /**
- * Finds the highest-priority valid auto-move for a given card/stack.
+ * Finds the highest-priority valid auto-move for a given card/stack in Solitaire.
  * Priority: Foundation -> Tableau.
  */
 export function findAutoMove(gs: SolitaireGameState, source: SelectedCardInfo): GameMove | null {
-    const cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
-    const cardToMove = cardsToMove[0];
+    let cardToMove: Card | undefined;
+    let cardsToMove: Card[] = [];
 
+    // Correctly get the card(s) to move based on the source type.
+    if (source.type === 'tableau') {
+        cardsToMove = (gs.tableau[source.pileIndex] || []).slice(source.cardIndex);
+    } else if (source.type === 'waste') {
+        cardsToMove = gs.waste.length > 0 ? [last(gs.waste)!] : [];
+    }
+    
+    // If there's no card to move, exit.
+    if (cardsToMove.length === 0) return null;
+    cardToMove = cardsToMove[0];
+    
     // Priority 1: Try to move a single card to any foundation pile.
     if (cardsToMove.length === 1) {
         for (let i = 0; i < gs.foundation.length; i++) {
@@ -197,13 +208,22 @@ export function findAutoMove(gs: SolitaireGameState, source: SelectedCardInfo): 
     }
 
     // Priority 2: Try to move the stack to any other tableau pile.
-    for (let i = 0; i < gs.tableau.length; i++) {
-        if (source.type === 'tableau' && source.pileIndex === i) continue; // Don't move to the same pile
-        if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
-            return { source, destination: { type: 'tableau', pileIndex: i } };
+    // This check is only relevant for tableau sources.
+    if (source.type === 'tableau') {
+        for (let i = 0; i < gs.tableau.length; i++) {
+            if (source.pileIndex === i) continue;
+            if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+                return { source, destination: { type: 'tableau', pileIndex: i } };
+            }
+        }
+    } else if (source.type === 'waste') {
+         for (let i = 0; i < gs.tableau.length; i++) {
+            if (gs.canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
+                return { source, destination: { type: 'tableau', pileIndex: i } };
+            }
         }
     }
-
+    
     return null;
 }
 
@@ -226,3 +246,4 @@ export function last(pile: Pile): Card | undefined {
     return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
     
+
