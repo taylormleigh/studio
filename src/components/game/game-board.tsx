@@ -264,7 +264,7 @@ export default function GameBoard() {
     pileIndex: number,
     cardIndex: number
   ) => {
-    if (!gameState) return;
+    if (!gameState || isDragging) return;
 
     const clickInfo: ClickSource = { type, pileIndex, cardIndex };
     

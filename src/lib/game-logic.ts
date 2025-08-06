@@ -75,6 +75,9 @@ const getCardsToMove = (gameState: GameState, source: SelectedCardInfo): CardTyp
 };
 
 const getClickedCard = (gameState: GameState, clickInfo: ClickSource): CardType | undefined => {
+    // A cardIndex of -1 signifies a click on an empty pile.
+    if (clickInfo.cardIndex === -1) return undefined;
+    
     switch (clickInfo.type) {
         case 'tableau':    return gameState.tableau[clickInfo.pileIndex]?.[clickInfo.cardIndex];
         case 'waste':      return gameState.gameType === 'Solitaire' ? last((gameState as SolitaireGameState).waste) : undefined;
@@ -191,12 +194,20 @@ const findFreecellAutoMoveToTableau = (gs: FreecellGameState, src: SelectedCardI
 const findFreecellAutoMoveToFreecell = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
     if (getCardsToMove(gs, src).length !== 1) return null;
     const emptyCellIdx = gs.freecells.findIndex(cell => cell === null);
-    if (emptyCellIdx !== -1 && isValidMove(gs, { source: src, destination: { type: 'freecell', pileIndex: emptyCellIdx } }, () => {})) return { source: src, destination: { type: 'freecell', pileIndex: emptyCellIdx } };
+    if (emptyCellIdx !== -1) {
+        const move: GameMove = { source: src, destination: { type: 'freecell', pileIndex: emptyCellIdx } };
+        if (isValidMove(gs, move, () => {})) return move;
+    }
     return null;
 }
 const findFreecellAutoMoveFromTableau = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src) || findFreecellAutoMoveToFreecell(gs, src);
 const findFreecellAutoMoveFromFreecell = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => findFreecellAutoMoveToFoundation(gs, src) || findFreecellAutoMoveToTableau(gs, src);
-const findFreecellAutoMove = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => src.type === 'freecell' ? findFreecellAutoMoveFromFreecell(gs, src) : findFreecellAutoMoveFromTableau(gs, src);
+const findFreecellAutoMove = (gs: FreecellGameState, src: SelectedCardInfo): GameMove | null => {
+    if (src.type === 'freecell') {
+        return findFreecellAutoMoveFromFreecell(gs, src);
+    }
+    return findFreecellAutoMoveFromTableau(gs, src);
+};
 
 const findSpiderAutoMove = (gs: SpiderGameState, src: SelectedCardInfo): GameMove | null => {
     if (!isSpiderRun(getCardsToMove(gs, src))) return null;
@@ -270,14 +281,16 @@ const handleInitialClickWithAutoMove = (gs: GameState, clickInfo: ClickSource): 
         return { newState, newSelectedCard: null, highlightedPile, saveHistory: true };
     }
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
-}
+};
 
 /** Handles a click when no card is currently selected. */
 const handleInitialClick = (gs: GameState, clickInfo: ClickSource, settings: GameSettings): ProcessResult => {
     const clickedCard = getClickedCard(gs, clickInfo);
+
     if (!clickedCard || !clickedCard.faceUp) {
-        if (gs.gameType === 'Solitaire' && clickInfo.type === 'tableau') {
-             return handleSolitaireTableauFlip(gs as SolitaireGameState, clickInfo);
+        // Special case for Solitaire: flipping a face-down card in the tableau.
+        if (gs.gameType === 'Solitaire' && clickInfo.type === 'tableau' && clickedCard && !clickedCard.faceUp) {
+            return handleSolitaireTableauFlip(gs as SolitaireGameState, clickInfo);
         }
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
@@ -304,6 +317,7 @@ const handleMoveWithSelectedCard = (gs: GameState, sel: SelectedCardInfo, click:
         return { newState, newSelectedCard: null, highlightedPile: { type: move.destination.type, pileIndex: move.destination.pileIndex }, saveHistory: true };
     } else {
         const newClickedCard = getClickedCard(gs, click);
+        // If clicking on another valid card, select it. Otherwise, deselect.
         const newSelected = newClickedCard && newClickedCard.faceUp ? click : null;
         return { newState: null, newSelectedCard: newSelected, highlightedPile: null, saveHistory: false };
     }

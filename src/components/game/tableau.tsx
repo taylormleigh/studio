@@ -59,7 +59,7 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
           key={pileIndex} 
           data-testid={`tableau-pile-${pileIndex}`}
           className="relative"
-          onClick={() => pile.length === 0 && handleCardClick('tableau', pileIndex, 0)}
+          onClick={() => pile.length === 0 && handleCardClick('tableau', pileIndex, -1)}
         >
           <div className="absolute top-0 left-0 w-full h-full">
             {pile.length === 0 ? (
