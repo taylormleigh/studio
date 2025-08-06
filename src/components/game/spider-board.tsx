@@ -1,12 +1,11 @@
 
 "use client";
 
-import { DragEvent, TouchEvent } from 'react';
+import { DragEvent } from 'react';
 import { GameState as SpiderGameState, canMoveToTableau } from '@/lib/spider';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
-import { cn } from '@/lib/utils';
 
 interface SpiderBoardProps {
   gameState: SpiderGameState;
@@ -16,12 +15,10 @@ interface SpiderBoardProps {
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
-  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
-  draggedCardInfo: SelectedCardInfo | null;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, draggedCardInfo
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -115,7 +112,6 @@ export default function SpiderBoard({
                               e.stopPropagation();
                               handleCardClick('tableau', pileIndex, cardIndex);
                           }}
-                          onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                         />
                     </div>
                   )

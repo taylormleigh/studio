@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, DragEvent, TouchEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, canMoveToTableau as canMoveSolitaireToTableau, canMoveToFoundation as canMoveSolitaireToFoundation, isGameWon as isSolitaireGameWon, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState, canMoveToTableau as canMoveFreecellToTableau, canMoveToFoundation as canMoveFreecellToFoundation, isGameWon as isFreecellGameWon, getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState, canMoveToTableau as canMoveSpiderToTableau, isGameWon as isSpiderGameWon, checkForCompletedSet as checkForSpiderCompletedSet } from '@/lib/spider';
@@ -24,8 +24,6 @@ import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
-import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
-
 
 type GameState = SolitaireGameState | FreecellGameState | SpiderGameState;
 
@@ -58,8 +56,6 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
-  const [draggedCardInfo, setDraggedCardInfo] = useState<SelectedCardInfo | null>(null);
-
   
   useEffect(() => {
     setIsClient(true);
@@ -241,8 +237,6 @@ export default function GameBoard() {
     });
   }, [updateState, toast]);
 
-  const swipeHandlers = useSwipeGestures();
-
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
     onUndo: handleUndo,
@@ -396,68 +390,15 @@ export default function GameBoard() {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
     setSelectedCard(null); 
-    setDraggedCardInfo(info);
   };
   
   const handleDrop = (e: DragEvent, destType: 'tableau' | 'foundation' | 'freecell', destPileIndex: number) => {
     e.preventDefault();
-    setDraggedCardInfo(null);
     const infoJSON = e.dataTransfer.getData('application/json');
     if (!infoJSON) return;
 
     const info: SelectedCardInfo = JSON.parse(infoJSON);
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
-  };
-  
-  const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
-    e.stopPropagation();
-    setDraggedCardInfo(info);
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    if (draggedCardInfo) {
-      const touch = e.changedTouches[0];
-      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-
-      if (dropTarget) {
-          let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
-          let destPileIndex: number | null = null;
-          
-          const findPile = (type: string) => {
-              const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
-              if (pileElement) {
-                  destType = type as any;
-                  destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
-                  return true;
-              }
-              const emptyPileElement = dropTarget.closest(`[data-testid^="card-tableau-empty-"]`) || dropTarget.closest(`[data-testid^="card-foundation-empty-"]`) || dropTarget.closest(`[data-testid^="card-freecell-empty-"]`);
-               if (emptyPileElement) {
-                  const parts = emptyPileElement.getAttribute('data-testid')!.split('-');
-                  destType = parts[1] as any;
-                  destPileIndex = parseInt(parts[3], 10);
-                  return true;
-              }
-              const cardElement = dropTarget.closest('[data-testid^="card-"]');
-              if (cardElement) {
-                  const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
-                  if (parentPile) {
-                      destType = type as any;
-                      destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
-                      return true;
-                  }
-              }
-              return false;
-          };
-
-          findPile('tableau') || findPile('foundation') || findPile('freecell');
-          
-          if (destType && destPileIndex !== null) {
-              moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
-          }
-      }
-
-      setDraggedCardInfo(null);
-    }
   };
 
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
@@ -590,17 +531,13 @@ export default function GameBoard() {
     handleDragStart,
     handleDrop,
     handleDraw,
-    moveCards,
-    handleTouchStart,
-    draggedCardInfo,
+    moveCards
   };
 
   return (
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
-      onTouchMove={swipeHandlers.onTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       <GameHeader 
         onNewGame={handleNewGame} 

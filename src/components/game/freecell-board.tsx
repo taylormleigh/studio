@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent, TouchEvent, useMemo } from 'react';
+import { DragEvent } from 'react';
 import type { GameState as FreecellGameState } from '@/lib/freecell';
 import { getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { Card } from './card';
@@ -15,12 +15,10 @@ interface FreecellBoardProps {
   handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
-  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
-  draggedCardInfo: SelectedCardInfo | null;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart, draggedCardInfo
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
@@ -76,7 +74,6 @@ export default function FreecellBoard({
                   e.stopPropagation();
                   handleTableauClick(pileIndex, cardIndex);
               }}
-              onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
             />
         </div>
     )
@@ -100,7 +97,6 @@ export default function FreecellBoard({
             isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
             draggable={!!card}
             onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-            onTouchStart={(e) => card && handleTouchStart(e, { type: 'freecell', pileIndex: i, cardIndex: 0 })}
           />
         </div>
       ))}
