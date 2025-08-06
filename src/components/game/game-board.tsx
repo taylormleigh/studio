@@ -40,8 +40,6 @@ export type HighlightedPile = {
 
 type DraggedCardInfo = SelectedCardInfo & {
     cards: CardType[];
-    initialX: number;
-    initialY: number;
 };
 
 
@@ -66,7 +64,7 @@ const DraggedCard = ({ cardInfo, position }: { cardInfo: DraggedCardInfo, positi
                         className="absolute"
                         style={{ top: `${index * 24}px`}}
                     >
-                         <Card card={card} className="w-24"/>
+                         <Card card={card} />
                     </div>
                 ))}
             </div>
@@ -94,6 +92,7 @@ export default function GameBoard() {
   const [draggedCardInfo, setDraggedCardInfo] = useState<DraggedCardInfo | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [initialTouchPos, setInitialTouchPos] = useState<{ x: number, y: number} | null>(null);
 
 
   useEffect(() => {
@@ -533,22 +532,28 @@ export default function GameBoard() {
         default: cards = [];
     }
     
-    const targetElement = document.querySelector(`[data-testid="card-${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
-    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: 0, top: 0 };
-    
+    // Find the actual DOM element for the card that was clicked/touched
+    const cardIdentifier = (info.type === 'waste' || (info.type === 'foundation' && cards.length > 0)) 
+    ? `card-${cards[0].suit}-${cards[0].rank}`
+    : `card-${info.type}-pile-${info.pileIndex}-${info.cardIndex}`;
+
+    const targetElement = document.querySelector(`[data-testid*="${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
+    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY };
+
+    setInitialTouchPos({ x: clientX, y: clientY });
     setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
     setDragPosition({ x: clientX - (clientX - rect.left), y: clientY - (clientY - rect.top) });
-    setDraggedCardInfo({ ...info, cards, initialX: clientX, initialY: clientY });
-  };
+    setDraggedCardInfo({ ...info, cards });
+};
     
-  const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
+const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
     startDrag(e.clientX, e.clientY, info);
-  };
-  
-  const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
+};
+
+const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
     const touch = e.touches[0];
     startDrag(touch.clientX, touch.clientY, info);
-  };
+};
   
   const handleDragMove = (clientX: number, clientY: number) => {
     if (isDragging) {
@@ -559,19 +564,23 @@ export default function GameBoard() {
     }
   };
   
-  const handleDragEnd = (clientX: number, clientY: number) => {
-    if (isDragging && draggedCardInfo) {
-      const draggedEl = document.elementFromPoint(draggedCardInfo.initialX, draggedCardInfo.initialY);
-      if (draggedEl) {
-        (draggedEl as HTMLElement).style.display = 'none';
+  const handleDrop = (clientX: number, clientY: number) => {
+    if (isDragging && draggedCardInfo && initialTouchPos) {
+      // Temporarily hide the source element to find what's underneath
+      const sourceElement = document.elementFromPoint(initialTouchPos.x, initialTouchPos.y);
+      let originalDisplay = '';
+      if (sourceElement && sourceElement instanceof HTMLElement) {
+        originalDisplay = sourceElement.style.display;
+        sourceElement.style.display = 'none';
       }
-  
+
       const dropTarget = document.elementFromPoint(clientX, clientY);
       
-      if (draggedEl) {
-        (draggedEl as HTMLElement).style.display = '';
+      // Restore the source element's display
+      if (sourceElement && sourceElement instanceof HTMLElement) {
+          sourceElement.style.display = originalDisplay;
       }
-  
+      
       if (dropTarget) {
         let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
         let targetPileIndex: number | null = null;
@@ -605,6 +614,7 @@ export default function GameBoard() {
     }
     setIsDragging(false);
     setDraggedCardInfo(null);
+    setInitialTouchPos(null);
   };
   
   const renderLoader = () => (
@@ -651,9 +661,9 @@ export default function GameBoard() {
       className="flex flex-col min-h-screen"
       data-testid="game-board"
       onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
-      onMouseUp={(e) => handleDragEnd(e.clientX, e.clientY)}
+      onMouseUp={(e) => handleDrop(e.clientX, e.clientY)}
       onTouchMove={(e) => e.touches[0] && handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchEnd={(e) => e.changedTouches[0] && handleDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
+      onTouchEnd={(e) => e.changedTouches[0] && handleDrop(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
     >
       <GameHeader 
         onNewGame={handleNewGame} 
