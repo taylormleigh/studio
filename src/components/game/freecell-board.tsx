@@ -7,6 +7,7 @@ import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 import Tableau from './tableau';
+import { last } from '@/lib/solitaire';
 
 interface FreecellBoardProps {
   gameState: FreecellGameState;
@@ -58,12 +59,12 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick }: Freece
         key={`foundation-${i}`} 
         data-testid={`foundation-pile-${i}`}
         className="w-full max-w-[96px]"
+        onClick={() => handleCardClick('foundation', i, pile.length - 1)}
       >
         <Card 
-          card={pile[pile.length - 1]} 
-          data-testid={pile.length > 0 ? `card-${pile[pile.length - 1].suit}-${pile[pile.length - 1].rank}` : `card-foundation-empty-${i}`}
+          card={last(pile)} 
+          data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
           isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
-          onClick={() => handleCardClick('foundation', i, pile.length - 1)}
         />
       </div>
     ))}

@@ -80,7 +80,6 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onClick={() => handleCardClick('foundation', i, pile.length - 1)}
         >
           <Card 
             card={last(pile)}

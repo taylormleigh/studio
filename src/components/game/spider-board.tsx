@@ -28,13 +28,13 @@ export default function SpiderBoard(props: SpiderBoardProps) {
         {settings.leftHandMode ? (
           <>
             <StockPile {...props} />
-            <div className="col-span-1" />
+            <div className="col-span-2" />
             <FoundationPiles {...props} />
           </>
         ) : (
           <>
             <FoundationPiles {...props} />
-            <div className="col-span-1" />
+            <div className="col-span-2" />
             <StockPile {...props} />
           </>
         )}
@@ -51,7 +51,7 @@ const StockPile = ({ gameState, handleDraw }: SpiderBoardProps) => (
 );
 
 const FoundationPiles = ({ gameState }: SpiderBoardProps) => (
-  <div className="col-span-8 grid grid-cols-8 gap-x-0" data-testid="foundation-piles">
+  <div className="col-span-7 grid grid-cols-7 gap-x-0" data-testid="foundation-piles">
    {Array.from({ length: 8 }).map((_, i) => (
      <div key={`foundation-${i}`} data-testid={`foundation-pile-${i}`}>
        <Card 
