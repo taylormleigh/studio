@@ -1,9 +1,20 @@
 
 /**
- * @fileoverview This file contains the core game logic for card interactions,
- * acting as a central controller that dispatches actions to game-specific
- * rule implementations. It is designed to be highly modular, with each
- * function having a single, clear responsibility.
+ * @fileoverview This file contains the core game logic for card interactions.
+ * It is structured with a primary controller function, `processCardClick`, which
+ * delegates tasks to smaller, single-responsibility helper functions. This ensures
+ * a clear and maintainable separation of concerns.
+ *
+ * The logic adheres to the following flow:
+ * 1. An interaction (click, drag) occurs in a UI component (e.g., `game-board.tsx`).
+ * 2. The UI component calls `processCardClick` with the game state and click details.
+ * 3. `processCardClick` validates the initial click and determines the user's intent.
+ * 4. Based on the `autoMove` setting, it dispatches to either `handleAutoMove` or
+ *    `handleTwoClickMove`.
+ * 5. These functions find and validate potential moves by calling game-specific
+ *    rule functions (e.g., `canMoveSolitaireToTableau`).
+ * 6. If a valid move is found, `executeMove` is called to produce the new game state.
+ * 7. A `ProcessResult` object is returned to the UI, which then updates its state.
  */
 
 import type { GameSettings } from '@/hooks/use-settings';
@@ -59,7 +70,7 @@ type ProcessClickParams = {
     settings: GameSettings,
     toast: ReturnType<typeof useToast>['toast']
 }
-type ProcessResult = {
+export type ProcessResult = {
     newState: GameState | null;
     newSelectedCard: SelectedCardInfo | null;
     highlightedPile: HighlightedPile | null;
@@ -71,19 +82,29 @@ type ProcessResult = {
 // ================================================================================================
 
 /** Returns the last card in a pile, or undefined if the pile is empty. */
-export const last = (pile: CardType[]): CardType | undefined => pile[pile.length - 1];
+const last = (pile: CardType[]): CardType | undefined => pile[pile.length - 1];
 
 /** Returns the clicked card object from the game state based on click source information. */
 const getClickedCard = (gs: GameState, click: ClickSource): CardType | undefined => {
     if (click.cardIndex === -1) return undefined;
-    const getCardDispatch = {
-        tableau: (gs: GameState, c: ClickSource) => gs.tableau[c.pileIndex]?.[c.cardIndex],
-        waste: (gs: GameState, c: ClickSource) => gs.gameType === 'Solitaire' ? last((gs as SolitaireGameState).waste) : undefined,
-        foundation: (gs: GameState, c: ClickSource) => last(gs.foundation[c.pileIndex]),
-        freecell: (gs: GameState, c: ClickSource) => gs.gameType === 'Freecell' ? (gs as FreecellGameState).freecells[c.pileIndex] || undefined : undefined,
-        stock: () => undefined
-    };
-    return getCardDispatch[click.type](gs, click);
+    switch (click.type) {
+        case 'tableau': return gs.tableau[click.pileIndex]?.[click.cardIndex];
+        case 'waste': return gs.gameType === 'Solitaire' ? last((gs as SolitaireGameState).waste) : undefined;
+        case 'foundation': return last(gs.foundation[click.pileIndex]);
+        case 'freecell': return gs.gameType === 'Freecell' ? (gs as FreecellGameState).freecells[click.pileIndex] || undefined : undefined;
+        default: return undefined;
+    }
+};
+
+/** Returns an array of cards that would be part of a move from a given source. */
+const getCardsToMove = (gs: GameState, src: SelectedCardInfo): CardType[] => {
+    switch (src.type) {
+        case 'tableau': return gs.tableau[src.pileIndex].slice(src.cardIndex);
+        case 'waste': return gs.gameType === 'Solitaire' ? [last((gs as SolitaireGameState).waste)!] : [];
+        case 'foundation': return (gs.gameType === 'Solitaire' && gs.foundation[src.pileIndex].length > 0) ? [last(gs.foundation[src.pileIndex])!] : [];
+        case 'freecell': return (gs.gameType === 'Freecell' && (gs as FreecellGameState).freecells[src.pileIndex]) ? [(gs as FreecellGameState).freecells[src.pileIndex]!] : [];
+        default: return [];
+    }
 };
 
 // ================================================================================================
@@ -125,42 +146,29 @@ const checkAndCompleteSpiderSets = (state: SpiderGameState): SpiderGameState => 
     return newState;
 }
 
-/** Returns an array of cards that would be part of a move from a given source. */
-const getCardsToMove = (gs: GameState, src: SelectedCardInfo): CardType[] => {
-    const dispatch = {
-        tableau: (g: GameState, s: SelectedCardInfo) => g.tableau[s.pileIndex].slice(s.cardIndex),
-        waste: (g: GameState) => (g.gameType === 'Solitaire' ? [last((g as SolitaireGameState).waste)!] : []),
-        foundation: (g: GameState, s: SelectedCardInfo) => (g.gameType === 'Solitaire' ? [last(g.foundation[s.pileIndex])!] : []),
-        freecell: (g: GameState, s: SelectedCardInfo) => (g.gameType === 'Freecell' && (g as FreecellGameState).freecells[s.pileIndex] ? [(g as FreecellGameState).freecells[s.pileIndex]!] : [])
-    };
-    return dispatch[src.type](gs, src);
-};
-
 /** Executes a validated game move by modifying the game state. */
 const executeMove = (gs: GameState, move: GameMove): GameState => {
     let newState = JSON.parse(JSON.stringify(gs));
     const cards = getCardsToMove(newState, move.source);
     
     // Remove cards from source
-    const removeDispatch = {
-        tableau: (g: GameState, s: SelectedCardInfo) => {
-            const pile = g.tableau[s.pileIndex];
-            pile.splice(s.cardIndex);
-            if (g.gameType !== 'Freecell' && pile.length > 0) last(pile)!.faceUp = true;
-        },
-        waste: (g: GameState) => { (g as SolitaireGameState).waste.pop(); },
-        foundation: (g: GameState, s: SelectedCardInfo) => { g.foundation[s.pileIndex].pop(); },
-        freecell: (g: GameState, s: SelectedCardInfo) => { (g as FreecellGameState).freecells[s.pileIndex] = null; }
-    };
-    removeDispatch[move.source.type](newState, move.source);
+    switch (move.source.type) {
+        case 'tableau':
+            const srcPile = newState.tableau[move.source.pileIndex];
+            srcPile.splice(move.source.cardIndex);
+            if (newState.gameType !== 'Freecell' && srcPile.length > 0) last(srcPile)!.faceUp = true;
+            break;
+        case 'waste': (newState as SolitaireGameState).waste.pop(); break;
+        case 'foundation': newState.foundation[move.source.pileIndex].pop(); break;
+        case 'freecell': (newState as FreecellGameState).freecells[move.source.pileIndex] = null; break;
+    }
 
     // Add cards to destination
-    const addDispatch = {
-        tableau: (g: GameState, p: number, c: CardType[]) => { g.tableau[p].push(...c); },
-        foundation: (g: GameState, p: number, c: CardType[]) => { g.foundation[p].push(...c); },
-        freecell: (g: GameState, p: number, c: CardType[]) => { (g as FreecellGameState).freecells[p] = c[0]; }
-    };
-    addDispatch[move.destination.type](newState, move.destination.pileIndex, cards);
+    switch (move.destination.type) {
+        case 'tableau': newState.tableau[move.destination.pileIndex].push(...cards); break;
+        case 'foundation': newState.foundation[move.destination.pileIndex].push(...cards); break;
+        case 'freecell': (newState as FreecellGameState).freecells[move.destination.pileIndex] = cards[0]; break;
+    }
 
     // Update stats
     newState.moves++;
@@ -232,7 +240,7 @@ const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult =>
         }
     }
     
-    // Priority 2 & 3: Try to move to any tableau pile (existing or empty).
+    // Priority 2: Try to move to any tableau pile.
     for (let i = 0; i < gs.tableau.length; i++) {
         if (clickInfo.type === 'tableau' && clickInfo.pileIndex === i) continue;
         const move: GameMove = { source: clickInfo, destination: { type: 'tableau', pileIndex: i } };
@@ -241,7 +249,7 @@ const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult =>
         }
     }
 
-    // Priority 4: (Freecell only) Try to move to a freecell.
+    // Priority 3: (Freecell only) Try to move to a freecell.
     if (gs.gameType === 'Freecell' && cardsToMove.length === 1) {
         const emptyCellIndex = (gs as FreecellGameState).freecells.findIndex(cell => cell === null);
         if (emptyCellIndex !== -1) {
@@ -258,20 +266,23 @@ const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult =>
 
 /** Handles the logic for a two-click move (auto-move disabled). */
 const handleTwoClickMove = (gs: GameState, selectedCard: SelectedCardInfo, clickInfo: ClickSource, tst: ReturnType<typeof useToast>['toast']): ProcessResult => {
+    // This function handles the second click when a card is already selected.
+    
     const destinationType = clickInfo.type as 'tableau' | 'foundation' | 'freecell';
     const move: GameMove = { source: selectedCard, destination: { type: destinationType, pileIndex: clickInfo.pileIndex } };
     
-    // If the move is valid, execute it and clear selection.
+    // If the attempted move is valid, execute it.
     if (isValidMove(gs, move, tst)) {
         return { newState: executeMove(gs, move), newSelectedCard: null, highlightedPile: move.destination, saveHistory: true };
     }
     
-    // If invalid, check if the new click is on another movable card. If so, switch selection.
+    // If the move is invalid, check if the user clicked on another movable card.
+    // If so, switch the selection to the new card.
     if (isClickSourceMovable(gs, clickInfo)) {
         return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
     }
 
-    // Otherwise, the move is invalid and the destination is not a valid new selection, so clear the selection.
+    // If the move was invalid and the click was not on a movable card, clear the selection.
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 }
 
@@ -281,17 +292,17 @@ const handleTwoClickMove = (gs: GameState, selectedCard: SelectedCardInfo, click
 
 /** Processes a click on a card or pile, determining the correct action based on the current game state and settings. */
 export const processCardClick = ({ gameState, selectedCard, clickSource, settings, toast }: ProcessClickParams): ProcessResult => {
-    const clickedCard = getClickedCard(gameState, clickSource);
-
     // Case 1: A card is already selected (this is the second click).
     if (selectedCard) {
         return handleTwoClickMove(gameState, selectedCard, clickSource, toast);
     }
     
     // Case 2: No card is selected (this is the first click).
-    // First, validate if the clicked card/stack is a valid source for a move.
+    const clickedCard = getClickedCard(gameState, clickSource);
+
+    // If the click is on an empty pile or a non-movable card (face-down), do nothing,
+    // unless it's a Solitaire face-down card at the top of a tableau pile.
     if (!isClickSourceMovable(gameState, clickSource)) {
-        // Specifically handle flipping a face-down card in Solitaire tableau.
         if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
              let newState = JSON.parse(JSON.stringify(gameState));
              newState.tableau[clickSource.pileIndex][clickSource.cardIndex].faceUp = true;
@@ -301,7 +312,7 @@ export const processCardClick = ({ gameState, selectedCard, clickSource, setting
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
 
-    // If it's a valid source, proceed based on auto-move setting.
+    // If the source is movable, decide what to do based on the autoMove setting.
     if (settings.autoMove) {
         return handleAutoMove(gameState, clickSource);
     } else {
@@ -309,5 +320,3 @@ export const processCardClick = ({ gameState, selectedCard, clickSource, setting
         return { newState: null, newSelectedCard: clickSource, highlightedPile: null, saveHistory: false };
     }
 };
-
-

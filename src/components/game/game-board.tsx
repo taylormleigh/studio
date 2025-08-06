@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, ClickSource, isGameWon } from '@/lib/game-logic';
+import { processCardClick, ClickSource, isGameWon, GameState } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -24,7 +24,6 @@ import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
-
 
 export type SelectedCardInfo = {
   type: 'tableau' | 'waste' | 'foundation' | 'freecell';
@@ -91,8 +90,6 @@ export default function GameBoard() {
   const [draggedCardInfo, setDraggedCardInfo] = useState<DraggedCardInfo | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [initialTouchPos, setInitialTouchPos] = useState<{ x: number, y: number} | null>(null);
-
 
   useEffect(() => {
     setIsClient(true);
@@ -158,26 +155,24 @@ export default function GameBoard() {
   }, [isRunning, isWon, gameState, isClient]);
 
   const checkWinCondition = useCallback((state: GameState) => {
-    const gameWon = isGameWon(state);
-
-    if (gameWon && !isWon) {
-        setIsRunning(false);
-        setIsWon(true);
-        updateStats({
-            gameType: state.gameType,
-            stats: { wins: 1, bestScore: state.score, bestTime: time }
-        });
+    if (isGameWon(state)) {
+      setIsRunning(false);
+      setIsWon(true);
+      updateStats({
+        gameType: state.gameType,
+        stats: { wins: 1, bestScore: state.score, bestTime: time }
+      });
     }
-  }, [time, updateStats, isWon]);
+  }, [time, updateStats]);
+
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
     if (saveHistory && gameState) {
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
     }
-    
     checkWinCondition(newState);
     setGameState(newState);
-    setSelectedCard(null);
+    setSelectedCard(null); // Always clear selection after an update
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
@@ -255,10 +250,9 @@ export default function GameBoard() {
   
     if (result.newState) {
       updateState(result.newState, result.saveHistory);
+    } else {
+      setSelectedCard(result.newSelectedCard);
     }
-  
-    // Always update selection state from the result
-    setSelectedCard(result.newSelectedCard);
   
     if (result.highlightedPile) {
       setHighlightedPile(result.highlightedPile);
@@ -286,27 +280,21 @@ export default function GameBoard() {
         default: cards = [];
     }
     
-    // Find the actual DOM element for the card that was clicked/touched
-    const cardIdentifier = (info.type === 'waste' || (info.type === 'foundation' && cards.length > 0)) 
-    ? `card-${cards[0].suit}-${cards[0].rank}`
-    : `card-${info.type}-pile-${info.pileIndex}-${info.cardIndex}`;
-
     const targetElement = document.querySelector(`[data-testid*="${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
-    
-    // Fallback to a reasonable default if the element isn't found
-    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY, width: 96, height: 134 };
+    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY };
 
-    setInitialTouchPos({ x: clientX, y: clientY });
     setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
-    setDragPosition({ x: clientX - (clientX - rect.left), y: clientY - (clientY - rect.top) });
+    setDragPosition({ x: rect.left, y: rect.top });
     setDraggedCardInfo({ ...info, cards });
 };
     
 const handleMouseDown = (e: MouseEvent, info: SelectedCardInfo) => {
+    e.stopPropagation();
     startDrag(e.clientX, e.clientY, info);
 };
 
 const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
+    e.stopPropagation();
     const touch = e.touches[0];
     startDrag(touch.clientX, touch.clientY, info);
 };
@@ -321,63 +309,59 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
   };
   
   const handleDrop = (clientX: number, clientY: number) => {
-    if (isDragging && draggedCardInfo && initialTouchPos) {
-      const sourceElement = document.elementFromPoint(initialTouchPos.x, initialTouchPos.y);
-      let originalDisplay = '';
-      if (sourceElement && sourceElement instanceof HTMLElement) {
-        const parentWithTestId = sourceElement.closest('[data-testid]');
-        if (parentWithTestId) {
-          originalDisplay = (parentWithTestId as HTMLElement).style.display;
-          (parentWithTestId as HTMLElement).style.display = 'none';
-        }
-      }
+    if (!isDragging || !draggedCardInfo || !gameState) return;
 
-      const dropTarget = document.elementFromPoint(clientX, clientY);
-      
-      if (sourceElement && sourceElement instanceof HTMLElement) {
-          const parentWithTestId = sourceElement.closest('[data-testid]');
-          if (parentWithTestId) {
-            (parentWithTestId as HTMLElement).style.display = originalDisplay;
-          }
-      }
-      
-      if (dropTarget) {
+    // Temporarily hide the dragged cards to find the element underneath
+    const draggedElements = document.querySelectorAll('.absolute.pointer-events-none');
+    draggedElements.forEach(el => (el as HTMLElement).style.display = 'none');
+    const dropTarget = document.elementFromPoint(clientX, clientY);
+    draggedElements.forEach(el => (el as HTMLElement).style.display = ''); // Restore visibility
+
+    if (dropTarget) {
         let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
         let targetPileIndex: number | null = null;
-  
+        let targetCardIndex = -1; // Default for empty piles or whole pile targets
+
         let currentEl: HTMLElement | null = dropTarget as HTMLElement;
         while (currentEl) {
-          const testId = currentEl.dataset.testid;
-          if (testId) {
-            if (testId.startsWith('tableau-pile-') || testId.startsWith('card-tableau-empty-')) {
-              targetType = 'tableau';
-              targetPileIndex = parseInt(testId.replace(/tableau-pile-|card-tableau-empty-/, ''), 10);
-              break;
+            const testId = currentEl.dataset.testid;
+            if (testId) {
+                const parts = testId.split('-');
+                if (parts[0] === 'card' && parts[1] !== 'stock' && parts[1] !== 'waste-empty') {
+                    const type = parts[1] as any;
+                    if (testId.includes('pile')) {
+                        targetType = type;
+                        targetPileIndex = parseInt(parts[3], 10);
+                        break;
+                    } else if (testId.includes('empty')) {
+                        targetType = type;
+                        targetPileIndex = parseInt(parts[3], 10);
+                        break;
+                    }
+                } else if (testId.includes('-pile-')) {
+                   const type = testId.split('-')[0] as any;
+                   const index = parseInt(testId.split('-')[2]);
+                   if (['tableau', 'foundation', 'freecell'].includes(type) && !isNaN(index)) {
+                       targetType = type;
+                       targetPileIndex = index;
+                       break;
+                   }
+                }
             }
-            if (testId.startsWith('foundation-pile-') || testId.startsWith('card-foundation-empty-')) {
-              targetType = 'foundation';
-              targetPileIndex = parseInt(testId.replace(/foundation-pile-|card-foundation-empty-/, ''), 10);
-              break;
-            }
-            if (testId.startsWith('freecell-pile-') || testId.startsWith('card-freecell-empty-')) {
-              targetType = 'freecell';
-              targetPileIndex = parseInt(testId.replace(/freecell-pile-|card-freecell-empty-/, ''), 10);
-              break;
-            }
-          }
-          currentEl = currentEl.parentElement;
+            currentEl = currentEl.parentElement;
         }
+        
         if (targetType && targetPileIndex !== null) {
-          const result = processCardClick({gameState, selectedCard: draggedCardInfo, clickSource: { type: targetType, pileIndex: targetPileIndex, cardIndex: 0 }, settings, toast});
-          if (result.newState) {
-            updateState(result.newState, result.saveHistory);
-          }
+            const clickInfo: ClickSource = { type: targetType, pileIndex: targetPileIndex, cardIndex: targetCardIndex };
+            const result = processCardClick({ gameState, selectedCard: draggedCardInfo, clickSource: clickInfo, settings, toast });
+            if (result.newState) {
+                updateState(result.newState, result.saveHistory);
+            }
         }
-      }
     }
+    
     setIsDragging(false);
     setDraggedCardInfo(null);
-    setInitialTouchPos(null);
   };
   
   const renderLoader = () => (
