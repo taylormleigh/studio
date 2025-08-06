@@ -24,9 +24,7 @@ export default function SolitaireBoard({
   const { settings } = useSettings();
 
   const handleFoundationClick = (pileIndex: number) => {
-    if (selectedCard) {
-      moveCards(selectedCard.type, selectedCard.pileIndex, selectedCard.cardIndex, 'foundation', pileIndex);
-    }
+    handleCardClick('foundation', pileIndex, gameState.foundation[pileIndex].length - 1);
   };
   
   const handleTableauClick = (pileIndex: number, cardIndex: number) => {
@@ -88,8 +86,10 @@ export default function SolitaireBoard({
             card={last(pile)}
             data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
+            isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
             onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
+            onClick={() => handleCardClick('foundation', i, pile.length-1)}
           />
         </div>
       ))}
