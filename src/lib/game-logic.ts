@@ -4,17 +4,6 @@
  * It is structured with a primary controller function, `processCardClick`, which
  * delegates tasks to smaller, single-responsibility helper functions. This ensures
  * a clear and maintainable separation of concerns.
- *
- * The logic adheres to the following flow:
- * 1. An interaction (click, drag) occurs in a UI component (e.g., `game-board.tsx`).
- * 2. The UI component calls `processCardClick` with the game state and click details.
- * 3. `processCardClick` validates the initial click and determines the user's intent.
- * 4. Based on the `autoMove` setting, it dispatches to either `handleAutoMove` or
- *    `handleTwoClickMove`.
- * 5. These functions find and validate potential moves by calling game-specific
- *    rule functions (e.g., `canMoveSolitaireToTableau`).
- * 6. If a valid move is found, `executeMove` is called to produce the new game state.
- * 7. A `ProcessResult` object is returned to the UI, which then updates its state.
  */
 
 import type { GameSettings } from '@/hooks/use-settings';
@@ -54,7 +43,7 @@ export type GameState = SolitaireGameState | FreecellGameState | SpiderGameState
 export type ClickSource = {
   type: 'tableau' | 'waste' | 'foundation' | 'freecell' | 'stock';
   pileIndex: number;
-  cardIndex: number;
+  cardIndex: number; // -1 signifies a click on an empty pile/area
 }
 type GameMove = {
   source: SelectedCardInfo;
@@ -101,7 +90,7 @@ const getCardsToMove = (gs: GameState, src: SelectedCardInfo): CardType[] => {
     switch (src.type) {
         case 'tableau': return gs.tableau[src.pileIndex].slice(src.cardIndex);
         case 'waste': return gs.gameType === 'Solitaire' ? [last((gs as SolitaireGameState).waste)!] : [];
-        case 'foundation': return (gs.gameType === 'Solitaire' && gs.foundation[src.pileIndex].length > 0) ? [last(gs.foundation[src.pileIndex])!] : [];
+        case 'foundation': return (gs.gameType === 'Solitaire' || gs.gameType === 'Freecell') && gs.foundation[src.pileIndex].length > 0 ? [last(gs.foundation[src.pileIndex])!] : [];
         case 'freecell': return (gs.gameType === 'Freecell' && (gs as FreecellGameState).freecells[src.pileIndex]) ? [(gs as FreecellGameState).freecells[src.pileIndex]!] : [];
         default: return [];
     }
@@ -111,18 +100,9 @@ const getCardsToMove = (gs: GameState, src: SelectedCardInfo): CardType[] => {
 // Move Execution & Validation
 // ================================================================================================
 
-/** Dispatches to the correct game-specific win condition function. */
-export const isGameWon = (state: GameState): boolean => {
-    if (state.gameType === 'Spider') {
-        const newState = checkAndCompleteSpiderSets(state as SpiderGameState);
-        return isSpiderWon(newState);
-    }
-    const isGameWonDispatch = { Solitaire: isSolitaireWon, Freecell: isFreecellWon, Spider: isSpiderWon };
-    return isGameWonDispatch[state.gameType](state as any);
-}
-
-/** Checks a Spider game for completed sets and moves them to the foundation. */
-const checkAndCompleteSpiderSets = (state: SpiderGameState): SpiderGameState => {
+/** Checks a Spider game for completed sets and moves them to the foundation. This is a side-effect of a move. */
+const checkAndCompleteSpiderSets = (state: GameState): GameState => {
+    if (state.gameType !== 'Spider') return state;
     let newState = state;
     let setsFoundInIteration: boolean;
     do {
@@ -144,6 +124,12 @@ const checkAndCompleteSpiderSets = (state: SpiderGameState): SpiderGameState => 
         if (setsFoundInIteration) newState = tempState;
     } while (setsFoundInIteration);
     return newState;
+}
+
+/** Dispatches to the correct game-specific win condition function. */
+export const isGameWon = (state: GameState): boolean => {
+    const isGameWonDispatch = { Solitaire: isSolitaireWon, Freecell: isFreecellWon, Spider: isSpiderWon };
+    return isGameWonDispatch[state.gameType](state as any);
 }
 
 /** Executes a validated game move by modifying the game state. */
@@ -176,7 +162,7 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
     if (move.source.type === 'foundation') newState.score -= 10;
     if (newState.gameType === 'Spider') newState.score--;
     
-    return newState;
+    return checkAndCompleteSpiderSets(newState);
 };
 
 /** Dispatches to the correct game-specific move validation function. */

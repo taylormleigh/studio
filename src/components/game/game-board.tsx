@@ -172,7 +172,6 @@ export default function GameBoard() {
     }
     checkWinCondition(newState);
     setGameState(newState);
-    setSelectedCard(null); // Always clear selection after an update
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
@@ -247,16 +246,13 @@ export default function GameBoard() {
         settings,
         toast,
     });
-  
+
     if (result.newState) {
-      updateState(result.newState, result.saveHistory);
-    } else {
-      setSelectedCard(result.newSelectedCard);
+        updateState(result.newState, result.saveHistory);
     }
-  
-    if (result.highlightedPile) {
-      setHighlightedPile(result.highlightedPile);
-    }
+
+    setSelectedCard(result.newSelectedCard);
+    setHighlightedPile(result.highlightedPile);
   };
 
   useKeyboardShortcuts({
@@ -275,7 +271,7 @@ export default function GameBoard() {
     switch (info.type) {
         case 'tableau': cards = gameState.tableau[info.pileIndex].slice(info.cardIndex); break;
         case 'waste': cards = (gameState.gameType === 'Solitaire') ? [(gameState as SolitaireGameState).waste.slice(-1)[0]] : []; break;
-        case 'foundation': cards = (gameState.gameType === 'Solitaire') ? [gameState.foundation[info.pileIndex].slice(-1)[0]] : []; break;
+        case 'foundation': cards = (gameState.gameType === 'Solitaire' || gameState.gameType === 'Freecell') ? [gameState.foundation[info.pileIndex].slice(-1)[0]] : []; break;
         case 'freecell': cards = (gameState.gameType === 'Freecell') ? [(gameState as FreecellGameState).freecells[info.pileIndex]!] : []; break;
         default: cards = [];
     }
@@ -320,25 +316,13 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
     if (dropTarget) {
         let targetType: 'tableau' | 'foundation' | 'freecell' | null = null;
         let targetPileIndex: number | null = null;
-        let targetCardIndex = -1; // Default for empty piles or whole pile targets
-
+        
         let currentEl: HTMLElement | null = dropTarget as HTMLElement;
         while (currentEl) {
             const testId = currentEl.dataset.testid;
             if (testId) {
                 const parts = testId.split('-');
-                if (parts[0] === 'card' && parts[1] !== 'stock' && parts[1] !== 'waste-empty') {
-                    const type = parts[1] as any;
-                    if (testId.includes('pile')) {
-                        targetType = type;
-                        targetPileIndex = parseInt(parts[3], 10);
-                        break;
-                    } else if (testId.includes('empty')) {
-                        targetType = type;
-                        targetPileIndex = parseInt(parts[3], 10);
-                        break;
-                    }
-                } else if (testId.includes('-pile-')) {
+                if (testId.includes('-pile-')) {
                    const type = testId.split('-')[0] as any;
                    const index = parseInt(testId.split('-')[2]);
                    if (['tableau', 'foundation', 'freecell'].includes(type) && !isNaN(index)) {
@@ -352,7 +336,8 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
         }
         
         if (targetType && targetPileIndex !== null) {
-            const clickInfo: ClickSource = { type: targetType, pileIndex: targetPileIndex, cardIndex: targetCardIndex };
+            // A pile was dropped on. A cardIndex of -1 signifies dropping on the pile itself.
+            const clickInfo: ClickSource = { type: targetType, pileIndex: targetPileIndex, cardIndex: -1 };
             const result = processCardClick({ gameState, selectedCard: draggedCardInfo, clickSource: clickInfo, settings, toast });
             if (result.newState) {
                 updateState(result.newState, result.saveHistory);
