@@ -178,34 +178,40 @@ export function isRun(cards: Card[]): boolean {
 }
 
 /**
+ * Gets the stack of cards that would be moved from a given source click.
+ * In Solitaire, this can be a single card from the waste or a valid run from the tableau.
+ * @param gs The current game state.
+ * @param source The information about the clicked card.
+ * @returns An array of cards to be moved, or an empty array if the move is invalid.
+ */
+function getMovableUnit(gs: GameState, source: SelectedCardInfo): Card[] {
+    if (source.type === 'waste') {
+        const wasteCard = last(gs.waste);
+        return wasteCard ? [wasteCard] : [];
+    }
+    if (source.type === 'tableau') {
+        const sourcePile = gs.tableau[source.pileIndex];
+        const stack = sourcePile.slice(source.cardIndex);
+        if (isRun(stack)) {
+            return stack;
+        }
+    }
+    return [];
+}
+
+/**
  * Finds the highest-priority valid auto-move for a clicked card or stack in Solitaire.
+ * Priority: Foundation -> Tableau.
  * @param gs The current game state.
  * @param source The information about the clicked card.
  * @returns A valid GameMove object if a move is found, otherwise null.
  */
 export function findAutoMoveForSolitaire(gs: GameState, source: SelectedCardInfo): GameMove | null {
-    // 1. Identify the card or stack to be moved.
-    let cardsToMove: Card[] = [];
-    if (source.type === 'waste') {
-        const wasteCard = last(gs.waste);
-        if (wasteCard) cardsToMove = [wasteCard];
-    } else if (source.type === 'tableau') {
-        const sourcePile = gs.tableau[source.pileIndex];
-        const stack = sourcePile.slice(source.cardIndex);
-        // A stack can only be moved if it forms a valid run.
-        if (isRun(stack)) {
-            cardsToMove = stack;
-        }
-    }
-
-    // If there are no movable cards, exit.
-    if (cardsToMove.length === 0) {
-        return null;
-    }
-
+    const cardsToMove = getMovableUnit(gs, source);
+    if (cardsToMove.length === 0) return null;
     const cardToMove = cardsToMove[0];
 
-    // 2. Priority 1: Check foundation piles (only for single-card moves).
+    // Priority 1: Check foundation piles (only for single-card moves).
     if (cardsToMove.length === 1) {
         for (let i = 0; i < gs.foundation.length; i++) {
             if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
@@ -214,20 +220,14 @@ export function findAutoMoveForSolitaire(gs: GameState, source: SelectedCardInfo
         }
     }
 
-    // 3. Priority 2: Check tableau piles.
+    // Priority 2: Check tableau piles.
     for (let i = 0; i < gs.tableau.length; i++) {
-        // A card/stack cannot be moved to its own pile.
-        if (source.type === 'tableau' && source.pileIndex === i) {
-            continue;
-        }
-        
-        // Check if the base card of the stack can be legally moved.
+        if (source.type === 'tableau' && source.pileIndex === i) continue;
         if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             return { source, destination: { type: 'tableau', pileIndex: i } };
         }
     }
     
-    // 4. If no valid move is found, return null.
     return null;
 }
 
@@ -249,3 +249,4 @@ export function first(pile: Pile): Card | undefined {
 export function last(pile: Pile): Card | undefined {
     return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
+
