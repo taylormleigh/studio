@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react'
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
-import { processCardClick, GameState } from '@/lib/game-logic';
+import { processCardClick, ClickSource, GameState, last } from '@/lib/game-logic';
 
 import GameHeader from './game-header';
 import SolitaireBoard from './solitaire-board';
@@ -24,7 +24,7 @@ import { useSettings } from '@/hooks/use-settings';
 import { useStats } from '@/hooks/use-stats';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
-import { isGameWon, checkForCompletedSet, last } from '@/lib/game-logic';
+import { isGameWon, checkForCompletedSet } from '@/lib/game-logic';
 
 
 export type SelectedCardInfo = {
@@ -260,13 +260,22 @@ export default function GameBoard() {
   }, [gameState, toast, updateState]);
 
   const handleCardClick = (
-    sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', 
-    pileIndex: number, 
+    type: ClickSource['type'],
+    pileIndex: number,
     cardIndex: number
   ) => {
     if (!gameState) return;
-    const result = processCardClick(gameState, selectedCard, settings, { sourceType, pileIndex, cardIndex }, toast);
+
+    const clickInfo: ClickSource = { type, pileIndex, cardIndex };
     
+    const result = processCardClick(
+      gameState,
+      selectedCard,
+      settings,
+      clickInfo,
+      toast
+    );
+
     if (result.newState) {
       updateState(result.newState, result.saveHistory);
     }
@@ -379,7 +388,7 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
           currentEl = currentEl.parentElement;
         }
         if (targetType && targetPileIndex !== null) {
-          const result = processCardClick(gameState!, draggedCardInfo, settings, { sourceType: targetType, pileIndex: targetPileIndex, cardIndex: 0 }, toast);
+          const result = processCardClick(gameState!, draggedCardInfo, settings, { type: targetType, pileIndex: targetPileIndex, cardIndex: 0 }, toast);
           if (result.newState) {
             updateState(result.newState, result.saveHistory);
           }
