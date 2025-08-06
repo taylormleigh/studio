@@ -93,3 +93,4 @@ const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMo
       ))}
     </div>
 );
+
