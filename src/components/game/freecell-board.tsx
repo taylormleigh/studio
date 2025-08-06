@@ -71,7 +71,6 @@ export default function FreecellBoard({
           key={`freecell-${i}`}
           data-testid={`freecell-pile-${i}`}
           className="w-full max-w-[96px]"
-          onClick={() => handleFreecellClick(i)}
         >
           <Card 
             card={card || undefined} 
@@ -80,6 +79,7 @@ export default function FreecellBoard({
             isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
             onMouseDown={(e) => card && handleMouseDown(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
             onTouchStart={(e) => card && handleTouchStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
+            onClick={() => handleFreecellClick(i)}
           />
         </div>
       ))}

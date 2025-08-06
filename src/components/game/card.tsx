@@ -18,6 +18,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
   const baseClasses = cn(
     cardSize,
     'rounded-md transition-all card-border',
+    isSelected ? 'ring-2 ring-primary' : '',
     ringClass,
     className
   );

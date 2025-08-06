@@ -79,7 +79,6 @@ export default function SolitaireBoard({
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onClick={() => handleFoundationClick(i)}
         >
           <Card 
             card={last(pile)}
@@ -88,7 +87,7 @@ export default function SolitaireBoard({
             isSelected={selectedCard?.type === 'foundation' && selectedCard?.pileIndex === i}
             onMouseDown={(e) => pile.length > 0 && handleMouseDown(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-            onClick={() => handleCardClick('foundation', i, pile.length-1)}
+            onClick={() => handleFoundationClick(i)}
           />
         </div>
       ))}
