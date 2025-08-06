@@ -13,7 +13,7 @@ import type { useToast } from '@/hooks/use-toast';
 import type { SelectedCardInfo, HighlightedPile } from '@/components/game/game-board';
 
 // Game-specific type and function imports
-import { GameState as SolitaireGameState, Card as CardType, findAutoMove as findAutoMoveForSolitaire } from './solitaire';
+import { GameState as SolitaireGameState, Card as CardType, findAutoMoveForSolitaire } from './solitaire';
 import { GameState as FreecellGameState, getMovableCardCount, findAutoMove as findAutoMoveForFreecell } from './freecell';
 import { GameState as SpiderGameState, checkForCompletedSet as checkForSpiderCompletedSet, findAutoMove as findAutoMoveForSpider } from './spider';
 
@@ -251,10 +251,15 @@ const isClickSourceMovable = (gs: GameState, clickInfo: ClickSource): boolean =>
  * This function encapsulates the "auto-move" game flow.
  */
 const handleAutoMove = (gs: GameState, clickInfo: ClickSource): ProcessResult => {
-    const sourceCardInfo: SelectedCardInfo = (gs.gameType === 'Solitaire' && clickInfo.type === 'waste')
-        ? { type: 'waste', pileIndex: 0, cardIndex: (gs as SolitaireGameState).waste.length - 1 }
-        : clickInfo;
-    
+    let sourceCardInfo: SelectedCardInfo;
+    if (gs.gameType === 'Solitaire' && clickInfo.type === 'waste') {
+        const wastePile = (gs as SolitaireGameState).waste;
+        if (wastePile.length === 0) return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
+        sourceCardInfo = { type: 'waste', pileIndex: 0, cardIndex: wastePile.length - 1 };
+    } else {
+        sourceCardInfo = clickInfo;
+    }
+
     // Find the highest-priority move for the selected card.
     const move = findAutoMove(gs, sourceCardInfo);
 
