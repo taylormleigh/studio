@@ -2,7 +2,7 @@
 "use client";
 
 import type { MouseEvent, TouchEvent } from 'react';
-import type { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, last } from '@/lib/solitaire';
+import { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
