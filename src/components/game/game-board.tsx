@@ -33,7 +33,6 @@ export type SelectedCardInfo = {
   type: 'tableau' | 'waste' | 'foundation' | 'freecell';
   pileIndex: number;
   cardIndex: number;
-  isDragging?: boolean;
 };
 
 export type HighlightedPile = {
@@ -60,7 +59,6 @@ export default function GameBoard() {
   const [selectedCard, setSelectedCard] = useState<SelectedCardInfo | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
   const [draggedCardInfo, setDraggedCardInfo] = useState<SelectedCardInfo | null>(null);
-  const [draggedCardPosition, setDraggedCardPosition] = useState<{ x: number; y: number } | null>(null);
 
   
   useEffect(() => {
@@ -243,13 +241,7 @@ export default function GameBoard() {
     });
   }, [updateState, toast]);
 
-    const handleDrag = (x: number, y: number) => {
-        if (draggedCardInfo) {
-            setDraggedCardPosition({ x, y });
-        }
-    };
-    
-  const swipeHandlers = useSwipeGestures({ onDrag: handleDrag });
+  const swipeHandlers = useSwipeGestures();
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
@@ -404,10 +396,12 @@ export default function GameBoard() {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
     setSelectedCard(null); 
+    setDraggedCardInfo(info);
   };
   
   const handleDrop = (e: DragEvent, destType: 'tableau' | 'foundation' | 'freecell', destPileIndex: number) => {
     e.preventDefault();
+    setDraggedCardInfo(null);
     const infoJSON = e.dataTransfer.getData('application/json');
     if (!infoJSON) return;
 
@@ -416,65 +410,55 @@ export default function GameBoard() {
   };
   
   const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
-    e.stopPropagation(); 
-    const touch = e.touches[0];
-    setDraggedCardInfo({ ...info, isDragging: true });
-    setDraggedCardPosition({ x: touch.clientX, y: touch.clientY });
-};
+    e.stopPropagation();
+    setDraggedCardInfo(info);
+  };
 
-const handleTouchEnd = (e: TouchEvent) => {
-    if (draggedCardInfo && draggedCardPosition) {
-        // Temporarily set isDragging to false to make the element non-blocking for elementFromPoint
-        setDraggedCardInfo(info => info ? { ...info, isDragging: false } : null);
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (draggedCardInfo) {
+      const touch = e.changedTouches[0];
+      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
 
-        // Allow the DOM to update before finding the drop target
-        requestAnimationFrame(() => {
-            const touch = e.changedTouches[0];
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (dropTarget) {
+          let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
+          let destPileIndex: number | null = null;
+          
+          const findPile = (type: string) => {
+              const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
+              if (pileElement) {
+                  destType = type as any;
+                  destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
+                  return true;
+              }
+              const emptyPileElement = dropTarget.closest(`[data-testid^="card-tableau-empty-"]`) || dropTarget.closest(`[data-testid^="card-foundation-empty-"]`) || dropTarget.closest(`[data-testid^="card-freecell-empty-"]`);
+               if (emptyPileElement) {
+                  const parts = emptyPileElement.getAttribute('data-testid')!.split('-');
+                  destType = parts[1] as any;
+                  destPileIndex = parseInt(parts[3], 10);
+                  return true;
+              }
+              const cardElement = dropTarget.closest('[data-testid^="card-"]');
+              if (cardElement) {
+                  const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
+                  if (parentPile) {
+                      destType = type as any;
+                      destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
+                      return true;
+                  }
+              }
+              return false;
+          };
 
-            if (dropTarget) {
-                let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
-                let destPileIndex: number | null = null;
-                
-                const findPile = (type: string) => {
-                    const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
-                    if (pileElement) {
-                        destType = type as any;
-                        destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
-                        return true;
-                    }
-                    const emptyPileElement = dropTarget.closest(`[data-testid^="card-tableau-empty-"]`) || dropTarget.closest(`[data-testid^="card-foundation-empty-"]`) || dropTarget.closest(`[data-testid^="card-freecell-empty-"]`);
-                     if (emptyPileElement) {
-                        const parts = emptyPileElement.getAttribute('data-testid')!.split('-');
-                        destType = parts[1] as any;
-                        destPileIndex = parseInt(parts[3], 10);
-                        return true;
-                    }
-                    const cardElement = dropTarget.closest('[data-testid^="card-"]');
-                    if (cardElement) {
-                       const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
-                        if (parentPile) {
-                            destType = type as any;
-                            destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
-                            return true;
-                        }
-                    }
-                    return false;
-                };
+          findPile('tableau') || findPile('foundation') || findPile('freecell');
+          
+          if (destType && destPileIndex !== null) {
+              moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
+          }
+      }
 
-                findPile('tableau') || findPile('foundation') || findPile('freecell');
-                
-                if (destType && destPileIndex !== null) {
-                    moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
-                }
-            }
-
-            // Clean up dragging state after the drop logic
-            setDraggedCardInfo(null);
-            setDraggedCardPosition(null);
-        });
+      setDraggedCardInfo(null);
     }
-};
+  };
 
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
@@ -609,7 +593,6 @@ const handleTouchEnd = (e: TouchEvent) => {
     moveCards,
     handleTouchStart,
     draggedCardInfo,
-    draggedCardPosition,
   };
 
   return (

@@ -1,21 +1,18 @@
+
 "use client";
 
 import { TouchEvent } from 'react';
 
-interface SwipeGestureProps {
-    onDrag: (x: number, y: number) => void;
-}
+interface SwipeGestureProps {}
 
-export const useSwipeGestures = ({ onDrag }: SwipeGestureProps) => {
+export const useSwipeGestures = (props?: SwipeGestureProps) => {
 
     const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
         // This is handled by the individual card now to capture card info
     };
 
     const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        onDrag(currentX, currentY);
+        // No-op for now to simplify
     };
 
     const handleTouchEnd = () => {

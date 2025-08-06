@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/use-settings';
 import { SuitIcon } from './suit-icon';
 
-export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId = 'card-undefined', onTouchStart, isDragging }: CardProps) {
+export function Card({ card, isSelected, isHighlighted, className, onClick, draggable, onDragStart, onDragEnd, style, isStacked, "data-testid": dataTestId = 'card-undefined', onTouchStart }: CardProps) {
   const { settings } = useSettings();
   const { cardStyle } = settings;
 
@@ -19,8 +19,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
     cardSize,
     'rounded-md transition-all card-border',
     ringClass,
-    className,
-    isDragging && 'opacity-50 pointer-events-none' // Make card invisible to pointer events when dragging
+    className
   );
 
 
@@ -123,5 +122,4 @@ type CardProps = {
   draggable?: boolean;
   style?: React.CSSProperties;
   "data-testid"?: string;
-  isDragging?: boolean;
 };

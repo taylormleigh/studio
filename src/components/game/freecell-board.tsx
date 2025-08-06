@@ -3,7 +3,7 @@
 
 import { DragEvent, TouchEvent, useMemo } from 'react';
 import type { GameState as FreecellGameState } from '@/lib/freecell';
-import { getMovableCardCount, isRun } from '@/lib/freecell';
+import { getMovableCardCount, isRun as isFreecellRun } from '@/lib/freecell';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
@@ -17,11 +17,10 @@ interface FreecellBoardProps {
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   draggedCardInfo: SelectedCardInfo | null;
-  draggedCardPosition: { x: number; y: number } | null;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart, draggedCardInfo, draggedCardPosition
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart, draggedCardInfo
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
@@ -47,31 +46,17 @@ export default function FreecellBoard({
     const isTopCard = cardIndex === pile.length - 1;
     
     const stackToTest = pile.slice(cardIndex);
-    const isValidRun = isRun(stackToTest);
+    const isValidRun = isFreecellRun(stackToTest);
     const maxMovable = getMovableCardCount(gameState, false);
     
     const isDraggable = isValidRun && stackToTest.length <= maxMovable;
     
-    const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
     const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
 
-    let style = {
+    const style = {
       transform: `translateY(${yOffset}px)`,
       zIndex: cardIndex
     };
-
-    if (isBeingDragged && draggedCardPosition) {
-      const cardElement = document.querySelector(`[data-testid="card-${card.suit}-${card.rank}"]`);
-      const cardRect = cardElement?.getBoundingClientRect();
-
-      style = {
-        ...style,
-        position: 'fixed',
-        left: `${draggedCardPosition.x - (cardRect?.width ? cardRect.width / 2 : 48)}px`,
-        top: `${draggedCardPosition.y - (cardRect?.height ? cardRect.height / 2 : 68)}px`,
-        zIndex: 100 + cardIndex,
-      } as React.CSSProperties;
-    }
     
     return (
         <div 
@@ -92,7 +77,6 @@ export default function FreecellBoard({
                   handleTableauClick(pileIndex, cardIndex);
               }}
               onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-              isDragging={isBeingDragged}
             />
         </div>
     )
@@ -117,7 +101,6 @@ export default function FreecellBoard({
             draggable={!!card}
             onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
             onTouchStart={(e) => card && handleTouchStart(e, { type: 'freecell', pileIndex: i, cardIndex: 0 })}
-            isDragging={draggedCardInfo?.type === 'freecell' && draggedCardInfo.pileIndex === i}
           />
         </div>
       ))}

@@ -18,11 +18,10 @@ interface SpiderBoardProps {
   handleDraw: () => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
   draggedCardInfo: SelectedCardInfo | null;
-  draggedCardPosition: { x: number; y: number } | null;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, draggedCardInfo, draggedCardPosition
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, draggedCardInfo
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -90,26 +89,12 @@ export default function SpiderBoard({
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
                   const draggable = card.faceUp && canMoveToTableau(pile.slice(cardIndex), undefined, true);
-                  const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
                   const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
 
-                  let style = {
+                  const style = {
                     transform: `translateY(${yOffset}px)`,
                     zIndex: cardIndex
                   };
-
-                  if (isBeingDragged && draggedCardPosition) {
-                    const cardElement = document.querySelector(`[data-testid="card-${card.suit}-${card.rank}"]`);
-                    const cardRect = cardElement?.getBoundingClientRect();
-
-                    style = {
-                      ...style,
-                      position: 'fixed',
-                      left: `${draggedCardPosition.x - (cardRect?.width ? cardRect.width / 2 : 48)}px`,
-                      top: `${draggedCardPosition.y - (cardRect?.height ? cardRect.height / 2 : 68)}px`,
-                      zIndex: 100 + cardIndex,
-                    } as React.CSSProperties;
-                  }
 
                   return (
                     <div 
@@ -131,7 +116,6 @@ export default function SpiderBoard({
                               handleCardClick('tableau', pileIndex, cardIndex);
                           }}
                           onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
-                          isDragging={isBeingDragged}
                         />
                     </div>
                   )
