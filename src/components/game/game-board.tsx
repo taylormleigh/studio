@@ -538,7 +538,9 @@ export default function GameBoard() {
     : `card-${info.type}-pile-${info.pileIndex}-${info.cardIndex}`;
 
     const targetElement = document.querySelector(`[data-testid*="${cards[0].suit}-${cards[0].rank}"]`) as HTMLElement;
-    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY };
+    
+    // Fallback to a reasonable default if the element isn't found
+    const rect = targetElement ? targetElement.getBoundingClientRect() : { left: clientX, top: clientY, width: 96, height: 134 };
 
     setInitialTouchPos({ x: clientX, y: clientY });
     setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
@@ -566,19 +568,23 @@ const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
   
   const handleDrop = (clientX: number, clientY: number) => {
     if (isDragging && draggedCardInfo && initialTouchPos) {
-      // Temporarily hide the source element to find what's underneath
       const sourceElement = document.elementFromPoint(initialTouchPos.x, initialTouchPos.y);
       let originalDisplay = '';
       if (sourceElement && sourceElement instanceof HTMLElement) {
-        originalDisplay = sourceElement.style.display;
-        sourceElement.style.display = 'none';
+        const parentWithTestId = sourceElement.closest('[data-testid]');
+        if (parentWithTestId) {
+          originalDisplay = (parentWithTestId as HTMLElement).style.display;
+          (parentWithTestId as HTMLElement).style.display = 'none';
+        }
       }
 
       const dropTarget = document.elementFromPoint(clientX, clientY);
       
-      // Restore the source element's display
       if (sourceElement && sourceElement instanceof HTMLElement) {
-          sourceElement.style.display = originalDisplay;
+          const parentWithTestId = sourceElement.closest('[data-testid]');
+          if (parentWithTestId) {
+            (parentWithTestId as HTMLElement).style.display = originalDisplay;
+          }
       }
       
       if (dropTarget) {
