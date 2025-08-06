@@ -2,7 +2,7 @@
 "use client";
 
 import type { MouseEvent, TouchEvent } from 'react';
-import type { GameState as SolitaireGameState, Card as CardType } from '@/lib/solitaire';
+import type { GameState as SolitaireGameState } from '@/lib/solitaire';
 import { isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import type { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -10,7 +10,6 @@ import { useSettings } from '@/hooks/use-settings';
 
 interface SolitaireBoardProps {
   gameState: SolitaireGameState;
-  selectedCard: SelectedCardInfo | null;
   highlightedPile: HighlightedPile | null;
   handleCardClick: (type: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
