@@ -211,7 +211,7 @@ export default function GameBoard() {
   const handleMouseDown = (e: MouseEvent, card: CardType, location: CardLocation) => {
     e.stopPropagation();
     if (settings.autoMove) return;
-    const { gameState } = { gameState: gameState! };
+    if (!gameState) return;
     const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
     setSelectedCard(result.newSelectedCard);
 };
@@ -219,7 +219,7 @@ export default function GameBoard() {
   const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation) => {
       e.stopPropagation();
       if (settings.autoMove) return;
-      const { gameState } = { gameState: gameState! };
+      if (!gameState) return;
       const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
       setSelectedCard(result.newSelectedCard);
   };
