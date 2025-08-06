@@ -262,7 +262,7 @@ const findFreecellAutoMoveToFreecell = (gameState: FreecellGameState, source: Se
 const findFreecellAutoMove = (gameState: FreecellGameState, source: SelectedCardInfo): GameMove | null => {
     return findFreecellAutoMoveToFoundation(gameState, source) || 
            findFreecellAutoMoveToTableau(gameState, source) ||
-           findFreecellAutoMoveToFreecell(gameState, source);
+           (source.type === 'tableau' ? findFreecellAutoMoveToFreecell(gameState, source) : null);
 };
 
 
@@ -368,18 +368,27 @@ const handleInitialClick = (
     settings: GameSettings,
 ): ProcessResult => {
     const clickedCard = getClickedCard(gameState, clickInfo);
+
+    // Handle flipping a face-down card in Solitaire
     if (!clickedCard || !clickedCard.faceUp) {
         if (gameState.gameType === 'Solitaire' && clickInfo.type === 'tableau') {
              return handleSolitaireTableauFlip(gameState as SolitaireGameState, clickInfo) || { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
         }
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
-
+    
+    // Attempt an auto-move if the setting is enabled
     if (settings.autoMove) {
-        const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
-        if (autoMoveResult) return autoMoveResult;
+        if (gameState.gameType === 'Freecell' && (clickInfo.type === 'tableau' || clickInfo.type === 'freecell')) {
+            const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
+            if (autoMoveResult) return autoMoveResult;
+        } else if (gameState.gameType !== 'Freecell') {
+            const autoMoveResult = handleInitialClickWithAutoMove(gameState, clickInfo);
+            if (autoMoveResult) return autoMoveResult;
+        }
     }
     
+    // If no auto-move, select the card
     return { newState: null, newSelectedCard: clickInfo, highlightedPile: null, saveHistory: false };
 };
 
