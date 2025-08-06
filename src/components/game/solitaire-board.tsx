@@ -59,6 +59,7 @@ export default function SolitaireBoard({
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
                 onTouchStart={(e) => handleTouchStart(e, { type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
+                isDragging={draggedCardInfo?.type === 'waste'}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
           </div>
@@ -75,6 +76,7 @@ export default function SolitaireBoard({
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
                 onTouchStart={(e) => handleTouchStart(e, { type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
+                isDragging={draggedCardInfo?.type === 'waste'}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
           </div>
@@ -99,11 +101,12 @@ export default function SolitaireBoard({
         >
           <Card 
             card={last(pile)}
-            data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `foundation-empty-${i}`}
+            data-testid={last(pile) ? `card-${last(pile)?.suit}-${last(pile)?.rank}` : `card-foundation-empty-${i}`}
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             draggable={pile.length > 0}
             onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
             onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, { type: 'foundation', pileIndex: i, cardIndex: pile.length - 1 })}
+            isDragging={draggedCardInfo?.type === 'foundation' && draggedCardInfo.pileIndex === i}
           />
         </div>
       ))}
@@ -139,7 +142,7 @@ export default function SolitaireBoard({
           >
             <div className="absolute top-0 left-0 w-full h-full">
               {pile.length === 0 ? (
-                <Card data-testid={`tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
+                <Card data-testid={`card-tableau-empty-${pileIndex}`} isHighlighted={highlightedPile?.type === 'tableau' && highlightedPile?.pileIndex === pileIndex}/>
               ) : (
                 pile.map((card, cardIndex) => {
                   const isTopCard = cardIndex === pile.length - 1;
@@ -148,15 +151,23 @@ export default function SolitaireBoard({
                   const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
                   const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 22 : 24) : 10), 0);
                   
-                  const style = isBeingDragged && draggedCardPosition ? {
-                    transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
-                    zIndex: 100 + cardIndex,
-                    pointerEvents: 'none',
-                    position: 'fixed'
-                  } : {
+                  let style = {
                     transform: `translateY(${yOffset}px)`,
                     zIndex: cardIndex
                   };
+
+                  if (isBeingDragged && draggedCardPosition) {
+                    const cardElement = document.querySelector(`[data-testid="card-${card.suit}-${card.rank}"]`);
+                    const cardRect = cardElement?.getBoundingClientRect();
+
+                    style = {
+                      ...style,
+                      position: 'fixed',
+                      left: `${draggedCardPosition.x - (cardRect?.width ? cardRect.width / 2 : 48)}px`,
+                      top: `${draggedCardPosition.y - (cardRect?.height ? cardRect.height / 2 : 68)}px`,
+                      zIndex: 100 + cardIndex,
+                    } as React.CSSProperties;
+                  }
 
                   return (
                     <div 

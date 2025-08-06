@@ -93,15 +93,23 @@ export default function SpiderBoard({
                   const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
                   const yOffset = pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? (window.innerWidth < 640 ? 24 : 26) : 10), 0)
 
-                  const style = isBeingDragged && draggedCardPosition ? {
-                    transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
-                    zIndex: 100 + cardIndex,
-                    pointerEvents: 'none',
-                    position: 'fixed'
-                  } : {
+                  let style = {
                     transform: `translateY(${yOffset}px)`,
                     zIndex: cardIndex
                   };
+
+                  if (isBeingDragged && draggedCardPosition) {
+                    const cardElement = document.querySelector(`[data-testid="card-${card.suit}-${card.rank}"]`);
+                    const cardRect = cardElement?.getBoundingClientRect();
+
+                    style = {
+                      ...style,
+                      position: 'fixed',
+                      left: `${draggedCardPosition.x - (cardRect?.width ? cardRect.width / 2 : 48)}px`,
+                      top: `${draggedCardPosition.y - (cardRect?.height ? cardRect.height / 2 : 68)}px`,
+                      zIndex: 100 + cardIndex,
+                    } as React.CSSProperties;
+                  }
 
                   return (
                     <div 
@@ -120,7 +128,7 @@ export default function SpiderBoard({
                           onDragStart={(e) => draggable && handleDragStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           onClick={(e) => {
                               e.stopPropagation();
-                              handleTableauClick(pileIndex, cardIndex);
+                              handleCardClick('tableau', pileIndex, cardIndex);
                           }}
                           onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                           isDragging={isBeingDragged}

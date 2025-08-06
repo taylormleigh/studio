@@ -29,30 +29,19 @@ import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
 
 type GameState = SolitaireGameState | FreecellGameState | SpiderGameState;
 
-/**
- * Represents the currently selected card or stack of cards.
- * `type` indicates the source area (e.g., 'tableau', 'waste').
- * `pileIndex` is the index of the pile within that area.
- * `cardIndex` is the index of the specific card within the pile that was clicked/dragged.
- */
 export type SelectedCardInfo = {
   type: 'tableau' | 'waste' | 'foundation' | 'freecell';
   pileIndex: number;
   cardIndex: number;
+  isDragging?: boolean;
 };
 
-/**
- * Represents a pile that should be visually highlighted, typically after a move.
- * `type` indicates the area of the pile.
- * `pileIndex` is the index of the pile to highlight.
- */
 export type HighlightedPile = {
   type: 'tableau' | 'foundation' | 'freecell';
   pileIndex: number;
 } | null;
 
 
-// The maximum number of moves that can be undone.
 const UNDO_LIMIT = 100;
 
 export default function GameBoard() {
@@ -74,29 +63,21 @@ export default function GameBoard() {
   const [draggedCardPosition, setDraggedCardPosition] = useState<{ x: number; y: number } | null>(null);
 
   
-  // Effect to confirm component has mounted on the client, preventing SSR issues.
   useEffect(() => {
     setIsClient(true);
   }, []);
   
   
-  /**
-   * Starts a new game based on the current settings.
-   * Resets all game-related state variables.
-   */
   const handleNewGame = useCallback(() => {
     let newState: GameState;
-    // Check for a debug state in localStorage for testing purposes.
     const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
     if (debugStateJSON) {
         try {
             const parsedDebugState = JSON.parse(debugStateJSON);
-            // Only use debug state if it matches the current game type setting
             if (parsedDebugState.gameType === settings.gameType) {
               newState = parsedDebugState;
-              localStorage.removeItem('deck-of-cards-debug-state'); // Use it only once.
+              localStorage.removeItem('deck-of-cards-debug-state'); 
             } else {
-              // If game types mismatch, ignore debug state and initialize normally
               if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
               else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
               else newState = createSpiderInitialState(settings.spiderSuits);
@@ -122,14 +103,12 @@ export default function GameBoard() {
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
   
   
-  // Effect to initialize a new game once the client has mounted, and when settings change.
   useEffect(() => {
     if (isClient) {
       handleNewGame();
     }
   }, [isClient, handleNewGame]);
 
-  // Effect to automatically clear the highlighted pile after a short delay.
   useEffect(() => {
     if (highlightedPile) {
       const timer = setTimeout(() => setHighlightedPile(null), 500);
@@ -137,7 +116,6 @@ export default function GameBoard() {
     }
   }, [highlightedPile]);
   
-  // Effect to manage the game timer. It runs when the game is active and not won.
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning && !isWon && gameState && isClient) {
@@ -148,18 +126,11 @@ export default function GameBoard() {
     return () => clearInterval(interval);
   }, [isRunning, isWon, gameState, isClient]);
 
-  /**
-   * Checks if the current game state meets the win condition for the active game type.
-   * If the game is won, it stops the timer, updates stats, and sets the win state.
-   * @param state The current game state to check.
-   * @returns The updated game state.
-   */
   const checkWinCondition = useCallback((state: GameState) => {
     let gameWon = false;
     let finalScore = state.score;
     let finalTime = time;
 
-    // Determine if the game is won based on its type.
     if (state.gameType === 'Solitaire') {
       gameWon = isSolitaireGameWon(state as SolitaireGameState);
       if (gameWon) finalScore = calculateScore(state.moves, finalTime);
@@ -171,7 +142,6 @@ export default function GameBoard() {
         if (gameWon) finalScore = state.score;
     }
     
-    // If the game is won, update the application state accordingly.
     if (gameWon && !isWon) {
         setIsRunning(false);
         setIsWon(true);
@@ -184,13 +154,6 @@ export default function GameBoard() {
     return state;
   }, [time, updateStats, isWon]);
 
-  /**
-   * Main function to update the game state.
-   * It saves the previous state to history for the undo functionality.
-   * It also includes special logic for Spider to check for and handle completed sets.
-   * @param newState The new state or a function that returns the new state.
-   * @param saveHistory Whether to save the previous state to the undo history.
-   */
   const updateState = useCallback((newStateFn: (prevState: GameState) => GameState, saveHistory = true) => {
     setGameState(prev => {
         if (!prev) return null;
@@ -201,7 +164,6 @@ export default function GameBoard() {
 
         let nextState = newStateFn(prev);
 
-        // Spider-specific logic: Check for completed sets after every move.
         if (nextState.gameType === 'Spider') {
             let setsCompletedThisMove = 0;
             (nextState as SpiderGameState).tableau.forEach((pile, index) => {
@@ -225,9 +187,6 @@ export default function GameBoard() {
     });
 }, [checkWinCondition]);
 
-  /**
-   * Reverts the game to the previous state from the history stack.
-   */
   const handleUndo = useCallback(() => {
     if (history.length > 0) {
       const [lastState, ...rest] = history;
@@ -237,18 +196,13 @@ export default function GameBoard() {
     }
   }, [history]);
   
-    /**
-   * Handles drawing new cards from the stock pile.
-   */
   const handleDraw = useCallback(() => {
     setSelectedCard(null);
     updateState(prev => {
         const newGameState = JSON.parse(JSON.stringify(prev));
 
-        // Solitaire draw logic
         if (newGameState.gameType === 'Solitaire') {
           if (newGameState.stock.length > 0) {
-            // Draw cards from stock to waste.
             const numToDraw = Math.min(newGameState.drawCount, newGameState.stock.length);
             const drawnCards = [];
             for (let i = 0; i < numToDraw; i++) {
@@ -258,16 +212,13 @@ export default function GameBoard() {
             }
             newGameState.waste.push(...drawnCards.reverse());
           } else if (newGameState.waste.length > 0) {
-            // Reset stock from waste if stock is empty.
             newGameState.stock = newGameState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
             newGameState.waste = [];
           }
           newGameState.moves += 1;
         } 
-        // Spider draw logic
         else if (newGameState.gameType === 'Spider') {
           if (newGameState.stock.length > 0) {
-            // Cannot deal with an empty tableau pile.
             const hasEmptyPile = newGameState.tableau.some((pile: CardType[]) => pile.length === 0);
             if (hasEmptyPile) {
                 toast({
@@ -277,7 +228,6 @@ export default function GameBoard() {
                 });
                 return prev;
             }
-            // Deal one card to each tableau pile.
             const dealCount = newGameState.tableau.length;
             if(newGameState.stock.length >= dealCount) {
               for(let i = 0; i < dealCount; i++) {
@@ -308,10 +258,6 @@ export default function GameBoard() {
     onOpenSettings: () => setIsSettingsOpen(true)
   });
 
-  /**
-   * Handles the logic for moving cards between different piles and areas.
-   * This function contains the core rules for each game type.
-   */
   const moveCards = useCallback((
     sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell',
     sourcePileIndex: number,
@@ -337,7 +283,7 @@ export default function GameBoard() {
             } else if (sourceType === 'foundation') {
                 if (newGameState.foundation[sourcePileIndex].length === 0) { moveMade = false; return prev; }
                 cardsToMove = [newGameState.foundation[sourcePileIndex][newGameState.foundation[sourcePileIndex].length - 1]];
-            } else { // 'tableau'
+            } else { 
                 const sourcePile = newGameState.tableau[sourcePileIndex];
                 if (sourcePile.length === 0 || !sourcePile[sourceCardIndex]?.faceUp) { moveMade = false; return prev; }
                 cardsToMove = sourcePile.slice(sourceCardIndex);
@@ -454,23 +400,12 @@ export default function GameBoard() {
      return moveMade;
   }, [updateState, toast]);
     
-  /**
-   * Handles the start of a drag operation.
-   * @param e The drag event.
-   * @param info Information about the card being dragged.
-   */
   const handleDragStart = (e: DragEvent, info: SelectedCardInfo) => {
     e.dataTransfer.setData('application/json', JSON.stringify(info));
     e.dataTransfer.effectAllowed = 'move';
-    setSelectedCard(null); // Clear selection on drag start
+    setSelectedCard(null); 
   };
   
-  /**
-   * Handles the drop event to complete a move.
-   * @param e The drop event.
-   * @param destType The type of the destination area.
-   * @param destPileIndex The index of the destination pile.
-   */
   const handleDrop = (e: DragEvent, destType: 'tableau' | 'foundation' | 'freecell', destPileIndex: number) => {
     e.preventDefault();
     const infoJSON = e.dataTransfer.getData('application/json');
@@ -481,69 +416,69 @@ export default function GameBoard() {
   };
   
   const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
-    e.stopPropagation();
-    setDraggedCardInfo(info);
+    e.stopPropagation(); 
     const touch = e.touches[0];
+    setDraggedCardInfo({ ...info, isDragging: true });
     setDraggedCardPosition({ x: touch.clientX, y: touch.clientY });
-  };
-  
-  const handleTouchEnd = (e: TouchEvent) => {
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
     if (draggedCardInfo && draggedCardPosition) {
-        const touch = e.changedTouches[0];
-        
-        // Find the element under the touch point
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        
-        if (dropTarget) {
-            let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
-            let destPileIndex: number | null = null;
-            
-            const findPile = (type: string) => {
-                const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
-                if (pileElement) {
-                    destType = type as any;
-                    destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
-                    return true;
-                }
-                const emptyPileElement = dropTarget.closest(`[data-testid^="card-${type}-empty-"]`) || dropTarget.closest(`[data-testid^="${type}-empty-"]`);
-                if (emptyPileElement) {
-                    destType = type as any;
-                    destPileIndex = parseInt(emptyPileElement.getAttribute('data-testid')!.split('-')[3], 10);
-                    return true;
-                }
-                const cardElement = dropTarget.closest('[data-testid^="card-"]');
-                if (cardElement) {
-                   const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
-                    if (parentPile) {
+        // Temporarily set isDragging to false to make the element non-blocking for elementFromPoint
+        setDraggedCardInfo(info => info ? { ...info, isDragging: false } : null);
+
+        // Allow the DOM to update before finding the drop target
+        requestAnimationFrame(() => {
+            const touch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+
+            if (dropTarget) {
+                let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
+                let destPileIndex: number | null = null;
+                
+                const findPile = (type: string) => {
+                    const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
+                    if (pileElement) {
                         destType = type as any;
-                        destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
+                        destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
                         return true;
                     }
+                    const emptyPileElement = dropTarget.closest(`[data-testid^="card-tableau-empty-"]`) || dropTarget.closest(`[data-testid^="card-foundation-empty-"]`) || dropTarget.closest(`[data-testid^="card-freecell-empty-"]`);
+                     if (emptyPileElement) {
+                        const parts = emptyPileElement.getAttribute('data-testid')!.split('-');
+                        destType = parts[1] as any;
+                        destPileIndex = parseInt(parts[3], 10);
+                        return true;
+                    }
+                    const cardElement = dropTarget.closest('[data-testid^="card-"]');
+                    if (cardElement) {
+                       const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
+                        if (parentPile) {
+                            destType = type as any;
+                            destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                findPile('tableau') || findPile('foundation') || findPile('freecell');
+                
+                if (destType && destPileIndex !== null) {
+                    moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
                 }
-                return false;
-            };
-
-            findPile('tableau') || findPile('foundation') || findPile('freecell');
-            
-            if (destType && destPileIndex !== null) {
-                moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
             }
-        }
-    }
-    setDraggedCardInfo(null);
-    setDraggedCardPosition(null);
-  };
 
-    /**
-   * Handles all card click events, routing to selection, deselection, or auto-move logic.
-   * @param sourceType The area of the clicked card.
-   * @param pileIndex The pile index of the clicked card.
-   * @param cardIndex The card index of the clicked card.
-   */
+            // Clean up dragging state after the drop logic
+            setDraggedCardInfo(null);
+            setDraggedCardPosition(null);
+        });
+    }
+};
+
   const handleCardClick = (sourceType: 'tableau' | 'waste' | 'foundation' | 'freecell', pileIndex: number, cardIndex: number) => {
     if (!gameState) return;
   
-    // Logic for flipping a face-down card in Solitaire/Spider.
     if (gameState.gameType !== 'Freecell' && sourceType === 'tableau') {
       const sourcePile = gameState.tableau[pileIndex];
       const clickedCard = sourcePile?.[cardIndex];
@@ -554,7 +489,7 @@ export default function GameBoard() {
           newGameState.moves++;
           return newGameState;
         });
-        setSelectedCard(null); // Clear selection after flipping
+        setSelectedCard(null);
         return; 
       }
     }
@@ -568,7 +503,6 @@ export default function GameBoard() {
       return;
     }
   
-    // --- Auto-Move or Select Logic (for the first click) ---
     const clickedCard = 
       (sourceType === 'waste' && gameState.gameType === 'Solitaire') ? last((gameState as SolitaireGameState).waste) :
       (sourceType === 'tableau') ? gameState.tableau[pileIndex]?.[cardIndex] :
@@ -576,9 +510,8 @@ export default function GameBoard() {
       (sourceType === 'freecell' && gameState.gameType === 'Freecell') ? (gameState as FreecellGameState).freecells[pileIndex] :
       undefined;
   
-    // Only proceed if a valid, face-up card was clicked.
     if (!clickedCard || !(clickedCard as CardType).faceUp) {
-      setSelectedCard(null); // Ensure no selection is kept
+      setSelectedCard(null); 
       return;
     }
   
@@ -589,7 +522,6 @@ export default function GameBoard() {
           const isSolitaire = g.gameType === 'Solitaire';
           const cardToMove = clickedCard as CardType;
 
-          // 1. Try foundation
           for (let i = 0; i < g.foundation.length; i++) {
             const canMoveFn = isSolitaire ? canMoveSolitaireToFoundation : canMoveFreecellToFoundation;
             if (canMoveFn(cardToMove, g.foundation[i])) {
@@ -597,7 +529,6 @@ export default function GameBoard() {
             }
           }
 
-          // 2. Try tableau
           if (sourceType === 'waste' || sourceType === 'tableau' || sourceType === 'freecell') {
             const canMoveToTableauFn = isSolitaire ? canMoveSolitaireToTableau : canMoveFreecellToTableau;
             for (let i = 0; i < g.tableau.length; i++) {
@@ -612,7 +543,6 @@ export default function GameBoard() {
             }
           }
           
-           // 3. Try freecell (Freecell only)
            if (!isSolitaire && (sourceType === 'tableau')) {
             const emptyFreecellIndex = (g as FreecellGameState).freecells.findIndex(cell => cell === null);
             if (emptyFreecellIndex !== -1) {
@@ -629,22 +559,18 @@ export default function GameBoard() {
             }
           }
         }
-        return false; // No move found
+        return false;
       };
 
       tryAutoMove();
-      setSelectedCard(null); // Always clear selection after an auto-move attempt.
+      setSelectedCard(null); 
       return;
     }
   
-    // If not auto-moving, just set the card as selected.
     setSelectedCard({ type: sourceType, pileIndex, cardIndex });
   };
   
   
-  /**
-   * Renders a skeleton loader while the game is initializing.
-   */
   const renderLoader = () => (
     <div className="flex flex-col min-h-screen">
     <GameHeader 
@@ -664,18 +590,16 @@ export default function GameBoard() {
   );
 
   
-  // Show loader until the component has mounted and game state is initialized.
   if (!isClient || !gameState) {
     return renderLoader();
   }
   
-  // Adjust container width based on game type for optimal layout.
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
   ? 'md:max-w-[480px]' 
   : (gameState.gameType === 'Freecell' ? 'md:max-w-[480px]' : 'md:max-w-[480px]');
 
   const boardProps = {
-    gameState: gameState as any, // Cast to any to satisfy specific board props
+    gameState: gameState as any,
     selectedCard,
     highlightedPile,
     handleCardClick,
@@ -692,7 +616,6 @@ export default function GameBoard() {
     <div 
       className="flex flex-col min-h-screen"
       data-testid="game-board"
-      onTouchStart={swipeHandlers.onTouchStart}
       onTouchMove={swipeHandlers.onTouchMove}
       onTouchEnd={handleTouchEnd}
     >

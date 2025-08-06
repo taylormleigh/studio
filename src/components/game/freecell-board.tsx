@@ -46,25 +46,32 @@ export default function FreecellBoard({
     const card = pile[cardIndex];
     const isTopCard = cardIndex === pile.length - 1;
     
-    // Determine how many cards can be moved from this position.
     const stackToTest = pile.slice(cardIndex);
     const isValidRun = isRun(stackToTest);
     const maxMovable = getMovableCardCount(gameState, false);
     
-    // A stack is draggable if it's a valid run and its length is within the movable limit.
     const isDraggable = isValidRun && stackToTest.length <= maxMovable;
+    
     const isBeingDragged = draggedCardInfo?.type === 'tableau' && draggedCardInfo.pileIndex === pileIndex && cardIndex >= draggedCardInfo.cardIndex;
     const yOffset = cardIndex * (window.innerWidth < 640 ? 22 : 24);
 
-    const style = isBeingDragged && draggedCardPosition ? {
-      transform: `translate(${draggedCardPosition.x - (pile[0].faceUp ? 48 : 0)}px, ${draggedCardPosition.y - yOffset}px)`,
-      zIndex: 100 + cardIndex,
-      pointerEvents: 'none',
-      position: 'fixed'
-    } : {
+    let style = {
       transform: `translateY(${yOffset}px)`,
       zIndex: cardIndex
     };
+
+    if (isBeingDragged && draggedCardPosition) {
+      const cardElement = document.querySelector(`[data-testid="card-${card.suit}-${card.rank}"]`);
+      const cardRect = cardElement?.getBoundingClientRect();
+
+      style = {
+        ...style,
+        position: 'fixed',
+        left: `${draggedCardPosition.x - (cardRect?.width ? cardRect.width / 2 : 48)}px`,
+        top: `${draggedCardPosition.y - (cardRect?.height ? cardRect.height / 2 : 68)}px`,
+        zIndex: 100 + cardIndex,
+      } as React.CSSProperties;
+    }
     
     return (
         <div 
@@ -110,6 +117,7 @@ export default function FreecellBoard({
             draggable={!!card}
             onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
             onTouchStart={(e) => card && handleTouchStart(e, { type: 'freecell', pileIndex: i, cardIndex: 0 })}
+            isDragging={draggedCardInfo?.type === 'freecell' && draggedCardInfo.pileIndex === i}
           />
         </div>
       ))}

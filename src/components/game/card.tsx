@@ -19,7 +19,8 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
     cardSize,
     'rounded-md transition-all card-border',
     ringClass,
-    className
+    className,
+    isDragging && 'opacity-50 pointer-events-none' // Make card invisible to pointer events when dragging
   );
 
 
@@ -70,7 +71,6 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, drag
         baseClasses,
         'bg-card border-black cursor-pointer relative duration-300 ease-in-out',
         draggable && "cursor-grab",
-        isDragging && 'opacity-50'
       )}
     >
       <div
