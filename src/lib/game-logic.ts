@@ -297,14 +297,7 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
     const { gameState, clickSource, clickedCard, settings } = params;
     
     if (!clickedCard || !isClickSourceMovable(gameState, clickedCard, clickSource)) {
-        // Specific logic for flipping a face-down card in Solitaire.
-        if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
-             const newState = { ...gameState, tableau: gameState.tableau.map(p => [...p]) };
-             (newState as SolitaireGameState).tableau[clickSource.pileIndex][clickSource.cardIndex].faceUp = true;
-             newState.moves++;
-             return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
-        }
-        return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
+        return flipOverFaceDownCardInSolitaire(params);
     }
 
     const locatedCard: LocatedCard = { ...clickedCard, location: clickSource };
@@ -315,6 +308,19 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
     
     // If auto-move is off, the first click simply selects the card.
     return { newState: null, newSelectedCard: locatedCard, highlightedPile: null, saveHistory: false };
+};
+
+const flipOverFaceDownCardInSolitaire = (params: ProcessClickParams): ProcessResult => {
+    const { gameState, clickSource, clickedCard, settings } = params;
+
+    // Specific logic for flipping a face-down card in Solitaire.
+    if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
+        const newState = { ...gameState, tableau: gameState.tableau.map(p => [...p]) };
+        (newState as SolitaireGameState).tableau[clickSource.pileIndex][clickSource.cardIndex].faceUp = true;
+        newState.moves++;
+        return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
+   }
+   return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
 
@@ -330,7 +336,7 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
  */
 export const processCardClick = (params: ProcessClickParams): ProcessResult => {
     // If a card is already selected, this is the second click (destination).
-    if (params.selectedCard) {
+    if (params.selectedCard && !params.settings.autoMove) {
         return handleTwoClickMove(params);
     }
     // If no card is selected, this is the first click (source).
