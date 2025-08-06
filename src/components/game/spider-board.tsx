@@ -16,12 +16,11 @@ interface SpiderBoardProps {
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau', pileIndex: number) => void;
   handleDraw: () => void;
-  handleTouchStart: (info: SelectedCardInfo) => void;
-  handleTouchEnd: (e: TouchEvent) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
 }
 
 export default function SpiderBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart, handleTouchEnd
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, handleTouchStart
 }: SpiderBoardProps) {
   const { settings } = useSettings();
 
@@ -113,8 +112,7 @@ export default function SpiderBoard({
                               e.stopPropagation();
                               handleTableauClick(pileIndex, cardIndex);
                           }}
-                          onTouchStart={() => draggable && handleTouchStart({ type: 'tableau', pileIndex, cardIndex })}
-                          onTouchEnd={handleTouchEnd}
+                          onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                         />
                     </div>
                   )

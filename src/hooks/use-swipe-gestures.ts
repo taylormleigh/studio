@@ -1,33 +1,26 @@
 
 "use client";
 
-import { useState, TouchEvent } from 'react';
+import { TouchEvent } from 'react';
 
 interface SwipeGestureProps {
-    onDrag?: (x: number, y: number) => void;
+    onDrag: (x: number, y: number) => void;
 }
 
 export const useSwipeGestures = ({ onDrag }: SwipeGestureProps) => {
-    const [touchStartX, setTouchStartX] = useState<number | null>(null);
-    const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
     const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
-        const touch = e.touches[0];
-        setTouchStartX(touch.clientX);
-        setTouchStartY(touch.clientY);
+        // This is handled by the individual card now to capture card info
     };
 
     const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
-        if (!touchStartX || !touchStartY || !onDrag) return;
-
         const currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
         onDrag(currentX, currentY);
     };
 
     const handleTouchEnd = () => {
-        setTouchStartX(null);
-        setTouchStartY(null);
+       // This is handled by the main GameBoard component now
     };
 
     return {

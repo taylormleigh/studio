@@ -17,12 +17,11 @@ interface SolitaireBoardProps {
   handleDrop: (e: DragEvent, type: 'tableau' | 'foundation', pileIndex: number) => void;
   handleDraw: () => void;
   moveCards: (sourceType: 'tableau' | 'waste' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'foundation', destPileIndex: number) => void;
-  handleTouchStart: (info: SelectedCardInfo) => void;
-  handleTouchEnd: (e: TouchEvent) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
 }
 
 export default function SolitaireBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, moveCards, handleTouchStart, handleTouchEnd
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleDraw, moveCards, handleTouchStart
 }: SolitaireBoardProps) {
   const { settings } = useSettings();
 
@@ -57,8 +56,7 @@ export default function SolitaireBoard({
                 draggable={true}
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
-                onTouchStart={() => handleTouchStart({ type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
-                onTouchEnd={handleTouchEnd}
+                onTouchStart={(e) => handleTouchStart(e, { type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
           </div>
@@ -74,8 +72,7 @@ export default function SolitaireBoard({
                 draggable={true}
                 onDragStart={(e) => handleDragStart(e, {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1})}
                 onClick={() => handleCardClick('waste', 0, gameState.waste.length - 1)}
-                onTouchStart={() => handleTouchStart({ type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
-                onTouchEnd={handleTouchEnd}
+                onTouchStart={(e) => handleTouchStart(e, { type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length - 1 })}
               />
             ) : <Card onClick={handleDraw} data-testid="card-waste-empty" />}
           </div>
@@ -104,8 +101,7 @@ export default function SolitaireBoard({
             isHighlighted={highlightedPile?.type === 'foundation' && highlightedPile?.pileIndex === i}
             draggable={pile.length > 0}
             onDragStart={(e) => pile.length > 0 && handleDragStart(e, {type: 'foundation', pileIndex: i, cardIndex: pile.length-1})}
-            onTouchStart={() => pile.length > 0 && handleTouchStart({ type: 'foundation', pileIndex: i, cardIndex: pile.length - 1 })}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={(e) => pile.length > 0 && handleTouchStart(e, { type: 'foundation', pileIndex: i, cardIndex: pile.length - 1 })}
           />
         </div>
       ))}
@@ -168,8 +164,7 @@ export default function SolitaireBoard({
                             e.stopPropagation();
                             handleCardClick('tableau', pileIndex, cardIndex);
                         }}
-                        onTouchStart={() => draggable && handleTouchStart({ type: 'tableau', pileIndex, cardIndex })}
-                        onTouchEnd={handleTouchEnd}
+                        onTouchStart={(e) => draggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
                       />
                     </div>
                   )

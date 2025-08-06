@@ -15,12 +15,11 @@ interface FreecellBoardProps {
   handleCardClick: (type: 'tableau' | 'freecell' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleDragStart: (e: DragEvent, info: SelectedCardInfo) => void;
   handleDrop: (e: DragEvent, type: 'tableau' | 'freecell' | 'foundation', pileIndex: number) => void;
-  handleTouchStart: (info: SelectedCardInfo) => void;
-  handleTouchEnd: (e: TouchEvent) => void;
+  handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
 }
 
 export default function FreecellBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart, handleTouchEnd
+  gameState, selectedCard, highlightedPile, handleCardClick, handleDragStart, handleDrop, handleTouchStart
 }: FreecellBoardProps) {
   const { settings } = useSettings();
 
@@ -74,8 +73,7 @@ export default function FreecellBoard({
                   e.stopPropagation();
                   handleTableauClick(pileIndex, cardIndex);
               }}
-              onTouchStart={() => isDraggable && handleTouchStart({ type: 'tableau', pileIndex, cardIndex })}
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={(e) => isDraggable && handleTouchStart(e, { type: 'tableau', pileIndex, cardIndex })}
             />
         </div>
     )
@@ -99,8 +97,7 @@ export default function FreecellBoard({
             isSelected={selectedCard?.type === 'freecell' && selectedCard?.pileIndex === i}
             draggable={!!card}
             onDragStart={(e) => card && handleDragStart(e, {type: 'freecell', pileIndex: i, cardIndex: 0})}
-            onTouchStart={() => card && handleTouchStart({ type: 'freecell', pileIndex: i, cardIndex: 0 })}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={(e) => card && handleTouchStart(e, { type: 'freecell', pileIndex: i, cardIndex: 0 })}
           />
         </div>
       ))}

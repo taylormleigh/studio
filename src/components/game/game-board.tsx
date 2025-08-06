@@ -480,48 +480,53 @@ export default function GameBoard() {
     moveCards(info.type, info.pileIndex, info.cardIndex, destType, destPileIndex);
   };
   
-  const handleTouchStart = (info: SelectedCardInfo) => {
+  const handleTouchStart = (e: TouchEvent, info: SelectedCardInfo) => {
+    e.stopPropagation();
     setDraggedCardInfo(info);
+    const touch = e.touches[0];
+    setDraggedCardPosition({ x: touch.clientX, y: touch.clientY });
   };
   
   const handleTouchEnd = (e: TouchEvent) => {
     if (draggedCardInfo && draggedCardPosition) {
         const touch = e.changedTouches[0];
-        
-        // Temporarily hide the dragged card to accurately find the drop target
         const draggedCardDiv = document.getElementById('dragged-card');
         if (draggedCardDiv) draggedCardDiv.style.display = 'none';
 
         const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        
-        // Restore visibility
         if (draggedCardDiv) draggedCardDiv.style.display = 'block';
 
         if (dropTarget) {
             let destType: 'tableau' | 'foundation' | 'freecell' | null = null;
             let destPileIndex: number | null = null;
+            
+            const findPile = (type: string) => {
+                const pileElement = dropTarget.closest(`[data-testid^="${type}-pile-"]`);
+                if (pileElement) {
+                    destType = type as any;
+                    destPileIndex = parseInt(pileElement.getAttribute('data-testid')!.split('-')[2], 10);
+                    return true;
+                }
+                const emptyPileElement = dropTarget.closest(`[data-testid^="card-${type}-empty-"]`) || dropTarget.closest(`[data-testid^="${type}-empty-"]`);
+                if (emptyPileElement) {
+                    destType = type as any;
+                    destPileIndex = parseInt(emptyPileElement.getAttribute('data-testid')!.split('-')[3], 10);
+                    return true;
+                }
+                const cardElement = dropTarget.closest('[data-testid^="card-"]');
+                if (cardElement) {
+                   const parentPile = cardElement.closest(`[data-testid^="${type}-pile-"]`);
+                    if (parentPile) {
+                        destType = type as any;
+                        destPileIndex = parseInt(parentPile.getAttribute('data-testid')!.split('-')[2], 10);
+                        return true;
+                    }
+                }
+                return false;
+            };
 
-            // Check if dropped on a tableau pile
-            const tableauPile = dropTarget.closest('[data-testid^="tableau-pile-"]');
-            if (tableauPile) {
-                destType = 'tableau';
-                destPileIndex = parseInt(tableauPile.getAttribute('data-testid')!.split('-')[3], 10);
-            }
-
-            // Check if dropped on a foundation pile
-            const foundationPile = dropTarget.closest('[data-testid^="foundation-pile-"]');
-            if (foundationPile) {
-                destType = 'foundation';
-                destPileIndex = parseInt(foundationPile.getAttribute('data-testid')!.split('-')[3], 10);
-            }
-
-            // Check if dropped on a freecell pile
-            const freecellPile = dropTarget.closest('[data-testid^="freecell-pile-"]');
-            if (freecellPile) {
-                destType = 'freecell';
-                destPileIndex = parseInt(freecellPile.getAttribute('data-testid')!.split('-')[3], 10);
-            }
-
+            findPile('tableau') || findPile('foundation') || findPile('freecell');
+            
             if (destType && destPileIndex !== null) {
                 moveCards(draggedCardInfo.type, draggedCardInfo.pileIndex, draggedCardInfo.cardIndex, destType, destPileIndex);
             }
@@ -709,8 +714,8 @@ export default function GameBoard() {
     handleDragStart,
     handleDrop,
     handleDraw,
+    moveCards,
     handleTouchStart,
-    handleTouchEnd,
   };
 
   return (
@@ -727,7 +732,7 @@ export default function GameBoard() {
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
       />
       <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
-        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} moveCards={moveCards} />}
+        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
         {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
         {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
       </main>
