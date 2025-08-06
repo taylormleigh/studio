@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DragEvent, MouseEvent, TouchEvent } from 'react';
+import { MouseEvent, TouchEvent } from 'react';
 import { GameState as SolitaireGameState, isRun as isSolitaireRun, last } from '@/lib/solitaire';
 import { Card } from './card';
 import { SelectedCardInfo, HighlightedPile } from './game-board';
@@ -14,13 +14,12 @@ interface SolitaireBoardProps {
   handleCardClick: (type: 'tableau' | 'waste' | 'foundation', pileIndex: number, cardIndex: number) => void;
   handleMouseDown: (e: MouseEvent, info: SelectedCardInfo) => void;
   handleTouchStart: (e: TouchEvent, info: SelectedCardInfo) => void;
-  handleDrop: (e: DragEvent, type: 'tableau' | 'foundation', pileIndex: number) => void;
   handleDraw: () => void;
   moveCards: (sourceType: 'tableau' | 'waste' | 'foundation', sourcePileIndex: number, sourceCardIndex: number, destType: 'tableau' | 'foundation', destPileIndex: number) => void;
 }
 
 export default function SolitaireBoard({ 
-  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop, handleDraw, moveCards
+  gameState, selectedCard, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDraw, moveCards
 }: SolitaireBoardProps) {
   const { settings } = useSettings();
 
@@ -32,11 +31,6 @@ export default function SolitaireBoard({
   
   const handleTableauClick = (pileIndex: number, cardIndex: number) => {
     handleCardClick('tableau', pileIndex, cardIndex);
-  };
-
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
   };
 
   const StockAndWaste = () => (
@@ -88,8 +82,6 @@ export default function SolitaireBoard({
           key={i} 
           data-testid={`foundation-pile-${i}`}
           className="w-full max-w-[96px]"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, 'foundation', i)}
           onClick={() => handleFoundationClick(i)}
         >
           <Card 
@@ -127,7 +119,6 @@ export default function SolitaireBoard({
             key={pileIndex} 
             data-testid={`tableau-pile-${pileIndex}`}
             className="relative"
-            onDrop={(e) => handleDrop(e, 'tableau', pileIndex)}
             onClick={() => handleTableauClick(pileIndex, 0)}
           >
             <div className="absolute top-0 left-0 w-full h-full">
