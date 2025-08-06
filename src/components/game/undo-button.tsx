@@ -12,7 +12,7 @@ interface UndoButtonProps {
   canUndo: boolean;
 }
 
-const iconSize = 32;
+const iconSize = 28;
 const iconStrokeWidth = 1.85;
 
 export function UndoButton({ onUndo, canUndo }: UndoButtonProps) {
@@ -112,7 +112,7 @@ export function UndoButton({ onUndo, canUndo }: UndoButtonProps) {
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       className={cn(
-        "undo-button fixed z-50 h-16 w-16 rounded-full shadow-lg flex flex-col items-center justify-center cursor-grab",
+        "undo-button fixed z-50 h-20 w-20 rounded-full shadow-lg flex flex-col items-center justify-center cursor-grab",
          isDragging && "cursor-grabbing"
       )}
       style={{
