@@ -73,12 +73,12 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
       data-testid={dataTestId}
       className={cn(
         baseClasses,
-        'bg-card border-black cursor-pointer relative duration-300 ease-in-out'
+        'bg-card border-black cursor-pointer  duration-300 ease-in-out'
       )}
     >
       <div
         className={cn(
-          'relative p-1 flex flex-col justify-between h-full',
+          'p-1 flex flex-col justify-between h-full',
           suitColorClass
         )}
       >

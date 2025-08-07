@@ -57,10 +57,10 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 
   const Waste = () => {
     const wastePile = gameState.waste;
-    const displayCards = wastePile.slice(-3);
-  
+    const drawCount = gameState.drawCount;
+
     return (
-      <div data-testid="waste-pile" className="relative col-span-1 w-full max-w-[96px] h-full">
+      <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
         {wastePile.length === 0 ? (
           <Card 
             onClick={() => handleDraw()} 
@@ -68,25 +68,27 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
             className="w-full"
           />
         ) : (
-          displayCards.map((card, index) => {
-            const isTopCard = index === displayCards.length - 1;
-            const cardIndexInWaste = wastePile.length - displayCards.length + index;
+          (drawCount === 1 ? wastePile.slice(-1) : wastePile.slice(-3)).map((card, index, arr) => {
+            const isTopCard = index === arr.length - 1;
+            const cardIndexInWaste = wastePile.length - arr.length + index;
             const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
-            const xOffset = gameState.drawCount === 3 ? index * 20 : 0;
+            const xOffset = drawCount === 3 ? index * 20 : 0;
             
             return (
-              <Card
-                key={`${card.suit}-${card.rank}-${cardIndexInWaste}`}
-                card={card}
-                className="absolute w-full max-w-[96px]"
-                style={{ 
-                  left: `${xOffset}px`,
-                  pointerEvents: isTopCard ? 'auto' : 'none',
-                }}
-                onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
-                onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
-                onClick={() => isTopCard && handleCardClick(card, location)}
-              />
+              <div 
+                key={`${card.suit}-${card.rank}-${cardIndexInWaste}`} 
+                className="absolute w-full"
+                style={{ transform: `translateX(${xOffset}px)`, zIndex: index }}
+              >
+                <Card
+                  card={card}
+                  className="w-full max-w-[96px]"
+                  style={{ pointerEvents: isTopCard ? 'auto' : 'none' }}
+                  onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
+                  onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
+                  onClick={() => isTopCard && handleCardClick(card, location)}
+                />
+              </div>
             );
           })
         )}
