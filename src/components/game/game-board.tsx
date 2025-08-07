@@ -224,7 +224,9 @@ export default function GameBoard() {
     if (history.length > 0) {
       log('GameBoard: handleUndo - History found, undoing move');
       const [lastState, ...rest] = history;
-      setGameState(lastState);
+      // Deep copy the state to ensure React detects the change and re-renders all components.
+      // This is crucial for correctly flipping cards back face-down on undo.
+      setGameState(JSON.parse(JSON.stringify(lastState)));
       setHistory(rest);
       setSelectedCard(null);
     } else {
@@ -410,4 +412,3 @@ export default function GameBoard() {
     </>
   );
 }
- 
