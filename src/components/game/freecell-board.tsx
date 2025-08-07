@@ -60,7 +60,7 @@ const FreecellPiles = ({ gameState, highlightedPile, handleCardClick, handleMous
 );
 
 const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleDrop }: FreecellBoardProps) => (
-   <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="foundation-piles">
+   <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-4 grid grid-cols-4 gap-x-0`}data-testid="foundation-piles">
     {gameState.foundation.map((pile, i) => {
         const location: CardLocation = { type: 'foundation', pileIndex: i, cardIndex: pile.length - 1};
         return (

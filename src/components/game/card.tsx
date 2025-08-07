@@ -33,15 +33,15 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
         data-testid={dataTestId}
         className={cn(
           baseClasses,
-          'bg-muted/60 border-dashed border-muted-foreground/60'
+          'bg-muted/40 border-dashed border-muted-foreground/50'
         )}
       />
     );
   }
 
   if (!card.faceUp) {
-    const modernBack = "bg-[#5f8fb1] [background-image:repeating-linear-gradient(45deg,_#80ADCC,_#80ADCC_1px,_transparent_1px,_transparent_5px)] [background-size:5px_5px]";
-    const dominoBack = "bg-[#9FC756] [background-image:repeating-linear-gradient(45deg,#D6E444,#D6E444_1px,transparent_1px,transparent_5px)]";
+    const modernBack = "light-mode-card-bg";
+    const dominoBack = "dark-mode-card-bg";
 
     return (
       <div

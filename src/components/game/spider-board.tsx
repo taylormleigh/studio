@@ -61,7 +61,7 @@ const StockPile = ({ gameState, handleDraw }: SpiderBoardProps) => (
 );
 
 const FoundationPiles = ({ gameState }: SpiderBoardProps) => (
-  <div className="col-span-8 grid grid-cols-8 gap-x-0" data-testid="foundation-piles">
+  <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-8 grid grid-cols-8 gap-x-0`} data-testid="foundation-piles">
    {Array.from({ length: 8 }).map((_, i) => (
      <div key={`foundation-${i}`} data-testid={`foundation-pile-${i}`}>
        <Card 

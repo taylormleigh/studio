@@ -80,7 +80,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 
 
 const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: SolitaireBoardProps) => (
-    <div className="flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles">
+    <div className={`${gameState.gameType.toLowerCase()}-foundation flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles`}>
       {gameState.foundation.map((pile, i) => {
         const topCard = last(pile);
         const location: CardLocation = {type: 'foundation', pileIndex: i, cardIndex: pile.length-1};

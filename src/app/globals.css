@@ -23,6 +23,8 @@
     --foreground: 240 10% 3.9%; /* #09090b - Black */
     --card: 0 0% 100%; /* White cards */
     --card-foreground: 240 10% 3.9%;
+    --card-bg-color: #5F8FB1;
+    --card-bg-color-accent: #8FC1E4;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     --primary: 240 10% 3.9%;
@@ -49,6 +51,8 @@
     --foreground: 0 0% 98%; /* #fafafa - White */
     --card: 0 0% 100%; /* White cards */
     --card-foreground: 0 0% 13%; /* Dark gray text on cards */
+    --card-bg-color: #9FC756;
+    --card-bg-color-accent: #D6E444;
     --popover: 0 0% 13%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
@@ -98,14 +102,32 @@ html, body, .font-body, .font-headline {
   font-weight: 900;
 }
 
+.bg-card {
+  overflow: hidden;
+}
+.light-mode-card-bg {
+  background: 
+		  radial-gradient(farthest-side at -33.33% 50%,#0000 52%, var(--card-bg-color-accent) 54% 57%,#0000 59%) 0 calc(44px/2),
+		  radial-gradient(farthest-side at 50% 133.33%,#0000 52%,var(--card-bg-color-accent) 54% 57%,#0000 59%) calc(44px/2) 0,
+		  radial-gradient(farthest-side at 133.33% 50%,#0000 52%,var(--card-bg-color-accent) 54% 57%,#0000 59%),
+		  radial-gradient(farthest-side at 50% -33.33%,#0000 52%,var(--card-bg-color-accent) 54% 57%,#0000 59%),
+		  var(--card-bg-color);
+	background-size: calc(44px/4.667) 44px,44px calc(44px/4.667);
+}
+.dark-mode-card-bg {
+  background-image: repeating-conic-gradient(var(--card-bg-color) 0% 25%, var(--card-bg-color-accent) 0% 50%);
+	background-position: -3 5, 10px 10px;
+	background-size: 15px 15px;
+	background-color: var(--card-bg-color);
+}
 .card-border {
   border-width: 1.75px;
   box-shadow: none; /* Removed box shadow for e-ink */
 }
-
 .card-suite-icon-corner {
   font-size: clamp(1.1rem, 0.2vw, 3.5rem) !important;
 }
+
 .solitaire-tableau .card-suite-icon-center {
   font-size: clamp(2.2rem, 5vw, 3rem) !important;
 }
@@ -115,8 +137,10 @@ html, body, .font-body, .font-headline {
 .spider-tableau .card-suite-icon-center {
   font-size: clamp(1.6rem, 5vw, 2rem) !important;
 }
-.bg-card {
-  overflow: hidden;
+.solitaire-foundation [data-testid*="card-foundation-empty"],
+.freecell-foundation [data-testid*="card-foundation-empty"],
+.spider-foundation [data-testid*="card-foundation-empty"] {
+  background-color: rgba(125,125,125,0.3);
 }
 
 
