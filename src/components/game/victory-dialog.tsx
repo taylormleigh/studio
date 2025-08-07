@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
+import { Clock3, Trophy } from 'lucide-react';
 
 const Confetti = () => {
   const confettiCount = 50;
@@ -62,19 +62,13 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                         Game Over
                     </DialogTitle>
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Result</TableHead>
-                                <TableHead className="text-right">Value</TableHead>
-                            </TableRow>
-                        </TableHeader>
                         <TableBody>
                             <TableRow>
                                 <TableCell>Time</TableCell>
                                 <TableCell className="text-right">{formatTime(time)}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell>Moves</TableCell>
+                                <TableCell>Number of Moves</TableCell>
                                 <TableCell className="text-right">{moves}</TableCell>
                             </TableRow>
                             <TableRow>
@@ -83,21 +77,23 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                             </TableRow>
                         </TableBody>
                     </Table>
-                    <Separator className="my-2" />
+                    <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
+                    </svg>
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Personal Best</TableHead>
-                                <TableHead className="text-right">Value</TableHead>
-                            </TableRow>
-                        </TableHeader>
                         <TableBody>
                              <TableRow>
-                                <TableCell>High Score</TableCell>
+                                <TableCell className="flex items-center gap-1">
+                                    <Trophy/>
+                                    High Score
+                                </TableCell>
                                 <TableCell className="text-right">{bestScore === undefined || bestScore === -Infinity ? "N/A" : bestScore}</TableCell>
                             </TableRow>
                             <TableRow>
-                                <TableCell>Lowest Time</TableCell>
+                                <TableCell className="flex items-center gap-1">
+                                    <Clock3/>
+                                    Best Time
+                                </TableCell>
                                 <TableCell className="text-right">{formatTime(bestTime)}</TableCell>
                             </TableRow>
                         </TableBody>
