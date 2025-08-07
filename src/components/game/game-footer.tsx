@@ -5,7 +5,7 @@ import { memo, useState, useEffect } from 'react';
 import { Pointer, Hourglass, Smile } from 'lucide-react';
 import { useSettings } from '@/hooks/use-settings';
 
-const iconStrokeWidth = 1.9;
+const iconStrokeWidth = 2;
 const iconSize = 18;
 
 interface GameFooterProps {
