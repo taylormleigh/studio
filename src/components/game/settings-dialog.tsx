@@ -16,7 +16,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { CardPreview } from './card-preview';
 import { Download, VenetianMask } from 'lucide-react';
-import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import type { GameState } from '@/lib/game-logic';
 import { log } from '@/lib/utils';
@@ -86,11 +85,11 @@ export function SettingsDialog({ open, onOpenChange, showVictoryDialog, loadDebu
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]" data-testid="settings-dialog">
         <DialogHeader>
-          <DialogTitle className="text-xs cursor-pointer" onClick={handleTitleClick}>
+          <DialogTitle className="text-xs" onClick={handleTitleClick}>
             Settings
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-5 py-2">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="left-hand-mode" className="text-right">
                 Layout
@@ -173,13 +172,16 @@ export function SettingsDialog({ open, onOpenChange, showVictoryDialog, loadDebu
 
         {isDevMode && (
           <>
-            <Separator />
-            <div className="grid gap-4 pt-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <VenetianMask className="h-5 w-5" />
-                <h3 className="font-semibold">Developer Options</h3>
+            <hr/>
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2 justify-between text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <VenetianMask className="h-5 w-5" />
+                  <h3>Developer Options</h3>
+                </div>
+                <Button className="m-0 px-4 text-xs" onClick={() => setIsDevMode(false)} variant="outline">X</Button>
               </div>
-              <div className="text-xs text-muted-foreground ml-2">
+              <div className="text-xs text-muted-foreground m-0">
                 Last Build: {process.env.NEXT_PUBLIC_BUILD_TIMESTAMP || 'N/A'}
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -197,14 +199,17 @@ export function SettingsDialog({ open, onOpenChange, showVictoryDialog, loadDebu
                   />
                   <Button onClick={handleLoadDebugState} variant="outline">Load State & Start New Game</Button>
               </div>
-              <Button onClick={() => setIsDevMode(false)} variant="outline">Hide Developer Options</Button>
+             
             </div>
           </>
         )}
 
-        {installable && (
+        {installable && !isDevMode && (
           <>
-            <Separator />
+            <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
+            </svg>
+
             <div className="grid grid-cols-1 pt-4">
               <Button onClick={handleInstallPrompt} variant="outline">
                   <Download className="mr-2 h-4 w-4" />
