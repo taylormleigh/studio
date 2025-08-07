@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, MouseEvent, TouchEvent, memo } from 'react';
-import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
+import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType, handleSolitaireDraw } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
 import { processCardClick, isGameWon, GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
@@ -239,31 +239,15 @@ export default function GameBoard() {
         return;
     }
 
-    const newState = JSON.parse(JSON.stringify(gameState));
+    let newState: GameState;
     
-    if (newState.gameType === 'Solitaire') {
+    if (gameState.gameType === 'Solitaire') {
       log('GameBoard: handleDraw - Solitaire game');
-      const solState = newState as SolitaireGameState;
-      if (solState.stock.length > 0) {
-        log('GameBoard: handleDraw - Drawing from stock');
-        const numToDraw = Math.min(solState.drawCount, solState.stock.length);
-        const drawnCards = [];
-        for (let i = 0; i < numToDraw; i++) {
-          const card = solState.stock.pop()!;
-          card.faceUp = true;
-          drawnCards.push(card);
-        }
-        solState.waste.push(...drawnCards);
-      } else if (solState.waste.length > 0) {
-        log('GameBoard: handleDraw - Recycling waste to stock');
-        solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
-        solState.waste = [];
-      }
-      solState.moves++;
+      newState = handleSolitaireDraw(gameState as SolitaireGameState);
     } 
-    else if (newState.gameType === 'Spider') {
+    else if (gameState.gameType === 'Spider') {
       log('GameBoard: handleDraw - Spider game');
-      const spiderState = newState as SpiderGameState;
+      const spiderState = JSON.parse(JSON.stringify(gameState)) as SpiderGameState;
       if (spiderState.stock.length > 0) {
         const hasEmptyPile = spiderState.tableau.some((pile: CardType[]) => pile.length === 0);
         if (hasEmptyPile) {
@@ -286,6 +270,9 @@ export default function GameBoard() {
           spiderState.moves++;
         }
       }
+      newState = spiderState;
+    } else {
+      newState = gameState;
     }
     updateState(newState);
   }, [gameState, toast, updateState]);

@@ -19,6 +19,7 @@ export interface GameState {
   foundation: Pile[];
   stock: Pile;
   waste: Pile;
+  drawnCards: Card[]; // The 1 or 3 cards currently drawn and visible
   drawCount: 1 | 3;
   score: number;
   moves: number;
@@ -95,10 +96,45 @@ export function createInitialState(drawCount: 1 | 3 = 1): GameState {
     foundation: [[], [], [], []],
     stock: deck,
     waste: [],
+    drawnCards: [],
     drawCount,
     score: 0,
     moves: 0,
   };
+}
+
+/**
+ * Handles the logic for drawing a card from the stock pile in Solitaire.
+ * @param gs The current Solitaire game state.
+ * @returns The new game state after the draw action.
+ */
+export function handleSolitaireDraw(gs: GameState): GameState {
+    log('solitaire.ts: handleSolitaireDraw called');
+    const newState = JSON.parse(JSON.stringify(gs)) as GameState;
+
+    // Move any existing drawn cards to the main waste pile first.
+    if (newState.drawnCards.length > 0) {
+        newState.waste.push(...newState.drawnCards);
+        newState.drawnCards = [];
+    }
+  
+    // Now, handle the draw or recycle action.
+    if (newState.stock.length > 0) {
+      log('solitaire.ts: handleSolitaireDraw - Drawing from stock');
+      const numToDraw = Math.min(newState.drawCount, newState.stock.length);
+      for (let i = 0; i < numToDraw; i++) {
+        const card = newState.stock.pop()!;
+        card.faceUp = true;
+        newState.drawnCards.push(card);
+      }
+    } else if (newState.waste.length > 0) {
+      log('solitaire.ts: handleSolitaireDraw - Recycling waste to stock');
+      newState.stock = newState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
+      newState.waste = [];
+    }
+    
+    newState.moves++;
+    return newState;
 }
 
 /**
@@ -222,7 +258,8 @@ export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCar
         const stack = sourcePile.slice(location.cardIndex);
         cardsToMove = isRun(stack) ? stack : [];
     } else if (location.type === 'waste') {
-        const wasteCard = last(gs.waste);
+        // With drawnCards, the waste pile is now a single source
+        const wasteCard = last(gs.drawnCards);
         cardsToMove = wasteCard ? [wasteCard] : [];
     } else {
         cardsToMove = [];

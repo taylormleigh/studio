@@ -84,8 +84,11 @@ const getCardsToMove = (gs: GameState, src: CardLocation): CardType[] => {
         case 'tableau':    
             // Ensure the pile exists before trying to slice.
             return gs.tableau[src.pileIndex] ? gs.tableau[src.pileIndex].slice(src.cardIndex) : [];
-        case 'waste':      
-            return gs.gameType === 'Solitaire' && (gs as SolitaireGameState).waste.length > 0 ? [last((gs as SolitaireGameState).waste)!] : [];
+        case 'waste': {
+            if (gs.gameType !== 'Solitaire') return [];
+            const solGs = gs as SolitaireGameState;
+            return solGs.drawnCards.length > 0 ? [solGs.drawnCards[src.cardIndex]] : [];
+        }
         case 'foundation': 
             return (gs.gameType === 'Solitaire' || gs.gameType === 'Freecell') && gs.foundation[src.pileIndex].length > 0 ? [last(gs.foundation[src.pileIndex])!] : [];
         case 'freecell':   
@@ -196,7 +199,9 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
                 last(srcPile)!.faceUp = true;
             }
             break;
-        case 'waste':      (newState as SolitaireGameState).waste.pop(); break;
+        case 'waste':      
+            (newState as SolitaireGameState).drawnCards.splice(move.source.cardIndex, 1);
+            break;
         case 'foundation': newState.foundation[move.source.pileIndex].pop(); break;
         case 'freecell':   (newState as FreecellGameState).freecells[move.source.pileIndex] = null; break;
     }
