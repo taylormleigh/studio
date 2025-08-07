@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Clock3, Trophy } from 'lucide-react';
+import { StatisticsTable } from './statistics-table';
 
 const Confetti = () => {
   const confettiCount = 50;
@@ -41,9 +41,10 @@ interface VictoryDialogProps {
     time: number;
     bestScore?: number;
     bestTime?: number;
+    wins?: number;
 }
 
-export default function VictoryDialog({ isOpen, onNewGame, onRestartGame, score, moves, time, bestScore, bestTime }: VictoryDialogProps) {
+export default function VictoryDialog({ isOpen, onNewGame, onRestartGame, score, moves, time, wins, bestScore, bestTime }: VictoryDialogProps) {
     if (!isOpen) return null;
 
     const formatTime = (seconds?: number) => {
@@ -78,27 +79,13 @@ export default function VictoryDialog({ isOpen, onNewGame, onRestartGame, score,
                             </TableRow>
                         </TableBody>
                     </Table>
+
                     <svg viewBox="0 0 1100 100" xmlns="http://www.w3.org/2000/svg">
                         <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
                     </svg>
-                    <Table>
-                        <TableBody>
-                             <TableRow>
-                                <TableCell className="flex items-center gap-1">
-                                    <Trophy/>
-                                    High Score
-                                </TableCell>
-                                <TableCell className="text-right">{bestScore === undefined || bestScore === -Infinity ? "N/A" : bestScore}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell className="flex items-center gap-1">
-                                    <Clock3/>
-                                    Best Time
-                                </TableCell>
-                                <TableCell className="text-right">{formatTime(bestTime)}</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
+
+                    <StatisticsTable wins={wins} highScore={bestScore} bestTime={bestTime} />
+                 
                 </DialogHeader>
                 <DialogFooter className="flex justify-between w-full">
                     <Button onClick={onRestartGame} variant="outline">Play Again</Button>

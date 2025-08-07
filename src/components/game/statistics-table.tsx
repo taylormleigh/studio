@@ -4,13 +4,18 @@
 import { GameStats } from '@/hooks/use-stats';
 import { GameType } from '@/hooks/use-settings';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Crown, Clock3, Trophy } from 'lucide-react';
 
 interface StatisticsTableProps {
-  stats: GameStats;
-  gameType: GameType;
+  wins?: number;
+  highScore?: number;
+  bestTime?: number;
 }
 
-export function StatisticsTable({ stats, gameType }: StatisticsTableProps) {
+const iconStrokeWidth = 2;
+const iconSize = 18;
+
+export function StatisticsTable({ wins, highScore, bestTime }: StatisticsTableProps) {
   const formatTime = (seconds: number) => {
     if (seconds === Infinity || isNaN(seconds)) return "N/A";
     const minutes = Math.floor(seconds / 60);
@@ -23,16 +28,31 @@ export function StatisticsTable({ stats, gameType }: StatisticsTableProps) {
       <Table>
         <TableBody>
           <TableRow>
-            <TableCell>Wins</TableCell>
-            <TableCell className="text-right">{stats.wins}</TableCell>
+            <TableCell className="flex items-center gap-1">
+                <Crown strokeWidth={iconStrokeWidth} size={iconSize} />
+                Wins
+            </TableCell>
+            <TableCell className="text-right">
+              {wins ? wins : "-----"}
+            </TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>High Score</TableCell>
-            <TableCell className="text-right">{stats.bestScore === -Infinity ? "N/A" : stats.bestScore}</TableCell>
+            <TableCell className="flex items-center gap-1">
+              <Trophy strokeWidth={iconStrokeWidth} size={iconSize} />
+              High Score
+            </TableCell>
+            <TableCell className="text-right">
+              {(!highScore || highScore === -Infinity) ? "-----" : highScore}
+            </TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Best Time</TableCell>
-            <TableCell className="text-right">{formatTime(stats.bestTime)}</TableCell>
+            <TableCell className="flex items-center gap-1">
+                <Clock3 strokeWidth={iconStrokeWidth} size={iconSize} />
+                Best Time
+            </TableCell>
+            <TableCell className="text-right">
+              {bestTime ? formatTime(bestTime): "--:--"}
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>

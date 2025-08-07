@@ -137,7 +137,7 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
           <path d="M0,50 C300,0 900,170 1100,60" stroke="currentColor" fill="none" strokeWidth="6"/>
         </svg>
         
-        <StatisticsTable gameType={tempSettings.gameType} stats={selectedGameStats} />
+        <StatisticsTable wins={selectedGameStats.wins} highScore={selectedGameStats.bestScore} bestTime={selectedGameStats.bestTime} />
 
         <div className="flex flex-row justify-end pt-1 opacity-50">
             <a href="https://github.com/taylormleigh/studio/tree/master" target="_blank" rel="noopener noreferrer">

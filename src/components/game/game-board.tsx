@@ -395,6 +395,7 @@ export default function GameBoard() {
         time={gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0}
         bestScore={stats[gameState.gameType]?.bestScore}
         bestTime={stats[gameState.gameType]?.bestTime}
+        wins={stats[gameState.gameType]?.wins}
       />
 
       <SettingsDialog 
