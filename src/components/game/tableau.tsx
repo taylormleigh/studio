@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, type MouseEvent, type TouchEvent } from 'react';
+import { useMemo, type MouseEvent, type TouchEvent, memo } from 'react';
 import type { Card as CardType } from '@/lib/solitaire';
 import { isRun as isFreecellRun, getMovableCardCount } from '@/lib/freecell';
 import { isRun as isSolitaireRun } from '@/lib/solitaire';
@@ -21,7 +21,7 @@ interface TableauProps {
   handleDrop: (location: CardLocation) => void;
 }
 
-export default function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
+function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
   console.log("tableau.tsx: Tableau component rendered");
   const getCardYOffset = (pile: CardType[], cardIndex: number) => {
     if (gameState.gameType === 'Spider') {
@@ -133,3 +133,5 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
     </div>
   );
 }
+
+export default memo(Tableau);
