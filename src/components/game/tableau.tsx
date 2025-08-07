@@ -22,7 +22,7 @@ interface TableauProps {
 }
 
 function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
-  console.log("tableau.tsx: Tableau component rendered");
+  console.log(`[${new Date().toISOString()}] tableau.tsx: Tableau component rendered`);
   const getCardYOffset = (pile: CardType[], cardIndex: number) => {
     if (gameState.gameType === 'Spider') {
         return pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 26 : 10), 0)
@@ -34,7 +34,7 @@ function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handle
   }
 
   const isCardDraggable = useMemo(() => {
-    console.log("tableau.tsx: Recalculating isCardDraggable map");
+    console.log(`[${new Date().toISOString()}] tableau.tsx: Recalculating isCardDraggable map`);
     const draggableMap = new Map<string, boolean>();
 
     gameState.tableau.forEach((pile, pileIndex) => {
@@ -115,9 +115,9 @@ function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handle
                         onMouseUp={() => handleDrop(location)}
                         onTouchEnd={() => handleDrop(location)}
                         onClick={(e) => {
-                            console.log("tableau.tsx: Card clicked");
+                            console.log(`[${new Date().toISOString()}] tableau.tsx: Card clicked`);
                             if (card.faceUp) {
-                              console.log("tableau.tsx: conditional - card is face up");
+                              console.log(`[${new Date().toISOString()}] tableau.tsx: conditional - card is face up`);
                             }
                             e.stopPropagation();
                             handleCardClick(card, location);

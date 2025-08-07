@@ -69,7 +69,7 @@ const GameUI = memo(({
   setIsSettingsOpen,
   setIsGameMenuOpen
 }: GameUIProps) => {
-  console.log("GameUI: render");
+  console.log(`[${new Date().toISOString()}] GameUI: render`);
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
   ? 'md:max-w-[480px]' 
   : (gameState.gameType === 'Freecell' ? 'md:max-w-[480px]' : 'md:max-w-[480px]');
@@ -133,37 +133,37 @@ export default function GameBoard() {
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
 
   useEffect(() => {
-    console.log("GameBoard: useEffect - Setting isClient to true");
+    console.log(`[${new Date().toISOString()}] GameBoard: useEffect - Setting isClient to true`);
     setIsClient(true);
   }, []);
   
   
   const handleNewGame = useCallback(() => {
-    console.log("GameBoard: handleNewGame called");
+    console.log(`[${new Date().toISOString()}] GameBoard: handleNewGame called`);
     let newState: GameState;
     const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
     if (debugStateJSON) {
-        console.log("GameBoard: handleNewGame - Found debug state in localStorage");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleNewGame - Found debug state in localStorage`);
         try {
             const parsedDebugState = JSON.parse(debugStateJSON);
             if (parsedDebugState.gameType === settings.gameType) {
-              console.log("GameBoard: handleNewGame - Using debug state for new game");
+              console.log(`[${new Date().toISOString()}] GameBoard: handleNewGame - Using debug state for new game`);
               newState = parsedDebugState;
               localStorage.removeItem('deck-of-cards-debug-state'); 
             } else {
-              console.log("GameBoard: handleNewGame - Debug state is for a different game, creating new state");
+              console.log(`[${new Date().toISOString()}] GameBoard: handleNewGame - Debug state is for a different game, creating new state`);
               if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
               else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
               else newState = createSpiderInitialState(settings.spiderSuits);
             }
         } catch (e) {
-            console.error("GameBoard: handleNewGame - Failed to parse debug state:", e);
+            console.error(`[${new Date().toISOString()}] GameBoard: handleNewGame - Failed to parse debug state:`, e);
             if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
             else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
             else newState = createSpiderInitialState(settings.spiderSuits);
         }
     } else {
-        console.log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
+        console.log(`[${new Date().toISOString()}] GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
         if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
         else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
         else newState = createSpiderInitialState(settings.spiderSuits);
@@ -179,23 +179,23 @@ export default function GameBoard() {
   
   useEffect(() => {
     if (isClient) {
-      console.log("GameBoard: useEffect[isClient, handleNewGame] - Calling handleNewGame");
+      console.log(`[${new Date().toISOString()}] GameBoard: useEffect[isClient, handleNewGame] - Calling handleNewGame`);
       handleNewGame();
     }
   }, [isClient, handleNewGame]);
 
   useEffect(() => {
     if (highlightedPile) {
-      console.log("GameBoard: useEffect[highlightedPile] - Setting timer to clear highlight");
+      console.log(`[${new Date().toISOString()}] GameBoard: useEffect[highlightedPile] - Setting timer to clear highlight`);
       const timer = setTimeout(() => setHighlightedPile(null), 500);
       return () => clearTimeout(timer);
     }
   }, [highlightedPile]);
   
   const checkWinCondition = useCallback((state: GameState) => {
-    console.log("GameBoard: checkWinCondition called");
+    console.log(`[${new Date().toISOString()}] GameBoard: checkWinCondition called`);
     if (isGameWon(state)) {
-      console.log("GameBoard: checkWinCondition - Game is won");
+      console.log(`[${new Date().toISOString()}] GameBoard: checkWinCondition - Game is won`);
       const endTime = Date.now();
       const timeTaken = gameStartTime ? Math.round((endTime - gameStartTime) / 1000) : 0;
       setIsWon(true);
@@ -208,9 +208,9 @@ export default function GameBoard() {
 
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    console.log(`GameBoard: updateState called. saveHistory: ${saveHistory}`);
+    console.log(`[${new Date().toISOString()}] GameBoard: updateState called. saveHistory: ${saveHistory}`);
     if (saveHistory && gameState) {
-      console.log("GameBoard: updateState - Saving current state to history");
+      console.log(`[${new Date().toISOString()}] GameBoard: updateState - Saving current state to history`);
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
     }
     setGameState(newState);
@@ -219,33 +219,33 @@ export default function GameBoard() {
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
-    console.log("GameBoard: handleUndo called");
+    console.log(`[${new Date().toISOString()}] GameBoard: handleUndo called`);
     if (history.length > 0) {
-      console.log("GameBoard: handleUndo - History found, undoing move");
+      console.log(`[${new Date().toISOString()}] GameBoard: handleUndo - History found, undoing move`);
       const [lastState, ...rest] = history;
       setGameState(lastState);
       setHistory(rest);
       setSelectedCard(null);
     } else {
-      console.log("GameBoard: handleUndo - No history, cannot undo");
+      console.log(`[${new Date().toISOString()}] GameBoard: handleUndo - No history, cannot undo`);
     }
   }, [history]);
   
   const handleDraw = useCallback(() => {
-    console.log("GameBoard: handleDraw called");
+    console.log(`[${new Date().toISOString()}] GameBoard: handleDraw called`);
     setSelectedCard(null);
     if (!gameState) {
-        console.log("GameBoard: handleDraw - No game state, returning");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - No game state, returning`);
         return;
     }
 
     const newState = { ...gameState };
     
     if (newState.gameType === 'Solitaire') {
-      console.log("GameBoard: handleDraw - Solitaire game");
+      console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Solitaire game`);
       const solState = newState as SolitaireGameState;
       if (solState.stock.length > 0) {
-        console.log("GameBoard: handleDraw - Drawing from stock");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Drawing from stock`);
         const numToDraw = Math.min(solState.drawCount, solState.stock.length);
         const drawnCards = [];
         for (let i = 0; i < numToDraw; i++) {
@@ -255,19 +255,19 @@ export default function GameBoard() {
         }
         solState.waste.push(...drawnCards.reverse());
       } else if (solState.waste.length > 0) {
-        console.log("GameBoard: handleDraw - Recycling waste to stock");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Recycling waste to stock`);
         solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
         solState.waste = [];
       }
       solState.moves++;
     } 
     else if (newState.gameType === 'Spider') {
-      console.log("GameBoard: handleDraw - Spider game");
+      console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Spider game`);
       const spiderState = newState as SpiderGameState;
       if (spiderState.stock.length > 0) {
         const hasEmptyPile = spiderState.tableau.some((pile: CardType[]) => pile.length === 0);
         if (hasEmptyPile) {
-            console.log("GameBoard: handleDraw - Cannot deal with empty tableau pile");
+            console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Cannot deal with empty tableau pile`);
             toast({
                 variant: "destructive",
                 title: "Invalid Move",
@@ -277,7 +277,7 @@ export default function GameBoard() {
         }
         const dealCount = spiderState.tableau.length;
         if(spiderState.stock.length >= dealCount) {
-          console.log("GameBoard: handleDraw - Dealing cards to tableau");
+          console.log(`[${new Date().toISOString()}] GameBoard: handleDraw - Dealing cards to tableau`);
           for(let i = 0; i < dealCount; i++) {
             const card = spiderState.stock.pop()!;
             card.faceUp = true;
@@ -291,9 +291,9 @@ export default function GameBoard() {
   }, [gameState, toast, updateState]);
 
   const handleCardClick = useCallback((card: CardType | undefined, location: CardLocation) => {
-    console.log("GameBoard: handleCardClick called", { card, location });
+    console.log(`[${new Date().toISOString()}] GameBoard: handleCardClick called`, { card, location });
     if (!gameState) {
-        console.log("GameBoard: handleCardClick - No game state, returning");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleCardClick - No game state, returning`);
         return;
     }
   
@@ -307,7 +307,7 @@ export default function GameBoard() {
     });
 
     if (result.newState) {
-        console.log("GameBoard: handleCardClick - Updating state");
+        console.log(`[${new Date().toISOString()}] GameBoard: handleCardClick - Updating state`);
         updateState(result.newState, result.saveHistory);
     }
 
@@ -316,7 +316,7 @@ export default function GameBoard() {
   }, [gameState, selectedCard, settings, toast, updateState]);
     
   const handleMouseDown = useCallback((e: MouseEvent, card: CardType, location: CardLocation) => {
-    console.log("GameBoard: handleMouseDown called", { card, location });
+    console.log(`[${new Date().toISOString()}] GameBoard: handleMouseDown called`, { card, location });
     e.stopPropagation();
     if (!gameState) return;
     const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
@@ -324,7 +324,7 @@ export default function GameBoard() {
 }, [gameState, settings, toast]);
 
   const handleTouchStart = useCallback((e: TouchEvent, card: CardType, location: CardLocation) => {
-    console.log("GameBoard: handleTouchStart called", { card, location });
+    console.log(`[${new Date().toISOString()}] GameBoard: handleTouchStart called`, { card, location });
       e.stopPropagation();
       if (!gameState) return;
       const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
@@ -332,7 +332,7 @@ export default function GameBoard() {
   }, [gameState, settings, toast]);
 
   const handleDrop = useCallback((location: CardLocation) => {
-    console.log("GameBoard: handleDrop called", { location });
+    console.log(`[${new Date().toISOString()}] GameBoard: handleDrop called`, { location });
       if (!selectedCard) return;
       handleCardClick(undefined, location);
   }, [selectedCard, handleCardClick]);

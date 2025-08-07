@@ -44,7 +44,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         }));
       }
     } catch (error) {
-      console.error("Could not load stats from localStorage", error);
+      console.error(`[${new Date().toISOString()}] Could not load stats from localStorage`, error);
     }
   }, []);
 
@@ -63,7 +63,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem('deck-of-cards-stats', JSON.stringify(updatedStats));
       } catch (error) {
-        console.error("Could not save stats to localStorage", error);
+        console.error(`[${new Date().toISOString()}] Could not save stats to localStorage`, error);
       }
       return updatedStats;
     });
@@ -75,7 +75,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         try {
             localStorage.setItem('deck-of-cards-stats', JSON.stringify(updatedStats));
         } catch (error) {
-            console.error("Could not save stats to localStorage", error);
+            console.error(`[${new Date().toISOString()}] Could not save stats to localStorage`, error);
         }
         return updatedStats;
     });

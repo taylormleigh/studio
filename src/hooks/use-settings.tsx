@@ -76,7 +76,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
 
     } catch (error) {
-      console.error("Could not load settings from localStorage", error);
+      console.error(`[${new Date().toISOString()}] Could not load settings from localStorage`, error);
     }
   }, []);
 
@@ -122,7 +122,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem('deck-of-cards-settings', JSON.stringify(settings));
     } catch (error) {
-      console.error("Could not save settings to localStorage", error);
+      console.error(`[${new Date().toISOString()}] Could not save settings to localStorage`, error);
     }
   }, [settings]);
 
@@ -131,9 +131,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+        console.log(`[${new Date().toISOString()}] User accepted the install prompt`);
       } else {
-        console.log('User dismissed the install prompt');
+        console.log(`[${new Date().toISOString()}] User dismissed the install prompt`);
       }
       setDeferredPrompt(null);
       setInstallable(false);
