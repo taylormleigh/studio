@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, MouseEvent, TouchEvent } from 'react';
+import { useState, useEffect, useCallback, MouseEvent, TouchEvent, memo } from 'react';
 import { GameState as SolitaireGameState, createInitialState as createSolitaireInitialState, Card as CardType } from '@/lib/solitaire';
 import { GameState as FreecellGameState, createInitialState as createFreecellInitialState } from '@/lib/freecell';
 import { GameState as SpiderGameState, createInitialState as createSpiderInitialState } from '@/lib/spider';
@@ -31,6 +31,92 @@ export type HighlightedPile = {
 
 const UNDO_LIMIT = 100;
 
+
+// ================================================================================================
+// GameUI Component
+// This component is memoized to prevent re-renders caused by the timer in the footer.
+// ================================================================================================
+interface GameUIProps {
+  gameState: GameState;
+  isWon: boolean;
+  selectedCard: LocatedCard | null;
+  highlightedPile: HighlightedPile | null;
+  historyLength: number;
+  handleNewGame: () => void;
+  handleUndo: () => void;
+  handleDraw: () => void;
+  handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
+  handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
+  handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
+  handleDrop: (location: CardLocation) => void;
+  setIsSettingsOpen: (isOpen: boolean) => void;
+  setIsGameMenuOpen: (isOpen: boolean) => void;
+}
+
+const GameUI = memo(({
+  gameState,
+  isWon,
+  selectedCard,
+  highlightedPile,
+  historyLength,
+  handleNewGame,
+  handleUndo,
+  handleDraw,
+  handleCardClick,
+  handleMouseDown,
+  handleTouchStart,
+  handleDrop,
+  setIsSettingsOpen,
+  setIsGameMenuOpen
+}: GameUIProps) => {
+  console.log("GameUI: render");
+  const mainContainerMaxWidth = gameState.gameType === 'Spider' 
+  ? 'md:max-w-[480px]' 
+  : (gameState.gameType === 'Freecell' ? 'md:max-w-[480px]' : 'md:max-w-[480px]');
+
+  const boardProps = {
+    gameState: gameState as any,
+    selectedCard,
+    highlightedPile,
+    handleCardClick,
+    handleMouseDown,
+    handleTouchStart,
+    handleDrop,
+    handleDraw
+  };
+
+  return (
+    <div 
+      className="flex flex-col min-h-screen"
+      data-testid="game-board"
+    >
+      <GameHeader 
+        onNewGame={handleNewGame} 
+        onSettings={() => setIsSettingsOpen(true)}
+        onGameMenuOpen={() => setIsGameMenuOpen(true)}
+      />
+      <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
+        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
+        {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
+        {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
+      </main>
+
+      <UndoButton onUndo={handleUndo} canUndo={historyLength > 0} />
+      
+      <GameFooter 
+        moves={gameState.moves}
+        isWon={isWon}
+        score={isWon ? gameState.score : undefined}
+      />
+    </div>
+  );
+});
+GameUI.displayName = 'GameUI';
+
+
+// ================================================================================================
+// GameBoard Component (Main State Controller)
+// ================================================================================================
 export default function GameBoard() {
   const { settings } = useSettings();
   const { toast } = useToast();
@@ -38,9 +124,8 @@ export default function GameBoard() {
   
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
-  const [time, setTime] = useState(0);
+  const [gameStartTime, setGameStartTime] = useState<number | null>(null);
   const [isWon, setIsWon] = useState(false);
-  const [isRunning, setIsRunning] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -86,8 +171,7 @@ export default function GameBoard() {
 
     setGameState(newState);
     setHistory([]);
-    setTime(0);
-    setIsRunning(true);
+    setGameStartTime(Date.now());
     setIsWon(false);
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
@@ -108,29 +192,19 @@ export default function GameBoard() {
     }
   }, [highlightedPile]);
   
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning && !isWon && gameState && isClient) {
-      console.log("GameBoard: useEffect[isRunning, isWon, gameState, isClient] - Starting timer");
-      interval = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, isWon, gameState, isClient]);
-
   const checkWinCondition = useCallback((state: GameState) => {
     console.log("GameBoard: checkWinCondition called");
     if (isGameWon(state)) {
       console.log("GameBoard: checkWinCondition - Game is won");
-      setIsRunning(false);
+      const endTime = Date.now();
+      const timeTaken = gameStartTime ? Math.round((endTime - gameStartTime) / 1000) : 0;
       setIsWon(true);
       updateStats({
         gameType: state.gameType,
-        stats: { wins: 1, bestScore: state.score, bestTime: time }
+        stats: { wins: 1, bestScore: state.score, bestTime: timeTaken }
       });
     }
-  }, [time, updateStats]);
+  }, [gameStartTime, updateStats]);
 
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
@@ -139,8 +213,9 @@ export default function GameBoard() {
       console.log("GameBoard: updateState - Saving current state to history");
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
     }
-    checkWinCondition(newState);
     setGameState(newState);
+    // Check win condition after state update
+    checkWinCondition(newState);
   }, [gameState, checkWinCondition]);
 
   const handleUndo = useCallback(() => {
@@ -291,44 +366,24 @@ export default function GameBoard() {
   if (!isClient || !gameState) {
     return renderLoader();
   }
-  
-  const mainContainerMaxWidth = gameState.gameType === 'Spider' 
-  ? 'md:max-w-[480px]' 
-  : (gameState.gameType === 'Freecell' ? 'md:max-w-[480px]' : 'md:max-w-[480px]');
-
-  const boardProps = {
-    gameState: gameState as any,
-    selectedCard,
-    highlightedPile,
-    handleCardClick,
-    handleMouseDown,
-    handleTouchStart,
-    handleDrop,
-    handleDraw
-  };
 
   return (
-    <div 
-      className="flex flex-col min-h-screen"
-      data-testid="game-board"
-    >
-      <GameHeader 
-        onNewGame={handleNewGame} 
-        onSettings={() => setIsSettingsOpen(true)}
-        onGameMenuOpen={() => setIsGameMenuOpen(true)}
-      />
-      <main className={cn("flex-grow p-2 w-full md:mx-auto", mainContainerMaxWidth)}>
-        {gameState.gameType === 'Solitaire' && <SolitaireBoard {...boardProps} />}
-        {gameState.gameType === 'Freecell' && <FreecellBoard {...boardProps} />}
-        {gameState.gameType === 'Spider' && <SpiderBoard {...boardProps} />}
-      </main>
-
-      <UndoButton onUndo={handleUndo} canUndo={history.length > 0} />
-      
-      <GameFooter 
-        moves={gameState.moves}
-        time={time}
-        score={isWon ? gameState.score : undefined}
+    <>
+      <GameUI
+        gameState={gameState}
+        isWon={isWon}
+        selectedCard={selectedCard}
+        highlightedPile={highlightedPile}
+        historyLength={history.length}
+        handleNewGame={handleNewGame}
+        handleUndo={handleUndo}
+        handleDraw={handleDraw}
+        handleCardClick={handleCardClick}
+        handleMouseDown={handleMouseDown}
+        handleTouchStart={handleTouchStart}
+        handleDrop={handleDrop}
+        setIsSettingsOpen={setIsSettingsOpen}
+        setIsGameMenuOpen={setIsGameMenuOpen}
       />
 
       <VictoryDialog
@@ -336,7 +391,7 @@ export default function GameBoard() {
         onNewGame={handleNewGame}
         score={gameState.score}
         moves={gameState.moves}
-        time={time}
+        time={gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0}
         bestScore={stats[gameState.gameType]?.bestScore}
         bestTime={stats[gameState.gameType]?.bestTime}
       />
@@ -351,6 +406,6 @@ export default function GameBoard() {
         onOpenChange={setIsGameMenuOpen}
         onNewGame={handleNewGame}
       />
-    </div>
+    </>
   );
 }

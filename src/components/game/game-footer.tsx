@@ -1,7 +1,7 @@
 
 "use client";
 
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Pointer, Hourglass, Smile } from 'lucide-react';
 import { useSettings } from '@/hooks/use-settings';
 
@@ -10,12 +10,27 @@ const iconSize = 18;
 
 interface GameFooterProps {
   moves: number;
-  time: number;
   score?: number;
+  isWon: boolean;
 }
 
-function GameFooter({ moves, time, score }: GameFooterProps) {
+function GameFooter({ moves, score, isWon }: GameFooterProps) {
   const { settings } = useSettings();
+  const [time, setTime] = useState(0);
+
+  // Timer logic moved here
+  useEffect(() => {
+    setTime(0); // Reset timer on new game (when footer re-mounts or isWon changes)
+    const interval = setInterval(() => {
+      if (!isWon) {
+        setTime(prevTime => prevTime + 1);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isWon]); // Dependency on isWon ensures timer stops/resets correctly
+
+
   const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);
   const displayTime = settings.animationMode === 'limited' ? "00:00" : formatTime(time);
 
