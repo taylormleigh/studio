@@ -43,7 +43,6 @@ interface GameUIProps {
   highlightedPile: HighlightedPile | null;
   historyLength: number;
   gameStartTime: number | null;
-  wasteTurn: number;
   handleNewGame: () => void;
   handleRestartGame: () => void;
   handleUndo: () => void;
@@ -63,7 +62,6 @@ const GameUI = memo(({
   highlightedPile,
   historyLength,
   gameStartTime,
-  wasteTurn,
   handleNewGame,
   handleRestartGame,
   handleUndo,
@@ -89,7 +87,6 @@ const GameUI = memo(({
     handleTouchStart,
     handleDrop,
     handleDraw,
-    wasteTurn
   };
 
   return (
@@ -141,7 +138,6 @@ export default function GameBoard() {
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<LocatedCard | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
-  const [wasteTurn, setWasteTurn] = useState<number>(0);
 
   useEffect(() => {
     log('GameBoard: useEffect - Setting isClient to true');
@@ -164,7 +160,6 @@ export default function GameBoard() {
     setGameStartTime(Date.now());
     setIsWon(false);
     setSelectedCard(null);
-    setWasteTurn(0);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
 
   const handleRestartGame = useCallback(() => {
@@ -176,7 +171,6 @@ export default function GameBoard() {
         setGameStartTime(Date.now());
         setIsWon(false);
         setSelectedCard(null);
-        setWasteTurn(0);
     } else {
         log('GameBoard: handleRestartGame - No initial state, starting new game');
         handleNewGame();
@@ -264,7 +258,6 @@ export default function GameBoard() {
         log('GameBoard: handleDraw - Recycling waste to stock');
         solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
         solState.waste = [];
-        setWasteTurn(t => t + 1);
       }
       solState.moves++;
     } 
@@ -381,7 +374,6 @@ export default function GameBoard() {
         highlightedPile={highlightedPile}
         historyLength={history.length}
         gameStartTime={gameStartTime}
-        wasteTurn={wasteTurn}
         handleNewGame={handleNewGame}
         handleRestartGame={handleRestartGame}
         handleUndo={handleUndo}

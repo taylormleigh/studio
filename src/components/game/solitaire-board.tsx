@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { MouseEvent, TouchEvent } from 'react';
+import { useState, useEffect, useRef, type MouseEvent, type TouchEvent } from 'react';
 import type { GameState as SolitaireGameState } from '@/lib/solitaire';
 import { last, Card as CardType } from '@/lib/solitaire';
 import { Card } from './card';
@@ -9,12 +9,12 @@ import type { HighlightedPile } from './game-board';
 import { useSettings } from '@/hooks/use-settings';
 import Tableau from './tableau';
 import { LocatedCard, CardLocation } from '@/lib/game-logic';
+import { log } from '@/lib/utils';
 
 interface SolitaireBoardProps {
   gameState: SolitaireGameState;
   selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
-  wasteTurn: number;
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
   handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
   handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
@@ -47,9 +47,26 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
   );
 }
 
-const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick, wasteTurn }: SolitaireBoardProps) => {
+const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
+  const [wasteTurn, setWasteTurn] = useState(0);
+  const prevStockLengthRef = useRef(gameState.stock.length);
+
+  // Logic to track when the stock is recycled to correctly display the 3-card draw waste pile
+  useEffect(() => {
+    if (gameState.stock.length > prevStockLengthRef.current && prevStockLengthRef.current === 0) {
+      log('solitaire-board.tsx: Stock recycled, incrementing wasteTurn');
+      setWasteTurn(t => t + 1);
+    }
+    prevStockLengthRef.current = gameState.stock.length;
+  }, [gameState.stock.length]);
   
+  // Reset turn counter on a new game
+  useEffect(() => {
+      log('solitaire-board.tsx: New game detected, resetting wasteTurn');
+      setWasteTurn(0);
+  }, [gameState.moves, gameState.waste.length, gameState.stock.length]);
+
   const Stock = () => (
     <div className="cursor-pointer col-span-1" data-testid="stock-pile">
         <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" className="w-full max-w-[96px]" />
@@ -58,9 +75,12 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 
   const Waste = () => {
     const { waste, drawCount } = gameState;
+    
+    // For 3-card draw, show the current "turn" of 3 cards.
+    // For 1-card draw, just show the top card.
     const cardsToShow = drawCount === 1 
       ? waste.slice(-1) 
-      : waste.slice(Math.max(0, waste.length - (wasteTurn * drawCount) % waste.length - 3), waste.length - (wasteTurn * drawCount) % waste.length);
+      : waste.slice(Math.max(0, waste.length - 3), waste.length);
 
     return (
       <div data-testid="waste-pile" className="solitaire-waste-pile col-span-1 w-full max-w-[96px] h-full relative">
