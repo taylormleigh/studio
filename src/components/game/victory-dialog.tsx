@@ -34,6 +34,7 @@ const Confetti = () => {
 
 interface VictoryDialogProps {
     isOpen: boolean;
+    onClose: () => void;
     onNewGame: () => void;
     score: number;
     moves: number;
@@ -42,8 +43,7 @@ interface VictoryDialogProps {
     bestTime?: number;
 }
 
-export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, bestScore, bestTime }: VictoryDialogProps) {
-    if (!isOpen) return null;
+export default function VictoryDialog({ isOpen, onClose, onNewGame, score, moves, time, bestScore, bestTime }: VictoryDialogProps) {
 
     const formatTime = (seconds?: number) => {
         if (seconds === undefined || seconds === Infinity || isNaN(seconds)) return "N/A";
@@ -53,8 +53,13 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
         return `${minutes}:${secs}`;
     };
 
+    const handlePlayAgain = () => {
+      onNewGame();
+      onClose();
+    }
+
     return (
-        <Dialog open={isOpen} >
+        <Dialog open={isOpen} onOpenChange={onClose} >
             <DialogContent data-testid="victory-dialog">
                 <Confetti />
                 <DialogHeader>
@@ -104,7 +109,7 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
                     </Table>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button onClick={onNewGame}>Play Again</Button>
+                    <Button onClick={handlePlayAgain}>Play Again</Button>
                 </DialogFooter>
             </DialogContent>
       </Dialog>

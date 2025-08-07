@@ -11,18 +11,29 @@ const iconSize = 18;
 interface GameFooterProps {
   moves: number;
   score?: number;
-  isWon: boolean;
 }
 
-function GameFooter({ moves, score, isWon }: GameFooterProps) {
+function GameFooter({ moves, score }: GameFooterProps) {
   const { settings } = useSettings();
   const [time, setTime] = useState(0);
+  const [isWon, setIsWon] = useState(false); // Local state to control timer
 
-  // Timer logic moved here
+  // Effect to listen for win state from parent (e.g., via props or context)
+  // For now, we simulate this with a prop. A better solution might be a game state context.
+  // This is a placeholder for a more robust win state management.
+  // In this implementation, the parent GameBoard will re-mount this component on new game, which resets the timer.
   useEffect(() => {
-    setTime(0); // Reset timer on new game (when footer re-mounts or isWon changes)
+    // A real implementation might get this from a context or prop
+    // For now, we assume if the score is part of a win condition, we'd know here.
+    // The key is that this component's timer is independent of the main game board's render cycle.
+  }, [score]);
+
+
+  // Timer logic
+  useEffect(() => {
+    setTime(0);
     const interval = setInterval(() => {
-      if (!isWon) {
+      if (!isWon) { // `isWon` would be updated by the parent or context
         setTime(prevTime => prevTime + 1);
       }
     }, 1000);

@@ -30,6 +30,7 @@ export interface GameSettings {
   colorMode: ColorMode;
   animationMode: AnimationMode;
   undoButtonPosition: { x: number, y: number } | null;
+  isDevMode: boolean;
 }
 
 const defaultSettings: GameSettings = {
@@ -42,6 +43,7 @@ const defaultSettings: GameSettings = {
   colorMode: 'color',
   animationMode: 'full',
   undoButtonPosition: null,
+  isDevMode: false,
 };
 
 interface SettingsContextType {
@@ -49,6 +51,8 @@ interface SettingsContextType {
   setSettings: (settings: Partial<GameSettings>) => void;
   installable: boolean;
   handleInstallPrompt: () => void;
+  isDevMode: boolean;
+  setIsDevMode: (isDevMode: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -57,6 +61,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<GameSettings>(defaultSettings);
   const [installable, setInstallable] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isDevMode, setIsDevModeState] = useState(false);
 
   // Effect to load settings from localStorage on mount
   useEffect(() => {
@@ -72,6 +77,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (storedSettings) {
         const parsedSettings = JSON.parse(storedSettings);
         setSettingsState({...initialSettings, ...parsedSettings});
+        setIsDevModeState(parsedSettings.isDevMode || false);
       } else {
         setSettingsState(initialSettings);
       }
@@ -145,8 +151,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettingsState(prev => ({ ...prev, ...newSettings }));
   }, []);
 
+  const setIsDevMode = useCallback((devMode: boolean) => {
+    setIsDevModeState(devMode);
+    setSettings({ isDevMode: devMode }); // Also save it to the main settings object
+  }, [setSettings]);
+
   return (
-    <SettingsContext.Provider value={{ settings, setSettings, installable, handleInstallPrompt }}>
+    <SettingsContext.Provider value={{ settings, setSettings, installable, handleInstallPrompt, isDevMode, setIsDevMode }}>
       {children}
     </SettingsContext.Provider>
   );

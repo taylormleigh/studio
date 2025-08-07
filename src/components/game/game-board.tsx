@@ -39,7 +39,6 @@ const UNDO_LIMIT = 100;
 // ================================================================================================
 interface GameUIProps {
   gameState: GameState;
-  isWon: boolean;
   selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
   historyLength: number;
@@ -56,7 +55,6 @@ interface GameUIProps {
 
 const GameUI = memo(({
   gameState,
-  isWon,
   selectedCard,
   highlightedPile,
   historyLength,
@@ -106,8 +104,7 @@ const GameUI = memo(({
       
       <GameFooter 
         moves={gameState.moves}
-        isWon={isWon}
-        score={isWon ? gameState.score : undefined}
+        score={gameState.score}
       />
     </div>
   );
@@ -129,6 +126,7 @@ export default function GameBoard() {
   const [isWon, setIsWon] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
+  const [isVictoryDialogOpen, setIsVictoryDialogOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<LocatedCard | null>(null);
   const [highlightedPile, setHighlightedPile] = useState<HighlightedPile | null>(null);
@@ -139,41 +137,49 @@ export default function GameBoard() {
   }, []);
   
   
-  const handleNewGame = useCallback(() => {
-    log('GameBoard: handleNewGame called');
+  const handleNewGame = useCallback((debugState?: GameState) => {
+    log('GameBoard: handleNewGame called', { hasDebugState: !!debugState });
     let newState: GameState;
-    const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
-    if (debugStateJSON) {
-        log('GameBoard: handleNewGame - Found debug state in localStorage');
-        try {
-            const parsedDebugState = JSON.parse(debugStateJSON);
-            if (parsedDebugState.gameType === settings.gameType) {
-              log('GameBoard: handleNewGame - Using debug state for new game');
-              newState = parsedDebugState;
-              localStorage.removeItem('deck-of-cards-debug-state'); 
-            } else {
-              log('GameBoard: handleNewGame - Debug state is for a different game, creating new state');
-              if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-              else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-              else newState = createSpiderInitialState(settings.spiderSuits);
+
+    if (debugState) {
+        log('GameBoard: handleNewGame - Using provided debug state');
+        newState = debugState;
+    } else {
+        const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
+        if (debugStateJSON) {
+            log('GameBoard: handleNewGame - Found debug state in localStorage');
+            try {
+                const parsedDebugState = JSON.parse(debugStateJSON);
+                // Ensure the debug state is for the currently selected game type in settings
+                if (parsedDebugState.gameType === settings.gameType) {
+                    log('GameBoard: handleNewGame - Using debug state for new game');
+                    newState = parsedDebugState;
+                    localStorage.removeItem('deck-of-cards-debug-state');
+                } else {
+                    log('GameBoard: handleNewGame - Debug state is for a different game, creating new state');
+                    if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+                    else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+                    else newState = createSpiderInitialState(settings.spiderSuits);
+                }
+            } catch (e) {
+                log('GameBoard: handleNewGame - Failed to parse debug state:', e);
+                if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+                else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+                else newState = createSpiderInitialState(settings.spiderSuits);
             }
-        } catch (e) {
-            log('GameBoard: handleNewGame - Failed to parse debug state:', e);
+        } else {
+            log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
             if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
             else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
             else newState = createSpiderInitialState(settings.spiderSuits);
         }
-    } else {
-        log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
-        if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-        else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-        else newState = createSpiderInitialState(settings.spiderSuits);
     }
 
     setGameState(newState);
     setHistory([]);
     setGameStartTime(Date.now());
     setIsWon(false);
+    setIsVictoryDialogOpen(false);
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
   
@@ -200,6 +206,7 @@ export default function GameBoard() {
       const endTime = Date.now();
       const timeTaken = gameStartTime ? Math.round((endTime - gameStartTime) / 1000) : 0;
       setIsWon(true);
+      setIsVictoryDialogOpen(true);
       updateStats({
         gameType: state.gameType,
         stats: { wins: 1, bestScore: state.score, bestTime: timeTaken }
@@ -209,7 +216,7 @@ export default function GameBoard() {
 
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    log('GameBoard: updateState called.', { saveHistory });
+    log('GameBoard: updateState called', { saveHistory });
     if (saveHistory && gameState) {
       log('GameBoard: updateState - Saving current state to history');
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
@@ -224,8 +231,6 @@ export default function GameBoard() {
     if (history.length > 0) {
       log('GameBoard: handleUndo - History found, undoing move');
       const [lastState, ...rest] = history;
-      // Deep copy the state to ensure React detects the change and re-renders all components.
-      // This is crucial for correctly flipping cards back face-down on undo.
       setGameState(JSON.parse(JSON.stringify(lastState)));
       setHistory(rest);
       setSelectedCard(null);
@@ -241,57 +246,64 @@ export default function GameBoard() {
         log('GameBoard: handleDraw - No game state, returning');
         return;
     }
-
-    const newState = { ...gameState };
     
-    if (newState.gameType === 'Solitaire') {
-      log('GameBoard: handleDraw - Solitaire game');
-      const solState = newState as SolitaireGameState;
-      if (solState.stock.length > 0) {
-        log('GameBoard: handleDraw - Drawing from stock');
-        const numToDraw = Math.min(solState.drawCount, solState.stock.length);
-        const drawnCards = [];
-        for (let i = 0; i < numToDraw; i++) {
-          const card = solState.stock.pop()!;
-          card.faceUp = true;
-          drawnCards.push(card);
-        }
-        solState.waste.push(...drawnCards.reverse());
-      } else if (solState.waste.length > 0) {
-        log('GameBoard: handleDraw - Recycling waste to stock');
-        solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
-        solState.waste = [];
-      }
-      solState.moves++;
-    } 
-    else if (newState.gameType === 'Spider') {
-      log('GameBoard: handleDraw - Spider game');
-      const spiderState = newState as SpiderGameState;
-      if (spiderState.stock.length > 0) {
-        const hasEmptyPile = spiderState.tableau.some((pile: CardType[]) => pile.length === 0);
-        if (hasEmptyPile) {
-            log('GameBoard: handleDraw - Cannot deal with empty tableau pile');
-            toast({
-                variant: "destructive",
-                title: "Invalid Move",
-                description: "You cannot deal new cards while there is an empty tableau pile.",
-            });
-            return;
-        }
-        const dealCount = spiderState.tableau.length;
-        if(spiderState.stock.length >= dealCount) {
-          log('GameBoard: handleDraw - Dealing cards to tableau');
-          for(let i = 0; i < dealCount; i++) {
-            const card = spiderState.stock.pop()!;
+    // Use a function with the state setter to ensure we have the latest state
+    setGameState(currentGameState => {
+      if (!currentGameState) return null;
+
+      // Create a deep copy to modify
+      const newState = JSON.parse(JSON.stringify(currentGameState));
+      
+      if (newState.gameType === 'Solitaire') {
+        log('GameBoard: handleDraw - Solitaire game');
+        const solState = newState as SolitaireGameState;
+        if (solState.stock.length > 0) {
+          log('GameBoard: handleDraw - Drawing from stock');
+          const numToDraw = Math.min(solState.drawCount, solState.stock.length);
+          const drawnCards = [];
+          for (let i = 0; i < numToDraw; i++) {
+            const card = solState.stock.pop()!;
             card.faceUp = true;
-            spiderState.tableau[i].push(card);
+            drawnCards.push(card);
           }
-          spiderState.moves++;
+          solState.waste.push(...drawnCards.reverse());
+        } else if (solState.waste.length > 0) {
+          log('GameBoard: handleDraw - Recycling waste to stock');
+          solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
+          solState.waste = [];
+        }
+        solState.moves++;
+      } 
+      else if (newState.gameType === 'Spider') {
+        log('GameBoard: handleDraw - Spider game');
+        const spiderState = newState as SpiderGameState;
+        if (spiderState.stock.length > 0) {
+          const hasEmptyPile = spiderState.tableau.some((pile: CardType[]) => pile.length === 0);
+          if (hasEmptyPile) {
+              log('GameBoard: handleDraw - Cannot deal with empty tableau pile');
+              toast({
+                  variant: "destructive",
+                  title: "Invalid Move",
+                  description: "You cannot deal new cards while there is an empty tableau pile.",
+              });
+              return currentGameState; // Return original state if move is invalid
+          }
+          const dealCount = spiderState.tableau.length;
+          if(spiderState.stock.length >= dealCount) {
+            log('GameBoard: handleDraw - Dealing cards to tableau');
+            for(let i = 0; i < dealCount; i++) {
+              const card = spiderState.stock.pop()!;
+              card.faceUp = true;
+              spiderState.tableau[i].push(card);
+            }
+            spiderState.moves++;
+          }
         }
       }
-    }
-    updateState(newState);
-  }, [gameState, toast, updateState]);
+      updateState(newState);
+      return newState;
+    });
+  }, [toast, updateState]);
 
   const handleCardClick = useCallback((card: CardType | undefined, location: CardLocation) => {
     log('GameBoard: handleCardClick called', { card, location });
@@ -321,21 +333,18 @@ export default function GameBoard() {
   const handleMouseDown = useCallback((e: MouseEvent, card: CardType, location: CardLocation) => {
     log('GameBoard: handleMouseDown called', { card, location });
     e.stopPropagation();
-    // This is the start of a drag, just select the card.
     setSelectedCard({ ...card, location });
   }, []);
 
   const handleTouchStart = useCallback((e: TouchEvent, card: CardType, location: CardLocation) => {
       log('GameBoard: handleTouchStart called', { card, location });
       e.stopPropagation();
-      // This is the start of a drag, just select the card.
       setSelectedCard({ ...card, location });
   }, []);
 
   const handleDrop = useCallback((location: CardLocation) => {
       log('GameBoard: handleDrop called', { location });
       if (!selectedCard) return;
-      // This is the end of a drag, so we treat it like the second click in a two-click move.
       handleCardClick(undefined, location);
   }, [selectedCard, handleCardClick]);
 
@@ -374,7 +383,6 @@ export default function GameBoard() {
     <>
       <GameUI
         gameState={gameState}
-        isWon={isWon}
         selectedCard={selectedCard}
         highlightedPile={highlightedPile}
         historyLength={history.length}
@@ -390,7 +398,8 @@ export default function GameBoard() {
       />
 
       <VictoryDialog
-        isOpen={isWon}
+        isOpen={isVictoryDialogOpen}
+        onClose={() => setIsVictoryDialogOpen(false)}
         onNewGame={handleNewGame}
         score={gameState.score}
         moves={gameState.moves}
@@ -402,6 +411,8 @@ export default function GameBoard() {
       <SettingsDialog 
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+        showVictoryDialog={() => setIsVictoryDialogOpen(true)}
+        loadDebugState={(state) => handleNewGame(state)}
       />
 
       <GameDialog
