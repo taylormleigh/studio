@@ -43,7 +43,7 @@ interface GameUIProps {
   highlightedPile: HighlightedPile | null;
   historyLength: number;
   gameStartTime: number | null;
-  handleNewGame: (debugState?: GameState) => void;
+  handleNewGame: () => void;
   handleUndo: () => void;
   handleDraw: () => void;
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
@@ -52,7 +52,6 @@ interface GameUIProps {
   handleDrop: (location: CardLocation) => void;
   setIsSettingsOpen: (isOpen: boolean) => void;
   setIsGameMenuOpen: (isOpen: boolean) => void;
-  forceWin: () => void;
 }
 
 const GameUI = memo(({
@@ -70,8 +69,7 @@ const GameUI = memo(({
   handleTouchStart,
   handleDrop,
   setIsSettingsOpen,
-  setIsGameMenuOpen,
-  forceWin,
+  setIsGameMenuOpen
 }: GameUIProps) => {
   log('GameUI: render');
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
@@ -143,41 +141,14 @@ export default function GameBoard() {
   }, []);
   
   
-  const handleNewGame = useCallback((debugState?: GameState) => {
+  const handleNewGame = useCallback(() => {
     log('GameBoard: handleNewGame called');
     let newState: GameState;
-    if (debugState) {
-        log('GameBoard: handleNewGame - Using provided debug state');
-        newState = JSON.parse(JSON.stringify(debugState));
-    } else {
-        const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
-        if (debugStateJSON) {
-            log('GameBoard: handleNewGame - Found debug state in localStorage');
-            try {
-                const parsedDebugState = JSON.parse(debugStateJSON);
-                if (parsedDebugState.gameType === settings.gameType) {
-                  log('GameBoard: handleNewGame - Using debug state for new game');
-                  newState = parsedDebugState;
-                  localStorage.removeItem('deck-of-cards-debug-state'); 
-                } else {
-                  log('GameBoard: handleNewGame - Debug state is for a different game, creating new state');
-                  if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-                  else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-                  else newState = createSpiderInitialState(settings.spiderSuits);
-                }
-            } catch (e) {
-                log('GameBoard: handleNewGame - Failed to parse debug state:', e);
-                if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-                else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-                else newState = createSpiderInitialState(settings.spiderSuits);
-            }
-        } else {
-            log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
-            if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-            else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-            else newState = createSpiderInitialState(settings.spiderSuits);
-        }
-    }
+    
+    log(`GameBoard: handleNewGame - Creating new ${settings.gameType} game`);
+    if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+    else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+    else newState = createSpiderInitialState(settings.spiderSuits);
 
     setGameState(newState);
     setHistory([]);
@@ -218,7 +189,7 @@ export default function GameBoard() {
 
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    log('GameBoard: updateState called.', { saveHistory });
+    log('GameBoard: updateState called', { saveHistory });
     if (saveHistory && gameState) {
       log('GameBoard: updateState - Saving current state to history');
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
@@ -342,14 +313,6 @@ export default function GameBoard() {
       handleCardClick(undefined, location);
   }, [selectedCard, handleCardClick]);
 
-  const forceWin = useCallback(() => {
-    log('GameBoard: forceWin called');
-    if (gameState) {
-      checkWinCondition(gameState);
-    }
-  }, [gameState, checkWinCondition]);
-
-
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
     onUndo: handleUndo,
@@ -398,7 +361,6 @@ export default function GameBoard() {
         handleDrop={handleDrop}
         setIsSettingsOpen={setIsSettingsOpen}
         setIsGameMenuOpen={setIsGameMenuOpen}
-        forceWin={forceWin}
       />
 
       <VictoryDialog
@@ -414,8 +376,6 @@ export default function GameBoard() {
       <SettingsDialog 
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
-        onForceWin={forceWin}
-        onLoadDebugState={(state) => handleNewGame(state)}
       />
 
       <GameDialog
