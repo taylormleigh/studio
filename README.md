@@ -1,4 +1,4 @@
-<img width="600" type="gif" src="https://github.com/user-attachments/assets/2b727e29-1ee3-471d-a74a-e13f0a38b1a7"/>
+<img width="600" type="gif" src="/screenshots.gif"/>
 
 ### *a deck of cards*
 ## clean and simple card games for mobile and browser 

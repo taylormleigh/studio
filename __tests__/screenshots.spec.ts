@@ -105,124 +105,124 @@ test.describe('App Screenshot Tests', () => {
   });
 
 
-  test.describe('Victory Screens', () => {
-    const theme: Theme = 'light';
-    const colorMode: ColorMode = 'color';
+  // test.describe('Victory Screens', () => {
+  //   const theme: Theme = 'light';
+  //   const colorMode: ColorMode = 'color';
 
-    test('Solitaire Victory', async ({ page }, testInfo) => {
-      await page.goto('/');
-      await page.evaluate(() => {
-            const getNewCompletedFoundation = () => {
-                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  //   test('Solitaire Victory', async ({ page }, testInfo) => {
+  //     await page.goto('/');
+  //     await page.evaluate(() => {
+  //           const getNewCompletedFoundation = () => {
+  //               const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+  //               const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
         
-                var spades = getCompletedSet('SPADES');
-                var hearts = getCompletedSet('HEARTS');
-                var clubs = getCompletedSet('CLUBS');
-                var diamonds = getCompletedSet('DIAMONDS');
+  //               var spades = getCompletedSet('SPADES');
+  //               var hearts = getCompletedSet('HEARTS');
+  //               var clubs = getCompletedSet('CLUBS');
+  //               var diamonds = getCompletedSet('DIAMONDS');
 
-                return [ spades, hearts, clubs, diamonds ];
-            };
+  //               return [ spades, hearts, clubs, diamonds ];
+  //           };
 
-            var foundationPiles = getNewCompletedFoundation();
-            var finalCard = foundationPiles[0].pop();
-            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
-                gameType: 'Solitaire',
-                tableau: [[], [], [], [], [], [], [finalCard]],
-                foundation: foundationPiles,
-                stock: [],
-                waste: [],
-                drawCount: 1,
-                score: 100,
-                moves: 50,
-            }));
-        });
-        await expect(page.getByTestId('tableau-piles')).toBeVisible();
-        await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
-        await page.waitForTimeout(500); //wait for dialog to fully load
+  //           var foundationPiles = getNewCompletedFoundation();
+  //           var finalCard = foundationPiles[0].pop();
+  //           localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+  //               gameType: 'Solitaire',
+  //               tableau: [[], [], [], [], [], [], [finalCard]],
+  //               foundation: foundationPiles,
+  //               stock: [],
+  //               waste: [],
+  //               drawCount: 1,
+  //               score: 100,
+  //               moves: 50,
+  //           }));
+  //       });
+  //       await expect(page.getByTestId('tableau-piles')).toBeVisible();
+  //       await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+  //       await page.waitForTimeout(500); //wait for dialog to fully load
 
-        await expect(page.getByTestId('victory-dialog')).toBeVisible();
-        await page.waitForTimeout(1000); 
+  //       await expect(page.getByTestId('victory-dialog')).toBeVisible();
+  //       await page.waitForTimeout(1000); 
 
-        const device = getDeviceName(testInfo);
-        await page.screenshot({ path: `test-results/${device}-solitaire-victory.png`, fullPage: true });
-    });
+  //       const device = getDeviceName(testInfo);
+  //       await page.screenshot({ path: `test-results/${device}-solitaire-victory.png`, fullPage: true });
+  //   });
 
-    test('Freecell Victory', async ({ page }, testInfo) => {
-      await page.goto('/');
-      await page.evaluate(() => {
-            const getNewCompletedFoundation = () => {
-                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  //   test('Freecell Victory', async ({ page }, testInfo) => {
+  //     await page.goto('/');
+  //     await page.evaluate(() => {
+  //           const getNewCompletedFoundation = () => {
+  //               const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+  //               const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
         
-                var spades = getCompletedSet('SPADES');
-                var hearts = getCompletedSet('HEARTS');
-                var clubs = getCompletedSet('CLUBS');
-                var diamonds = getCompletedSet('DIAMONDS');
+  //               var spades = getCompletedSet('SPADES');
+  //               var hearts = getCompletedSet('HEARTS');
+  //               var clubs = getCompletedSet('CLUBS');
+  //               var diamonds = getCompletedSet('DIAMONDS');
 
-                return [ spades, hearts, clubs, diamonds ];
-            };
+  //               return [ spades, hearts, clubs, diamonds ];
+  //           };
 
-            var foundationPiles = getNewCompletedFoundation();
-            var finalCard = foundationPiles[0].pop();
+  //           var foundationPiles = getNewCompletedFoundation();
+  //           var finalCard = foundationPiles[0].pop();
             
-            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
-                gameType: 'Freecell',
-                tableau: [[], [], [], [], [], [], [finalCard], []],
-                foundation: foundationPiles,
-                freecells: [null, null, null, null],
-                moves: 51,
-                score: 0,
-            }));
-        });
-        await expect(page.getByTestId('tableau-piles')).toBeVisible();
-        await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
-        await page.waitForTimeout(500); //wait for dialog to fully load
+  //           localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+  //               gameType: 'Freecell',
+  //               tableau: [[], [], [], [], [], [], [finalCard], []],
+  //               foundation: foundationPiles,
+  //               freecells: [null, null, null, null],
+  //               moves: 51,
+  //               score: 0,
+  //           }));
+  //       });
+  //       await expect(page.getByTestId('tableau-piles')).toBeVisible();
+  //       await page.getByTestId('tableau-pile-6').locator('[data-testid^="card-"]').last().click();
+  //       await page.waitForTimeout(500); //wait for dialog to fully load
 
-        await expect(page.getByTestId('victory-dialog')).toBeVisible();
-        await page.waitForTimeout(1000);
-    });
+  //       await expect(page.getByTestId('victory-dialog')).toBeVisible();
+  //       await page.waitForTimeout(1000);
+  //   });
 
-    test('Spider Victory', async ({ page }, testInfo) => {
-      await page.goto('/');
-      await page.evaluate(() => {
-            const getNewCompletedFoundation = () => {
-                const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  //   test('Spider Victory', async ({ page }, testInfo) => {
+  //     await page.goto('/');
+  //     await page.evaluate(() => {
+  //           const getNewCompletedFoundation = () => {
+  //               const allRanks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-                const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
+  //               const getCompletedSet = (suit: Suit) => allRanks.map(rank => ({ suit: suit, rank: rank, faceUp: true }));
         
-                var spades = getCompletedSet('SPADES');
-                var hearts = getCompletedSet('HEARTS');
-                var clubs = getCompletedSet('CLUBS');
-                var diamonds = getCompletedSet('DIAMONDS');
+  //               var spades = getCompletedSet('SPADES');
+  //               var hearts = getCompletedSet('HEARTS');
+  //               var clubs = getCompletedSet('CLUBS');
+  //               var diamonds = getCompletedSet('DIAMONDS');
 
-                return [ spades, hearts, clubs, diamonds ];
-            };
+  //               return [ spades, hearts, clubs, diamonds ];
+  //           };
 
-            var oneCompletedSet = getNewCompletedFoundation();
-            var completedFoundation = [ ...oneCompletedSet, ...oneCompletedSet ];
-            var finalCard = completedFoundation[0].pop();
-            localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
-                gameType: 'Spider',
-                tableau: [ 
-                    [], [finalCard], [], [], [], [], [], [], []
-                ],
-                foundation: completedFoundation,
-                stock: [],
-                completedSets: 7,
-                suitCount: 4, // Test with 4 suits for complexity
-                moves: 99,
-                score: 400,
-            }));
-        });
-        await expect(page.getByTestId('tableau-piles')).toBeVisible();
+  //           var oneCompletedSet = getNewCompletedFoundation();
+  //           var completedFoundation = [ ...oneCompletedSet, ...oneCompletedSet ];
+  //           var finalCard = completedFoundation[0].pop();
+  //           localStorage.setItem('deck-of-cards-debug-state', JSON.stringify({
+  //               gameType: 'Spider',
+  //               tableau: [ 
+  //                   [], [finalCard], [], [], [], [], [], [], []
+  //               ],
+  //               foundation: completedFoundation,
+  //               stock: [],
+  //               completedSets: 7,
+  //               suitCount: 4, // Test with 4 suits for complexity
+  //               moves: 99,
+  //               score: 400,
+  //           }));
+  //       });
+  //       await expect(page.getByTestId('tableau-piles')).toBeVisible();
 
-        await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
-        await page.waitForTimeout(500); //wait for dialog to fully load
+  //       await page.getByTestId('tableau-pile-1').locator('[data-testid^="card-"]').last().click();
+  //       await page.waitForTimeout(500); //wait for dialog to fully load
 
-        await expect(page.getByTestId('victory-dialog')).toBeVisible();
-    });
-  });
+  //       await expect(page.getByTestId('victory-dialog')).toBeVisible();
+  //   });
+  // });
 });

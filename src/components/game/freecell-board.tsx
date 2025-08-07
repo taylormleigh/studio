@@ -34,7 +34,7 @@ export default function FreecellBoard(props: FreecellBoardProps) {
 }
 
 const FreecellPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: FreecellBoardProps) => (
-  <div className="col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
+  <div className="freecell-piles col-span-4 grid grid-cols-4 gap-x-0" data-testid="freecell-piles">
     {gameState.freecells.map((card, i) => {
       const location: CardLocation = {type: 'freecell', pileIndex: i, cardIndex: 0};
       return (
