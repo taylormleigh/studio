@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, type MouseEvent, type TouchEvent } from 'react';
+import { useState, useEffect, useRef, type MouseEvent, type TouchEvent, memo } from 'react';
 import type { GameState as SolitaireGameState } from '@/lib/solitaire';
 import { last, Card as CardType } from '@/lib/solitaire';
 import { Card } from './card';
@@ -47,7 +47,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
   );
 }
 
-const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
+const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
   const [wasteTurn, setWasteTurn] = useState(0);
   const prevStockLengthRef = useRef(gameState.stock.length);
@@ -61,14 +61,16 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
     prevStockLengthRef.current = gameState.stock.length;
   }, [gameState.stock.length]);
   
-  // Reset turn counter on a new game
+  // Reset turn counter on a new game by watching for moves to be 0 and waste to be empty
   useEffect(() => {
+    if (gameState.moves === 0 && gameState.waste.length === 0 && gameState.stock.length === (52 - 28)) {
       log('solitaire-board.tsx: New game detected, resetting wasteTurn');
       setWasteTurn(0);
+    }
   }, [gameState.moves, gameState.waste.length, gameState.stock.length]);
 
   const Stock = () => (
-    <div className="cursor-pointer col-span-1" data-testid="stock-pile">
+    <div className="col-span-1 cursor-pointer" data-testid="stock-pile">
         <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" className="w-full max-w-[96px]" />
     </div>
   );
@@ -120,12 +122,12 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   };
   
   return (
-    <div className="col-span-1 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
+    <div className="col-span-3 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
       {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
     </div>
   );
-}
-
+});
+StockAndWaste.displayName = 'StockAndWaste';
 
 const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: SolitaireBoardProps) => (
     <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-4 grid grid-cols-4 gap-x-[clamp(2px,1vw,4px)]`} data-testid="foundation-piles">
