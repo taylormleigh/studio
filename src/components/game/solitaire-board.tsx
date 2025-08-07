@@ -52,7 +52,7 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
 
   const handleStockClick = () => {
     handleDraw();
-  }
+  };
 
   const Stock = () => (
     <div className="col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
@@ -74,6 +74,7 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
       );
     }
     
+    // Single card draw logic
     if (drawCount === 1) {
       const topCard = last(waste)!;
       const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: waste.length - 1 };
@@ -89,15 +90,16 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
       );
     }
     
-    const cardsToShow = waste.slice(Math.max(0, waste.length - 3));
+    // Three card draw logic
+    const cardsToShow = waste.slice(-3);
   
     return (
-      <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
+      <div data-testid="waste-pile" className="solitaire-waste-pile col-span-1 w-full max-w-[96px] h-full relative">
         {cardsToShow.map((card, index) => {
           const cardIndexInWaste = waste.indexOf(card);
           const isTopCard = cardIndexInWaste === waste.length - 1;
           const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
-          const xOffset = index * 25;
+          const xOffset = (cardsToShow.length - (cardsToShow.length - index)) * 16;
           
           return (
             <div 
@@ -108,7 +110,6 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
               <Card
                 card={card}
                 className={`solitaire-waste-card ${isTopCard ? '' : 'covered-card'} w-full max-w-[96px]`}
-                style={{ pointerEvents: isTopCard ? 'auto' : 'none' }}
                 onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
                 onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
                 onClick={() => isTopCard && handleCardClick(card, location)}
@@ -122,7 +123,7 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
   
   return (
     <div className="col-span-2 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
-      {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
+      {settings.leftHandMode ? <><Waste /><Stock /></> : <><Stock /><Waste /></>}
     </div>
   );
 });
