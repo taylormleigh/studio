@@ -12,23 +12,26 @@ interface GameFooterProps {
   moves: number;
   score?: number;
   isWon: boolean;
+  gameStartTime: number | null;
 }
 
-function GameFooter({ moves, score, isWon }: GameFooterProps) {
+function GameFooter({ moves, score, isWon, gameStartTime }: GameFooterProps) {
   const { settings } = useSettings();
   const [time, setTime] = useState(0);
 
-  // Timer logic moved here
+  // Timer logic
   useEffect(() => {
-    setTime(0); // Reset timer on new game (when footer re-mounts or isWon changes)
+    setTime(0); // Reset timer on new game
+    if (gameStartTime === null) return;
+
     const interval = setInterval(() => {
       if (!isWon) {
-        setTime(prevTime => prevTime + 1);
+        setTime(Math.floor((Date.now() - gameStartTime) / 1000));
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isWon]); // Dependency on isWon ensures timer stops/resets correctly
+  }, [isWon, gameStartTime]);
 
 
   const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);

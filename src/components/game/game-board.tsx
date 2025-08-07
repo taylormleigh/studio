@@ -32,7 +32,6 @@ export type HighlightedPile = {
 
 const UNDO_LIMIT = 100;
 
-
 // ================================================================================================
 // GameUI Component
 // This component is memoized to prevent re-renders caused by the timer in the footer.
@@ -43,7 +42,8 @@ interface GameUIProps {
   selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
   historyLength: number;
-  handleNewGame: () => void;
+  gameStartTime: number | null;
+  handleNewGame: (debugState?: GameState) => void;
   handleUndo: () => void;
   handleDraw: () => void;
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
@@ -52,6 +52,7 @@ interface GameUIProps {
   handleDrop: (location: CardLocation) => void;
   setIsSettingsOpen: (isOpen: boolean) => void;
   setIsGameMenuOpen: (isOpen: boolean) => void;
+  forceWin: () => void;
 }
 
 const GameUI = memo(({
@@ -60,6 +61,7 @@ const GameUI = memo(({
   selectedCard,
   highlightedPile,
   historyLength,
+  gameStartTime,
   handleNewGame,
   handleUndo,
   handleDraw,
@@ -68,7 +70,8 @@ const GameUI = memo(({
   handleTouchStart,
   handleDrop,
   setIsSettingsOpen,
-  setIsGameMenuOpen
+  setIsGameMenuOpen,
+  forceWin,
 }: GameUIProps) => {
   log('GameUI: render');
   const mainContainerMaxWidth = gameState.gameType === 'Spider' 
@@ -92,7 +95,7 @@ const GameUI = memo(({
       data-testid="game-board"
     >
       <GameHeader 
-        onNewGame={handleNewGame} 
+        onNewGame={() => handleNewGame()} 
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
       />
@@ -107,6 +110,7 @@ const GameUI = memo(({
       <GameFooter 
         moves={gameState.moves}
         isWon={isWon}
+        gameStartTime={gameStartTime}
         score={isWon ? gameState.score : undefined}
       />
     </div>
@@ -139,35 +143,40 @@ export default function GameBoard() {
   }, []);
   
   
-  const handleNewGame = useCallback(() => {
+  const handleNewGame = useCallback((debugState?: GameState) => {
     log('GameBoard: handleNewGame called');
     let newState: GameState;
-    const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
-    if (debugStateJSON) {
-        log('GameBoard: handleNewGame - Found debug state in localStorage');
-        try {
-            const parsedDebugState = JSON.parse(debugStateJSON);
-            if (parsedDebugState.gameType === settings.gameType) {
-              log('GameBoard: handleNewGame - Using debug state for new game');
-              newState = parsedDebugState;
-              localStorage.removeItem('deck-of-cards-debug-state'); 
-            } else {
-              log('GameBoard: handleNewGame - Debug state is for a different game, creating new state');
-              if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-              else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-              else newState = createSpiderInitialState(settings.spiderSuits);
+    if (debugState) {
+        log('GameBoard: handleNewGame - Using provided debug state');
+        newState = JSON.parse(JSON.stringify(debugState));
+    } else {
+        const debugStateJSON = localStorage.getItem('deck-of-cards-debug-state');
+        if (debugStateJSON) {
+            log('GameBoard: handleNewGame - Found debug state in localStorage');
+            try {
+                const parsedDebugState = JSON.parse(debugStateJSON);
+                if (parsedDebugState.gameType === settings.gameType) {
+                  log('GameBoard: handleNewGame - Using debug state for new game');
+                  newState = parsedDebugState;
+                  localStorage.removeItem('deck-of-cards-debug-state'); 
+                } else {
+                  log('GameBoard: handleNewGame - Debug state is for a different game, creating new state');
+                  if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+                  else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+                  else newState = createSpiderInitialState(settings.spiderSuits);
+                }
+            } catch (e) {
+                log('GameBoard: handleNewGame - Failed to parse debug state:', e);
+                if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
+                else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
+                else newState = createSpiderInitialState(settings.spiderSuits);
             }
-        } catch (e) {
-            log('GameBoard: handleNewGame - Failed to parse debug state:', e);
+        } else {
+            log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
             if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
             else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
             else newState = createSpiderInitialState(settings.spiderSuits);
         }
-    } else {
-        log(`GameBoard: handleNewGame - No debug state, creating new ${settings.gameType} game`);
-        if (settings.gameType === 'Solitaire') newState = createSolitaireInitialState(settings.solitaireDrawCount);
-        else if (settings.gameType === 'Freecell') newState = createFreecellInitialState();
-        else newState = createSpiderInitialState(settings.spiderSuits);
     }
 
     setGameState(newState);
@@ -215,7 +224,6 @@ export default function GameBoard() {
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
     }
     setGameState(newState);
-    // Check win condition after state update
     checkWinCondition(newState);
   }, [gameState, checkWinCondition]);
 
@@ -224,8 +232,6 @@ export default function GameBoard() {
     if (history.length > 0) {
       log('GameBoard: handleUndo - History found, undoing move');
       const [lastState, ...rest] = history;
-      // Deep copy the state to ensure React detects the change and re-renders all components.
-      // This is crucial for correctly flipping cards back face-down on undo.
       setGameState(JSON.parse(JSON.stringify(lastState)));
       setHistory(rest);
       setSelectedCard(null);
@@ -321,23 +327,27 @@ export default function GameBoard() {
   const handleMouseDown = useCallback((e: MouseEvent, card: CardType, location: CardLocation) => {
     log('GameBoard: handleMouseDown called', { card, location });
     e.stopPropagation();
-    // This is the start of a drag, just select the card.
     setSelectedCard({ ...card, location });
   }, []);
 
   const handleTouchStart = useCallback((e: TouchEvent, card: CardType, location: CardLocation) => {
       log('GameBoard: handleTouchStart called', { card, location });
       e.stopPropagation();
-      // This is the start of a drag, just select the card.
       setSelectedCard({ ...card, location });
   }, []);
 
   const handleDrop = useCallback((location: CardLocation) => {
       log('GameBoard: handleDrop called', { location });
       if (!selectedCard) return;
-      // This is the end of a drag, so we treat it like the second click in a two-click move.
       handleCardClick(undefined, location);
   }, [selectedCard, handleCardClick]);
+
+  const forceWin = useCallback(() => {
+    log('GameBoard: forceWin called');
+    if (gameState) {
+      checkWinCondition(gameState);
+    }
+  }, [gameState, checkWinCondition]);
 
 
   useKeyboardShortcuts({
@@ -378,6 +388,7 @@ export default function GameBoard() {
         selectedCard={selectedCard}
         highlightedPile={highlightedPile}
         historyLength={history.length}
+        gameStartTime={gameStartTime}
         handleNewGame={handleNewGame}
         handleUndo={handleUndo}
         handleDraw={handleDraw}
@@ -387,6 +398,7 @@ export default function GameBoard() {
         handleDrop={handleDrop}
         setIsSettingsOpen={setIsSettingsOpen}
         setIsGameMenuOpen={setIsGameMenuOpen}
+        forceWin={forceWin}
       />
 
       <VictoryDialog
@@ -402,6 +414,8 @@ export default function GameBoard() {
       <SettingsDialog 
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+        onForceWin={forceWin}
+        onLoadDebugState={(state) => handleNewGame(state)}
       />
 
       <GameDialog
