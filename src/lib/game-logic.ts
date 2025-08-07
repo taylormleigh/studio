@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview This file acts as the central controller for all card game interactions.
  * It is designed as a dispatcher, delegating game-specific rule validation and
@@ -277,7 +276,7 @@ const handleAutoMove = (gs: GameState, locatedCard: LocatedCard): ProcessResult 
 };
 
 /**
- * Handles the logic for the second click when auto-move is OFF.
+ * Handles the logic for the second click of a move (or the end of a drag).
  * This function completes a two-step move: select card, then select destination.
  * @param {ProcessClickParams} params The parameters for the click event.
  * @returns {ProcessResult} The result of the two-click move attempt.
@@ -324,12 +323,12 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
     log('game-logic.ts: handleInitialClick called');
     const { gameState, clickSource, clickedCard, settings } = params;
     
-    if (!clickedCard || !isClickSourceMovable(gameState, clickedCard, clickSource)) {
+    if (!isClickSourceMovable(gameState, clickedCard, clickSource)) {
         log('game-logic.ts: handleInitialClick - clicked card is not movable');
         return flipOverFaceDownCardInSolitaire(params);
     }
 
-    const locatedCard: LocatedCard = { ...clickedCard, location: clickSource };
+    const locatedCard: LocatedCard = { ...clickedCard!, location: clickSource };
 
     if (settings.autoMove) {
         log('game-logic.ts: handleInitialClick - autoMove is on, handling auto-move');
@@ -343,7 +342,7 @@ const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
 
 const flipOverFaceDownCardInSolitaire = (params: ProcessClickParams): ProcessResult => {
     log('game-logic.ts: flipOverFaceDownCardInSolitaire called');
-    const { gameState, clickSource, clickedCard, settings } = params;
+    const { gameState, clickSource, clickedCard } = params;
 
     // Specific logic for flipping a face-down card in Solitaire.
     if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
@@ -370,10 +369,15 @@ const flipOverFaceDownCardInSolitaire = (params: ProcessClickParams): ProcessRes
  */
 export const processCardClick = (params: ProcessClickParams): ProcessResult => {
     log('game-logic.ts: processCardClick called', { selectedCard: params.selectedCard, autoMove: params.settings.autoMove });
-    // If a card is already selected, this is the second click (destination).
-    if (params.selectedCard && !params.settings.autoMove) {
+    
+    // The most important check: is a card already selected?
+    // If so, we are ALWAYS trying to complete a move, regardless of the auto-move setting.
+    // This correctly handles the end of a drag-and-drop action.
+    if (params.selectedCard) {
         return handleTwoClickMove(params);
     }
+    
     // If no card is selected, this is the first click (source).
+    // This is where auto-move logic vs. simple selection is decided.
     return handleInitialClick(params);
 };
