@@ -31,13 +31,13 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
         {settings.leftHandMode ? (
           <>
             <StockAndWaste {...props} />
-            <div className="col-span-2" />
+            <div className="col-span-1" />
             <FoundationPiles {...props} />
           </>
         ) : (
           <>
             <FoundationPiles {...props} />
-            <div className="col-span-2" />
+            <div className="col-span-1" />
             <StockAndWaste {...props} />
           </>
         )}
@@ -52,34 +52,27 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
   const [wasteTurn, setWasteTurn] = useState(0);
   const prevStockLengthRef = useRef(gameState.stock.length);
 
-  // Logic to track when the stock is recycled to correctly display the 3-card draw waste pile
   useEffect(() => {
     if (gameState.stock.length > prevStockLengthRef.current && prevStockLengthRef.current === 0) {
-      log('solitaire-board.tsx: Stock recycled, incrementing wasteTurn');
       setWasteTurn(t => t + 1);
     }
     prevStockLengthRef.current = gameState.stock.length;
   }, [gameState.stock.length]);
   
-  // Reset turn counter on a new game by watching for moves to be 0 and waste to be empty
   useEffect(() => {
     if (gameState.moves === 0 && gameState.waste.length === 0 && gameState.stock.length === (52 - 28)) {
-      log('solitaire-board.tsx: New game detected, resetting wasteTurn');
       setWasteTurn(0);
     }
   }, [gameState.moves, gameState.waste.length, gameState.stock.length]);
 
   const Stock = () => (
-    <div className="col-span-1 cursor-pointer" data-testid="stock-pile">
-        <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" className="w-full max-w-[96px]" />
+    <div className="col-span-1 cursor-pointer w-full max-w-[96px]" data-testid="stock-pile">
+        <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
     </div>
   );
 
   const Waste = () => {
     const { waste, drawCount } = gameState;
-    
-    // For 3-card draw, show the current "turn" of 3 cards.
-    // For 1-card draw, just show the top card.
     const cardsToShow = drawCount === 1 
       ? waste.slice(-1) 
       : waste.slice(Math.max(0, waste.length - 3), waste.length);
@@ -90,14 +83,21 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
           <Card 
             onClick={() => handleDraw()} 
             data-testid="card-waste-empty" 
-            className="w-full"
           />
+        ) : drawCount === 1 ? (
+          <Card
+              card={last(waste)}
+              className="w-full max-w-[96px]"
+              onMouseDown={(e) => handleMouseDown(e, last(waste)!, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
+              onTouchStart={(e) => handleTouchStart(e, last(waste)!, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
+              onClick={() => handleCardClick(last(waste), { type: 'waste', pileIndex: 0, cardIndex: waste.length -1 })}
+            />
         ) : (
           cardsToShow.map((card, index, arr) => {
             const isTopCard = index === arr.length - 1;
             const cardIndexInWaste = waste.indexOf(card);
             const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
-            const xOffset = drawCount === 3 ? index * 25 : 0;
+            const xOffset = index * 25;
             
             return (
               <div 
@@ -122,7 +122,7 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
   };
   
   return (
-    <div className="col-span-3 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
+    <div className="col-span-2 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
       {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
     </div>
   );
