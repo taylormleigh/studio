@@ -78,7 +78,7 @@ const last = (pile: CardType[]): CardType | undefined => pile[pile.length - 1];
  * This is used to validate and execute moves involving stacks of cards.
  */
 const getCardsToMove = (gs: GameState, src: CardLocation): CardType[] => {
-    log('game-logic.ts: getCardsToMove called', { src });
+    log(`[${new Date().toISOString()}] game-logic.ts: getCardsToMove called`, { src });
     switch (src.type) {
         case 'tableau':    
             // Ensure the pile exists before trying to slice.
@@ -104,7 +104,7 @@ const getCardsToMove = (gs: GameState, src: CardLocation): CardType[] => {
  * This function acts as a dispatcher based on the gameType.
  */
 export const isGameWon = (state: GameState): boolean => {
-    log(`game-logic.ts: isGameWon called for gameType: ${state.gameType}`);
+    log(`[${new Date().toISOString()}] game-logic.ts: isGameWon called for gameType: ${state.gameType}`);
     const dispatch: {[key in GameState['gameType']]: (s: GameState) => boolean} = {
         Solitaire: (s: GameState) => isSolitaireGameWon(s as SolitaireGameState),
         Freecell:  (s: GameState) => isFreecellGameWon(s as FreecellGameState),
@@ -118,7 +118,7 @@ export const isGameWon = (state: GameState): boolean => {
  * This acts as a router to the specialized logic in each game's file.
  */
 const findAutoMove = (gs: GameState, source: LocatedCard): GameMove | null => {
-    log(`game-logic.ts: findAutoMove called for gameType: ${gs.gameType}`);
+    log(`[${new Date().toISOString()}] game-logic.ts: findAutoMove called for gameType: ${gs.gameType}`);
     switch (gs.gameType) {
         case 'Solitaire': return findAutoMoveForSolitaire(gs as SolitaireGameState, source);
         case 'Freecell':  return findAutoMoveForFreecell(gs as FreecellGameState, source);
@@ -131,10 +131,10 @@ const findAutoMove = (gs: GameState, source: LocatedCard): GameMove | null => {
  * This validates a move against the rules of the current game.
  */
 const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useToast>['toast']): boolean => {
-    log('game-logic.ts: isValidMove called', { move });
+    log(`[${new Date().toISOString()}] game-logic.ts: isValidMove called`, { move });
     const cards = getCardsToMove(gs, move.source);
     if (cards.length === 0) {
-        log('game-logic.ts: isValidMove - no cards to move, invalid');
+        log(`[${new Date().toISOString()}] game-logic.ts: isValidMove - no cards to move, invalid`);
         return false;
     }
     const cardToMove = cards[0];
@@ -169,7 +169,7 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
     };
     
     const result = dispatch[gs.gameType](gs);
-    log('game-logic.ts: isValidMove - result:', result);
+    log(`[${new Date().toISOString()}] game-logic.ts: isValidMove - result:`, result);
     return result;
 };
 
@@ -178,24 +178,22 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
  * This function modifies the game state based on a valid move.
  */
 const executeMove = (gs: GameState, move: GameMove): GameState => {
-    log('game-logic.ts: executeMove called', { move });
-    let newState = { ...gs, tableau: gs.tableau.map(p => [...p]), foundation: gs.foundation.map(p => [...p]) };
-    if (newState.gameType === 'Solitaire') {
-        newState = { ...newState, waste: [...(newState as SolitaireGameState).waste] } as SolitaireGameState;
-    }
-    if (newState.gameType === 'Freecell') {
-        newState = { ...newState, freecells: [...(newState as FreecellGameState).freecells] } as FreecellGameState;
-    }
+    log(`[${new Date().toISOString()}] game-logic.ts: executeMove called`, { move });
+    // Create a deep copy to ensure immutability
+    const newState = JSON.parse(JSON.stringify(gs)) as GameState;
 
     const cards = getCardsToMove(newState, move.source);
 
     // 1. Remove cards from the source pile.
-    log('game-logic.ts: executeMove - removing cards from source');
+    log(`[${new Date().toISOString()}] game-logic.ts: executeMove - removing cards from source`);
     switch (move.source.type) {
         case 'tableau':
             const srcPile = newState.tableau[move.source.pileIndex];
             srcPile.splice(move.source.cardIndex);
-            if (newState.gameType !== 'Freecell' && srcPile.length > 0) last(srcPile)!.faceUp = true;
+            // Flip the new top card if it's face down (except in Freecell)
+            if (newState.gameType !== 'Freecell' && srcPile.length > 0 && !last(srcPile)!.faceUp) {
+                last(srcPile)!.faceUp = true;
+            }
             break;
         case 'waste':      (newState as SolitaireGameState).waste.pop(); break;
         case 'foundation': newState.foundation[move.source.pileIndex].pop(); break;
@@ -203,7 +201,7 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
     }
 
     // 2. Add cards to the destination pile.
-    log('game-logic.ts: executeMove - adding cards to destination');
+    log(`[${new Date().toISOString()}] game-logic.ts: executeMove - adding cards to destination`);
     switch (move.destination.type) {
         case 'tableau':    newState.tableau[move.destination.pileIndex].push(...cards); break;
         case 'foundation': newState.foundation[move.destination.pileIndex].push(...cards); break;
@@ -215,11 +213,11 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
     if (move.destination.type === 'foundation') newState.score += 10;
     if (move.source.type === 'foundation') newState.score -= 10;
     if (newState.gameType === 'Spider') newState.score--;
-    log('game-logic.ts: executeMove - move complete, new score:', newState.score);
+    log(`[${new Date().toISOString()}] game-logic.ts: executeMove - move complete, new score:`, newState.score);
 
     // 4. After the move, check for completed sets in Spider.
     if (newState.gameType === 'Spider') {
-        log('game-logic.ts: executeMove - checking for completed Spider set');
+        log(`[${new Date().toISOString()}] game-logic.ts: executeMove - checking for completed Spider set`);
         return checkForSpiderCompletedSet(newState as SpiderGameState);
     }
     
@@ -236,9 +234,9 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
  * A card must be face-up, and if in a stack, must form a valid run.
  */
 const isClickSourceMovable = (gs: GameState, clickedCard: CardType | undefined, clickInfo: ClickSource): boolean => {
-    log('game-logic.ts: isClickSourceMovable called', { clickedCard, clickInfo });
+    log(`[${new Date().toISOString()}] game-logic.ts: isClickSourceMovable called`, { clickedCard, clickInfo });
     if (!clickedCard || !clickedCard.faceUp) {
-        log('game-logic.ts: isClickSourceMovable - card not movable (face down or undefined)');
+        log(`[${new Date().toISOString()}] game-logic.ts: isClickSourceMovable - card not movable (face down or undefined)`);
         return false;
     }
 
@@ -250,7 +248,7 @@ const isClickSourceMovable = (gs: GameState, clickedCard: CardType | undefined, 
             case 'Spider':    return isSpiderRun(stack);
         }
     }
-    log('game-logic.ts: isClickSourceMovable - card is movable');
+    log(`[${new Date().toISOString()}] game-logic.ts: isClickSourceMovable - card is movable`);
     return true; 
 };
 
@@ -263,15 +261,15 @@ const isClickSourceMovable = (gs: GameState, clickedCard: CardType | undefined, 
  * @returns {ProcessResult} The result of the auto-move attempt.
  */
 const handleAutoMove = (gs: GameState, locatedCard: LocatedCard): ProcessResult => {
-    log('game-logic.ts: handleAutoMove called');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleAutoMove called`);
     const move = findAutoMove(gs, locatedCard);
     
     if (move) {
-        log('game-logic.ts: handleAutoMove - auto-move found, executing');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleAutoMove - auto-move found, executing`);
         return { newState: executeMove(gs, move), newSelectedCard: null, highlightedPile: move.destination, saveHistory: true };
     }
 
-    log('game-logic.ts: handleAutoMove - no auto-move found');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleAutoMove - no auto-move found`);
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
@@ -282,12 +280,12 @@ const handleAutoMove = (gs: GameState, locatedCard: LocatedCard): ProcessResult 
  * @returns {ProcessResult} The result of the two-click move attempt.
  */
 const handleTwoClickMove = (params: ProcessClickParams): ProcessResult => {
-    log('game-logic.ts: handleTwoClickMove called');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleTwoClickMove called`);
     const { gameState, selectedCard, clickSource, clickedCard, toast } = params;
 
     // If the same card is clicked again, deselect it.
     if (clickedCard && selectedCard && selectedCard.rank === clickedCard.rank && selectedCard.suit === clickedCard.suit) {
-        log('game-logic.ts: handleTwoClickMove - same card clicked, deselecting');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleTwoClickMove - same card clicked, deselecting`);
         return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
     }
     
@@ -296,19 +294,19 @@ const handleTwoClickMove = (params: ProcessClickParams): ProcessResult => {
     
     // If the attempted move is valid, execute it and clear the selection.
     if (isValidMove(gameState, move, toast)) {
-        log('game-logic.ts: handleTwoClickMove - valid move, executing');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleTwoClickMove - valid move, executing`);
         return { newState: executeMove(gameState, move), newSelectedCard: null, highlightedPile: move.destination, saveHistory: true };
     }
     
     // If the move is invalid, check if the new click is on another movable card.
     // If so, switch the selection to the new card.
     if (clickedCard && isClickSourceMovable(gameState, clickedCard, clickSource)) {
-        log('game-logic.ts: handleTwoClickMove - invalid move, but new selection is movable');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleTwoClickMove - invalid move, but new selection is movable`);
         return { newState: null, newSelectedCard: { ...clickedCard, location: clickSource }, highlightedPile: null, saveHistory: false };
     }
 
     // If the move is invalid and the new click is not on a movable card, just clear the selection.
-    log('game-logic.ts: handleTwoClickMove - invalid move, clearing selection');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleTwoClickMove - invalid move, clearing selection`);
     return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 }
 
@@ -320,39 +318,39 @@ const handleTwoClickMove = (params: ProcessClickParams): ProcessResult => {
  * @returns {ProcessResult} The result of the initial click.
  */
 const handleInitialClick = (params: ProcessClickParams): ProcessResult => {
-    log('game-logic.ts: handleInitialClick called');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleInitialClick called`);
     const { gameState, clickSource, clickedCard, settings } = params;
     
     if (!isClickSourceMovable(gameState, clickedCard, clickSource)) {
-        log('game-logic.ts: handleInitialClick - clicked card is not movable');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleInitialClick - clicked card is not movable`);
         return flipOverFaceDownCardInSolitaire(params);
     }
 
     const locatedCard: LocatedCard = { ...clickedCard!, location: clickSource };
 
     if (settings.autoMove) {
-        log('game-logic.ts: handleInitialClick - autoMove is on, handling auto-move');
+        log(`[${new Date().toISOString()}] game-logic.ts: handleInitialClick - autoMove is on, handling auto-move`);
         return handleAutoMove(gameState, locatedCard);
     } 
     
     // If auto-move is off, the first click simply selects the card.
-    log('game-logic.ts: handleInitialClick - autoMove is off, selecting card');
+    log(`[${new Date().toISOString()}] game-logic.ts: handleInitialClick - autoMove is off, selecting card`);
     return { newState: null, newSelectedCard: locatedCard, highlightedPile: null, saveHistory: false };
 };
 
 const flipOverFaceDownCardInSolitaire = (params: ProcessClickParams): ProcessResult => {
-    log('game-logic.ts: flipOverFaceDownCardInSolitaire called');
+    log(`[${new Date().toISOString()}] game-logic.ts: flipOverFaceDownCardInSolitaire called`);
     const { gameState, clickSource, clickedCard } = params;
 
     // Specific logic for flipping a face-down card in Solitaire.
     if (gameState.gameType === 'Solitaire' && clickSource.type === 'tableau' && clickedCard && !clickedCard.faceUp && clickSource.cardIndex === gameState.tableau[clickSource.pileIndex].length - 1) {
-        log('game-logic.ts: flipOverFaceDownCardInSolitaire - flipping card');
-        const newState = { ...gameState, tableau: gameState.tableau.map(p => [...p]) };
+        log(`[${new Date().toISOString()}] game-logic.ts: flipOverFaceDownCardInSolitaire - flipping card`);
+        const newState = JSON.parse(JSON.stringify(gameState));
         (newState as SolitaireGameState).tableau[clickSource.pileIndex][clickSource.cardIndex].faceUp = true;
         newState.moves++;
         return { newState, newSelectedCard: null, highlightedPile: null, saveHistory: true };
    }
-   log('game-logic.ts: flipOverFaceDownCardInSolitaire - conditions not met to flip card');
+   log(`[${new Date().toISOString()}] game-logic.ts: flipOverFaceDownCardInSolitaire - conditions not met to flip card`);
    return { newState: null, newSelectedCard: null, highlightedPile: null, saveHistory: false };
 };
 
@@ -368,7 +366,7 @@ const flipOverFaceDownCardInSolitaire = (params: ProcessClickParams): ProcessRes
  * @returns {ProcessResult} The result of the operation, including any state changes and UI hints.
  */
 export const processCardClick = (params: ProcessClickParams): ProcessResult => {
-    log('game-logic.ts: processCardClick called', { selectedCard: params.selectedCard, autoMove: params.settings.autoMove });
+    log(`[${new Date().toISOString()}] game-logic.ts: processCardClick called`, { selectedCard: params.selectedCard, autoMove: params.settings.autoMove });
     
     // The most important check: is a card already selected?
     // If so, we are ALWAYS trying to complete a move, regardless of the auto-move setting.
