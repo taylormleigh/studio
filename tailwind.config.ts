@@ -14,6 +14,7 @@ export default {
         'sm': '400px',
         'md': '420px',
         'lg': '620px',
+        'xl': '720px',
       },
       fontFamily: {
         body: ["var(--primary-font)"],

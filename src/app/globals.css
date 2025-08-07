@@ -102,9 +102,9 @@ html, body, .font-body, .font-headline {
   font-weight: 900;
 }
 
-.bg-card {
+/* .bg-card {
   overflow: hidden;
-}
+} */
 .light-mode-card-bg {
   background: 
 		  radial-gradient(farthest-side at -33.33% 50%,#0000 52%, var(--card-bg-color-accent) 54% 57%,#0000 59%) 0 calc(44px/2),
@@ -177,6 +177,11 @@ html, body, .font-body, .font-headline {
 .text-2xl {
   font-size: clamp(2.2rem, 1vw, 2.5rem);
   line-height: 1.2rem;
+  transition: 0.2s all ease-in-out;
+}
+[role="dialog"] * {
+  font-size: clamp(0.765rem, 2.5vw, 1.2rem);
+  line-height: 1rem;
   transition: 0.2s all ease-in-out;
 }
 

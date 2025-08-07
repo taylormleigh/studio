@@ -19,7 +19,7 @@ const iconStrokeWidth = 1.4;
 export default function GameHeader({ onNewGame, onRestartGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
   const { settings } = useSettings();
 
-  const buttonContainerClasses = "flex items-center gap-3 md:gap-2";
+  const buttonContainerClasses = "flex items-center gap-4 md:gap-2";
   const buttonClasses = "flex-col h-auto p-3 lg:w-20";
 
   const Settings = () => (
@@ -39,7 +39,7 @@ export default function GameHeader({ onNewGame, onRestartGame, onSettings, onGam
   const RestartGame = () => (
     <Button variant="ghost" onClick={onRestartGame} aria-label="Restart Game" className={buttonClasses}>
         <Shell size={iconSize} strokeWidth={iconStrokeWidth} />
-        <span className="hidden lg:block text-xs font-medium">restart</span>
+        <span className="hidden lg:block text-xs font-medium">reset</span>
     </Button>
   );
 
