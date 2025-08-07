@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { CardPreview } from './card-preview';
-import { Download, ChevronsRight, VenetianMask } from 'lucide-react';
+import { Download, VenetianMask } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import type { GameState } from '@/lib/game-logic';
@@ -40,9 +40,10 @@ export function SettingsDialog({ open, onOpenChange, showVictoryDialog, loadDebu
     const newCount = titleClickCount + 1;
     setTitleClickCount(newCount);
     if (newCount >= 5) {
-      setIsDevMode(!isDevMode);
+      const newDevMode = !isDevMode;
+      setIsDevMode(newDevMode);
       setTitleClickCount(0); // Reset counter
-      toast({ title: `Developer Mode ${!isDevMode ? 'Enabled' : 'Disabled'}` });
+      toast({ title: `Developer Mode ${newDevMode ? 'Enabled' : 'Disabled'}` });
     }
   };
 
@@ -196,6 +197,7 @@ export function SettingsDialog({ open, onOpenChange, showVictoryDialog, loadDebu
                   />
                   <Button onClick={handleLoadDebugState} variant="outline">Load State & Start New Game</Button>
               </div>
+              <Button onClick={() => setIsDevMode(false)} variant="outline">Hide Developer Options</Button>
             </div>
           </>
         )}
