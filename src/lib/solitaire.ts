@@ -1,4 +1,3 @@
-
 import { GameMove, LocatedCard } from './game-logic';
 import { log } from './utils';
 
@@ -258,8 +257,7 @@ export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCar
         const stack = sourcePile.slice(location.cardIndex);
         cardsToMove = isRun(stack) ? stack : [];
     } else if (location.type === 'waste') {
-        // With drawnCards, the waste pile is now a single source
-        const wasteCard = last(gs.drawnCards);
+        const wasteCard = gs.drawnCards[location.cardIndex];
         cardsToMove = wasteCard ? [wasteCard] : [];
     } else {
         cardsToMove = [];
@@ -299,6 +297,18 @@ export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCar
     return null;
 }
 
+/**
+ * After a move, if playing draw 1 and the drawn card is played, this moves the next
+ * card from the main waste pile to the drawn pile to make it visible.
+ */
+export function replenishDrawnCard(gs: GameState): GameState {
+    if (gs.drawCount === 1 && gs.drawnCards.length === 0 && gs.waste.length > 0) {
+        log('solitaire.ts: replenishDrawnCard - replenishing card');
+        const newDrawnCard = gs.waste.pop()!;
+        gs.drawnCards.push(newDrawnCard);
+    }
+    return gs;
+}
 
 /**
  * Safely gets the first card of a pile.

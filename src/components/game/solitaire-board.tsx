@@ -49,7 +49,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
 const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
 
   const Stock = () => (
-    <div className="col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
+    <div className="solitaire-stock-pile col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
         <Card 
           onClick={handleDraw} 
           card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} 

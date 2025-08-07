@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview This file acts as the central controller for all card game interactions.
  * It is designed as a dispatcher, delegating game-specific rule validation and
@@ -14,7 +13,7 @@ import type { HighlightedPile } from '@/components/game/game-board';
 import { log } from './utils';
 
 // Game-specific type and function imports
-import { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, canMoveToFoundation as canMoveToFoundationSolitaire, canMoveToTableau as canMoveToTableauSolitaire, isGameWon as isSolitaireGameWon, findAutoMoveForSolitaire } from './solitaire';
+import { GameState as SolitaireGameState, Card as CardType, isRun as isSolitaireRun, canMoveToFoundation as canMoveToFoundationSolitaire, canMoveToTableau as canMoveToTableauSolitaire, isGameWon as isSolitaireGameWon, findAutoMoveForSolitaire, replenishDrawnCard } from './solitaire';
 import { GameState as FreecellGameState, canMoveToFoundation as canMoveToFoundationFreecell, canMoveToTableau as canMoveToTableauFreecell, getMovableCardCount, isGameWon as isFreecellGameWon, findAutoMoveForFreecell } from './freecell';
 import { GameState as SpiderGameState, isRun as isSpiderRun, canMoveToTableau as canMoveToTableauSpider, checkForCompletedSet as checkForSpiderCompletedSet, isGameWon as isSpiderGameWon, findAutoMoveForSpider } from './spider';
 
@@ -87,7 +86,8 @@ const getCardsToMove = (gs: GameState, src: CardLocation): CardType[] => {
         case 'waste': {
             if (gs.gameType !== 'Solitaire') return [];
             const solGs = gs as SolitaireGameState;
-            return solGs.drawnCards.length > 0 ? [solGs.drawnCards[src.cardIndex]] : [];
+            const card = solGs.drawnCards[src.cardIndex];
+            return card ? [card] : [];
         }
         case 'foundation': 
             return (gs.gameType === 'Solitaire' || gs.gameType === 'Freecell') && gs.foundation[src.pileIndex].length > 0 ? [last(gs.foundation[src.pileIndex])!] : [];
@@ -184,7 +184,7 @@ const isValidMove = (gs: GameState, move: GameMove, tst: ReturnType<typeof useTo
 const executeMove = (gs: GameState, move: GameMove): GameState => {
     log(`game-logic.ts: executeMove called`, { move });
     // Create a deep copy to ensure immutability
-    const newState = JSON.parse(JSON.stringify(gs)) as GameState;
+    let newState = JSON.parse(JSON.stringify(gs)) as GameState;
 
     const cards = getCardsToMove(newState, move.source);
 
@@ -224,7 +224,13 @@ const executeMove = (gs: GameState, move: GameMove): GameState => {
     // 4. After the move, check for completed sets in Spider.
     if (newState.gameType === 'Spider') {
         log(`game-logic.ts: executeMove - checking for completed Spider set`);
-        return checkForSpiderCompletedSet(newState as SpiderGameState);
+        newState = checkForSpiderCompletedSet(newState as SpiderGameState);
+    }
+    
+    // 5. After the move, check if we need to replenish the drawn card in Solitaire (draw 1)
+    if (newState.gameType === 'Solitaire' && (newState as SolitaireGameState).drawCount === 1) {
+        log(`game-logic.ts: executeMove - checking to replenish drawn card`);
+        newState = replenishDrawnCard(newState as SolitaireGameState);
     }
     
     return newState;
@@ -250,7 +256,7 @@ const isClickSourceMovable = (gs: GameState, clickedCard: CardType | undefined, 
         const stack = getCardsToMove(gs, {type: 'tableau', pileIndex: clickInfo.pileIndex, cardIndex: clickInfo.cardIndex });
         switch(gs.gameType) {
             case 'Solitaire': return isSolitaireRun(stack);
-            case 'Freecell':  return isSpiderRun(stack); // Freecell uses spider's isRun logic for validation
+            case 'Freecell':  return isSolitaireRun(stack); // Freecell uses solitaire's isRun logic for validation
             case 'Spider':    return isSpiderRun(stack);
         }
     }
