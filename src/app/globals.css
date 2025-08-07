@@ -105,7 +105,7 @@ html, body, .font-body, .font-headline {
 /* .bg-card {
   overflow: hidden;
 } */
-.light-mode-card-bg {
+.light-color-card-bg {
   background: 
 		  radial-gradient(farthest-side at -33.33% 50%,#0000 52%, var(--card-bg-color-accent) 54% 57%,#0000 59%) 0 calc(44px/2),
 		  radial-gradient(farthest-side at 50% 133.33%,#0000 52%,var(--card-bg-color-accent) 54% 57%,#0000 59%) calc(44px/2) 0,
@@ -114,11 +114,29 @@ html, body, .font-body, .font-headline {
 		  var(--card-bg-color);
 	background-size: calc(44px/4.667) 44px,44px calc(44px/4.667);
 }
-.dark-mode-card-bg {
+.light-grey-card-bg {
+  background:
+		  calc( .9*10px) calc( .9*10px)/calc(2*10px) calc(2*10px) conic-gradient(at 20% 20%,#0000 75%,#1E1E1E 0),
+		  calc(-.1*10px) calc(-.1*10px)/calc(2*10px) calc(2*10px) conic-gradient(at 20% 20%,#0000 75%,#1E1E1E 0),
+		  calc( .7*10px) calc( .7*10px)/calc(2*10px) calc(2*10px) conic-gradient(at 40% 40%,#0000 75%,#898989 0),
+		  calc(-.3*10px) calc(-.3*10px)/calc(2*10px) calc(2*10px) conic-gradient(at 40% 40%,#0000 75%,#898989 0),
+		  conic-gradient(from 90deg at 20% 20%,#3A3A3A 25%,#898989 0) 
+		   0 0/10px 10px;
+}
+.dark-color-card-bg {
   background-image: repeating-conic-gradient(var(--card-bg-color) 0% 25%, var(--card-bg-color-accent) 0% 50%);
 	background-position: -5 5, 10px 10px;
 	background-size: 15px 15px;
 	background-color: var(--card-bg-color);
+}
+.dark-grey-card-bg {
+  background:
+		  radial-gradient(26px at 100% 0, #AFAFAF 6.25%, #646464 6.3% 18.75%, #AFAFAF 18.8% 31.25%, #646464 31.3% 43.75%, #AFAFAF 43.8% 56.25%, #646464 56.3% 68.75%, #0000 0),
+		  radial-gradient(26px at 0 0, #AFAFAF 6.25%, #646464 6.3% 18.75%, #AFAFAF 18.8% 31.25%, #646464 31.3% 43.75%, #AFAFAF 43.8% 56.25%, #646464 56.3% 68.75%, #0000 0),
+		  radial-gradient(26px at 0 100%, #AFAFAF 6.25%, #646464 6.3% 18.75%, #AFAFAF 18.8% 31.25%, #646464 31.3% 43.75%, #AFAFAF 43.8% 56.25%, #646464 56.3% 68.75%, #0000 0),
+		  radial-gradient(26px at 100% 100%, #AFAFAF 6.25%, #646464 6.3% 18.75%, #AFAFAF 18.8% 31.25%, #646464 31.3% 43.75%, #AFAFAF 43.8% 56.25%, #646464 56.3% 68.75%, #0000 0) #AFAFAF;
+	background-size: 26px 26px;
+	background-color: #AFAFAF;
 }
 .card-border {
   border-width: 1.75px;

@@ -40,8 +40,10 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
   }
 
   if (!card.faceUp) {
-    const modernBack = "light-mode-card-bg";
-    const dominoBack = "dark-mode-card-bg";
+    const { settings } = useSettings();
+    const isGreyscaleMode = settings.colorMode === 'greyscale';
+    const modernBack = isGreyscaleMode ? "light-grey-card-bg" : "light-color-card-bg";
+    const dominoBack = isGreyscaleMode ? "dark-grey-card-bg" : "dark-color-card-bg";
 
     return (
       <div
