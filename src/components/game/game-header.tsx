@@ -4,10 +4,11 @@
 import { Button } from '@/components/ui/button';
 import { useSettings } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
-import { Snail, Sparkles } from 'lucide-react';
+import { RotateCw, Snail, Sparkles } from 'lucide-react';
 
 type GameHeaderProps = {
   onNewGame: () => void;
+  onRestartGame: () => void;
   onSettings: () => void;
   onGameMenuOpen: () => void;
 };
@@ -15,7 +16,7 @@ type GameHeaderProps = {
 const iconSize = 24;
 const iconStrokeWidth = 1.4;
 
-export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
+export default function GameHeader({ onNewGame, onRestartGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
   const { settings } = useSettings();
 
   const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
@@ -35,6 +36,13 @@ export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: Ga
     </Button>
   );
 
+  const RestartGame = () => (
+    <Button variant="ghost" onClick={onRestartGame} aria-label="Restart Game" className={buttonClasses}>
+        <RotateCw size={iconSize} strokeWidth={iconStrokeWidth} />
+        <span className="hidden lg:block text-xs font-medium">restart</span>
+    </Button>
+  );
+
   return (
     <header className={cn("flex gap-2 justify-between bg-[hsl(var(--header-background))] border-b p-1")}>
 
@@ -49,6 +57,7 @@ export default function GameHeader({ onNewGame, onSettings, onGameMenuOpen }: Ga
       </div>
 
       <div className={cn(buttonContainerClasses, "align-end")}>
+        <RestartGame />
         <NewGame />
       </div>
 

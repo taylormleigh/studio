@@ -44,6 +44,7 @@ interface GameUIProps {
   historyLength: number;
   gameStartTime: number | null;
   handleNewGame: () => void;
+  handleRestartGame: () => void;
   handleUndo: () => void;
   handleDraw: () => void;
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
@@ -62,6 +63,7 @@ const GameUI = memo(({
   historyLength,
   gameStartTime,
   handleNewGame,
+  handleRestartGame,
   handleUndo,
   handleDraw,
   handleCardClick,
@@ -94,6 +96,7 @@ const GameUI = memo(({
     >
       <GameHeader 
         onNewGame={() => handleNewGame()} 
+        onRestartGame={() => handleRestartGame()}
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
       />
@@ -126,6 +129,7 @@ export default function GameBoard() {
   const { stats, updateStats } = useStats();
   
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [initialGameState, setInitialGameState] = useState<GameState | null>(null);
   const [history, setHistory] = useState<GameState[]>([]);
   const [gameStartTime, setGameStartTime] = useState<number | null>(null);
   const [isWon, setIsWon] = useState(false);
@@ -151,11 +155,27 @@ export default function GameBoard() {
     else newState = createSpiderInitialState(settings.spiderSuits);
 
     setGameState(newState);
+    setInitialGameState(JSON.parse(JSON.stringify(newState)));
     setHistory([]);
     setGameStartTime(Date.now());
     setIsWon(false);
     setSelectedCard(null);
   }, [settings.gameType, settings.solitaireDrawCount, settings.spiderSuits]);
+
+  const handleRestartGame = useCallback(() => {
+    log('GameBoard: handleRestartGame called');
+    if (initialGameState) {
+        log('GameBoard: handleRestartGame - Restarting with initial state');
+        setGameState(JSON.parse(JSON.stringify(initialGameState)));
+        setHistory([]);
+        setGameStartTime(Date.now());
+        setIsWon(false);
+        setSelectedCard(null);
+    } else {
+        log('GameBoard: handleRestartGame - No initial state, starting new game');
+        handleNewGame();
+    }
+  }, [initialGameState, handleNewGame]);
   
   
   useEffect(() => {
@@ -317,6 +337,7 @@ export default function GameBoard() {
     onNewGame: handleNewGame,
     onUndo: handleUndo,
     onDraw: handleDraw,
+    onRestartGame: handleRestartGame,
     onOpenSettings: () => setIsSettingsOpen(true)
   });
   
@@ -324,6 +345,7 @@ export default function GameBoard() {
     <div className="flex flex-col min-h-screen">
     <GameHeader 
         onNewGame={() => {}} 
+        onRestartGame={() => {}}
         onSettings={() => setIsSettingsOpen(true)}
         onGameMenuOpen={() => setIsGameMenuOpen(true)}
       />
@@ -353,6 +375,7 @@ export default function GameBoard() {
         historyLength={history.length}
         gameStartTime={gameStartTime}
         handleNewGame={handleNewGame}
+        handleRestartGame={handleRestartGame}
         handleUndo={handleUndo}
         handleDraw={handleDraw}
         handleCardClick={handleCardClick}
@@ -366,6 +389,7 @@ export default function GameBoard() {
       <VictoryDialog
         isOpen={isWon}
         onNewGame={handleNewGame}
+        onRestartGame={handleRestartGame}
         score={gameState.score}
         moves={gameState.moves}
         time={gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0}

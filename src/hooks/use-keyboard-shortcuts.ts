@@ -7,10 +7,11 @@ interface KeyboardShortcutProps {
     onNewGame: () => void;
     onUndo: () => void;
     onDraw: () => void;
+    onRestartGame: () => void;
     onOpenSettings: () => void;
 }
 
-export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onOpenSettings }: KeyboardShortcutProps) => {
+export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onRestartGame, onOpenSettings }: KeyboardShortcutProps) => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const isModKey = e.metaKey || e.ctrlKey;
@@ -18,6 +19,9 @@ export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onOpenSettings
             if (isModKey && e.key.toLowerCase() === 'n') {
                 e.preventDefault();
                 onNewGame();
+            } else if (isModKey && e.key.toLowerCase() === 'r') {
+                e.preventDefault();
+                onRestartGame();
             } else if (isModKey && e.key.toLowerCase() === 's') {
                 e.preventDefault();
                 onOpenSettings();
@@ -48,5 +52,5 @@ export const useKeyboardShortcuts = ({ onNewGame, onUndo, onDraw, onOpenSettings
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onNewGame, onUndo, onDraw, onOpenSettings]);
+    }, [onNewGame, onUndo, onDraw, onRestartGame, onOpenSettings]);
 };
