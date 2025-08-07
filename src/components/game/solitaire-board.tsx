@@ -74,7 +74,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
             const isTopCard = index === arr.length - 1;
             const cardIndexInWaste = wastePile.length - arr.length + index;
             const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
-            const xOffset = drawCount === 3 ? index * 20 : 0;
+            const xOffset = drawCount === 3 ? index * 22 : 0;
             
             return (
               <div 
