@@ -24,6 +24,15 @@ interface SpiderBoardProps {
 export default function SpiderBoard(props: SpiderBoardProps) {
   const { settings } = useSettings();
   const gridCols = 'grid-cols-10';
+  const dealsLeft = Math.floor(props.gameState.stock.length / 10);
+
+  const DealCounter = () => (
+    <div className="col-span-1 flex flex-col items-center justify-center text-center text-muted-foreground text-xs">
+        <span>{dealsLeft}</span>
+        <span>Deals</span>
+        <span>Left</span>
+    </div>
+  );
 
   return (
     <>
@@ -31,13 +40,13 @@ export default function SpiderBoard(props: SpiderBoardProps) {
         {settings.leftHandMode ? (
           <>
             <StockPile {...props} />
-            <div className="col-span-2" />
+            <DealCounter />
             <FoundationPiles {...props} />
           </>
         ) : (
           <>
             <FoundationPiles {...props} />
-            <div className="col-span-2" />
+            <DealCounter />
             <StockPile {...props} />
           </>
         )}
@@ -48,13 +57,13 @@ export default function SpiderBoard(props: SpiderBoardProps) {
 }
 
 const StockPile = ({ gameState, handleDraw }: SpiderBoardProps) => (
-  <div onClick={handleDraw} className="cursor-pointer" data-testid="stock-pile">
+  <div onClick={handleDraw} className="col-span-1 cursor-pointer" data-testid="stock-pile">
     <Card card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
   </div>
 );
 
 const FoundationPiles = ({ gameState }: SpiderBoardProps) => (
-  <div className="col-span-7 grid grid-cols-7 gap-x-0" data-testid="foundation-piles">
+  <div className="col-span-8 grid grid-cols-8 gap-x-0" data-testid="foundation-piles">
    {Array.from({ length: 8 }).map((_, i) => (
      <div key={`foundation-${i}`} data-testid={`foundation-pile-${i}`}>
        <Card 
