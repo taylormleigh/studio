@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogClose,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,6 +58,7 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
             <DialogContent data-testid="victory-dialog">
                 <Confetti />
                 <DialogHeader>
+                    <DialogTitle className="sr-only">Game Over</DialogTitle>
                     <Table>
                         <TableHeader>
                             <TableRow>
