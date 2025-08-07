@@ -102,8 +102,8 @@ export function GameDialog({ open, onOpenChange, onNewGame }: GameDialogProps) {
                             <Label htmlFor="draw-1">One</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="3" id="draw-3" disabled />
-                            <Label htmlFor="draw-3" className="text-muted-foreground">Three</Label>
+                            <RadioGroupItem value="3" id="draw-3" />
+                            <Label htmlFor="draw-3">Three</Label>
                         </div>
                     </RadioGroup>
                 </div>

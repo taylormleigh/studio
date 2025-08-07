@@ -209,7 +209,7 @@ export default function GameBoard() {
 
 
   const updateState = useCallback((newState: GameState, saveHistory = true) => {
-    log('GameBoard: updateState called', { saveHistory });
+    log('GameBoard: updateState called.', { saveHistory });
     if (saveHistory && gameState) {
       log('GameBoard: updateState - Saving current state to history');
       setHistory(h => [gameState, ...h].slice(0, UNDO_LIMIT));
@@ -239,7 +239,7 @@ export default function GameBoard() {
         return;
     }
 
-    const newState = { ...gameState };
+    const newState = JSON.parse(JSON.stringify(gameState));
     
     if (newState.gameType === 'Solitaire') {
       log('GameBoard: handleDraw - Solitaire game');
@@ -253,7 +253,7 @@ export default function GameBoard() {
           card.faceUp = true;
           drawnCards.push(card);
         }
-        solState.waste.push(...drawnCards.reverse());
+        solState.waste.push(...drawnCards);
       } else if (solState.waste.length > 0) {
         log('GameBoard: handleDraw - Recycling waste to stock');
         solState.stock = solState.waste.reverse().map((c: CardType) => ({...c, faceUp: false}));
