@@ -1,5 +1,6 @@
 
 import { GameMove, LocatedCard } from './game-logic';
+import { log } from './utils';
 
 export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
@@ -36,7 +37,7 @@ const RANK_VALUES: Record<Rank, number> = {
  * @returns An array of Card objects.
  */
 export function createDeck(): Card[] {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: createDeck called`);
+  log('solitaire.ts: createDeck called');
   return SUITS.flatMap(suit =>
     RANKS.map(rank => ({ suit, rank, faceUp: false }))
   );
@@ -48,7 +49,7 @@ export function createDeck(): Card[] {
  * @returns The shuffled array.
  */
 export function shuffleDeck(array: any[]) {
-    console.log(`[${new Date().toISOString()}] solitaire.ts: shuffleDeck called`);
+    log('solitaire.ts: shuffleDeck called');
     let currentIndex = array.length,  randomIndex;
   
     // While there remain elements to shuffle.
@@ -72,7 +73,7 @@ export function shuffleDeck(array: any[]) {
  * @returns A new GameState object.
  */
 export function createInitialState(drawCount: 1 | 3 = 1): GameState {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: createInitialState called`, { drawCount });
+  log('solitaire.ts: createInitialState called', { drawCount });
   const deck = shuffleDeck(createDeck());
   const tableau: Pile[] = Array.from({ length: 7 }, () => []);
   
@@ -116,16 +117,16 @@ export function getCardColor(card: Card): 'red' | 'black' {
  * @returns True if the move is valid, false otherwise.
  */
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToTableau called`, { cardToMove, destinationCard });
+  log('solitaire.ts: canMoveToTableau called', { cardToMove, destinationCard });
   // If the destination pile is empty, only a King can be moved there.
   if (!destinationCard) {
     const result = cardToMove.rank === 'K';
-    console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToTableau - destination empty, card is King: ${result}`);
+    log('solitaire.ts: canMoveToTableau - destination empty, card is King:', result);
     return result;
   }
   // The destination card must be face-up to accept a new card.
   if (!destinationCard.faceUp) {
-    console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToTableau - destination card is face down, invalid`);
+    log('solitaire.ts: canMoveToTableau - destination card is face down, invalid');
     return false;
   }
   // The card to move must be of the opposite color to the destination card.
@@ -134,7 +135,7 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
   
   const result = !colorsMatch && ranksCorrect;
-  console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToTableau - colorsMatch: ${colorsMatch}, ranksCorrect: ${ranksCorrect}, result: ${result}`);
+  log('solitaire.ts: canMoveToTableau - result:', { colorsMatch, ranksCorrect, result });
   return result;
 }
 
@@ -145,12 +146,12 @@ export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undef
  * @returns True if the move is valid, false otherwise.
  */
 export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToFoundation called`, { cardToMove, foundationPile });
+  log('solitaire.ts: canMoveToFoundation called', { cardToMove, foundationPile });
   const topCard = last(foundationPile);
   // If the foundation pile is empty, only an Ace can be moved there.
   if (!topCard) {
     const result = cardToMove.rank === 'A';
-    console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToFoundation - foundation empty, card is Ace: ${result}`);
+    log('solitaire.ts: canMoveToFoundation - foundation empty, card is Ace:', { result });
     return result;
   }
   // The card must be of the same suit as the foundation pile.
@@ -159,7 +160,7 @@ export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): b
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
   
   const result = suitsMatch && ranksCorrect;
-  console.log(`[${new Date().toISOString()}] solitaire.ts: canMoveToFoundation - suitsMatch: ${suitsMatch}, ranksCorrect: ${ranksCorrect}, result: ${result}`);
+  log('solitaire.ts: canMoveToFoundation - result:', { suitsMatch, ranksCorrect, result });
   return result;
 }
 
@@ -169,9 +170,9 @@ export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): b
  * @returns True if the game is won, false otherwise.
  */
 export function isGameWon(state: GameState): boolean {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: isGameWon called`);
+  log('solitaire.ts: isGameWon called');
   const result = state.foundation.every(pile => pile.length === 13);
-  console.log(`[${new Date().toISOString()}] solitaire.ts: isGameWon - result: ${result}`);
+  log('solitaire.ts: isGameWon - result:', { result });
   return result;
 }
 
@@ -181,26 +182,26 @@ export function isGameWon(state: GameState): boolean {
  * @returns True if the stack is a valid run, false otherwise.
  */
 export function isRun(cards: Card[]): boolean {
-  console.log(`[${new Date().toISOString()}] solitaire.ts: isRun called`, { cards });
+  log('solitaire.ts: isRun called', { cards });
   // A single card is always a valid run.
   if (cards.length <= 1) {
-    console.log(`[${new Date().toISOString()}] solitaire.ts: isRun - card count <= 1, valid`);
+    log('solitaire.ts: isRun - card count <= 1, valid');
     return true;
   }
   // Iterate through the stack to check the color and rank rules between adjacent cards.
   for (let i = 0; i < cards.length - 1; i++) {
     // Check for alternating colors.
     if (getCardColor(cards[i]) === getCardColor(cards[i+1])) {
-        console.log(`[${new Date().toISOString()}] solitaire.ts: isRun - same color found, invalid`);
+        log('solitaire.ts: isRun - same color found, invalid');
         return false;
     }
     // Check for descending rank.
     if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) {
-        console.log(`[${new Date().toISOString()}] solitaire.ts: isRun - rank not sequential, invalid`);
+        log('solitaire.ts: isRun - rank not sequential, invalid');
         return false;
     }
   }
-  console.log(`[${new Date().toISOString()}] solitaire.ts: isRun - valid run`);
+  log('solitaire.ts: isRun - valid run');
   return true;
 }
 
@@ -211,7 +212,7 @@ export function isRun(cards: Card[]): boolean {
  * @returns A valid GameMove object if a move is found, otherwise null.
  */
 export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCard): GameMove | null {
-    console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire called`, { selectedCard });
+    log('solitaire.ts: findAutoMoveForSolitaire called', { selectedCard });
     const { location } = selectedCard;
     
     // Determine the actual card or stack of cards to be moved.
@@ -228,7 +229,7 @@ export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCar
     }
 
     if (cardsToMove.length === 0) {
-        console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - no cards to move`);
+        log('solitaire.ts: findAutoMoveForSolitaire - no cards to move');
         return null;
     }
     
@@ -236,28 +237,28 @@ export function findAutoMoveForSolitaire(gs: GameState, selectedCard: LocatedCar
 
     // Priority 1: Check foundation piles (only for single-card moves).
     if (cardsToMove.length === 1) {
-        console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - checking foundation`);
+        log('solitaire.ts: findAutoMoveForSolitaire - checking foundation');
         for (let i = 0; i < gs.foundation.length; i++) {
             if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
-                console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - found valid move to foundation pile ${i}`);
+                log(`solitaire.ts: findAutoMoveForSolitaire - found valid move to foundation pile ${i}`);
                 return { source: location, destination: { type: 'foundation', pileIndex: i } };
             }
         }
     }
 
     // Priority 2: Check tableau piles.
-    console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - checking tableau`);
+    log('solitaire.ts: findAutoMoveForSolitaire - checking tableau');
     for (let i = 0; i < gs.tableau.length; i++) {
         // Skip moving to the same pile.
         if (location.type === 'tableau' && location.pileIndex === i) continue;
 
         if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
-            console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - found valid move to tableau pile ${i}`);
+            log(`solitaire.ts: findAutoMoveForSolitaire - found valid move to tableau pile ${i}`);
             return { source: location, destination: { type: 'tableau', pileIndex: i } };
         }
     }
     
-    console.log(`[${new Date().toISOString()}] solitaire.ts: findAutoMoveForSolitaire - no valid auto-move found`);
+    log('solitaire.ts: findAutoMoveForSolitaire - no valid auto-move found');
     return null;
 }
 

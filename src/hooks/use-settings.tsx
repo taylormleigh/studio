@@ -2,6 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { log } from '@/lib/utils';
 
 export type GameType = 'Solitaire' | 'Freecell' | 'Spider';
 export type SolitaireDrawType = 1 | 3;
@@ -76,7 +77,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
 
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Could not load settings from localStorage`, error);
+      log('Could not load settings from localStorage', error);
     }
   }, []);
 
@@ -122,7 +123,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem('deck-of-cards-settings', JSON.stringify(settings));
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Could not save settings to localStorage`, error);
+      log('Could not save settings to localStorage', error);
     }
   }, [settings]);
 
@@ -131,9 +132,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        console.log(`[${new Date().toISOString()}] User accepted the install prompt`);
+        log('User accepted the install prompt');
       } else {
-        console.log(`[${new Date().toISOString()}] User dismissed the install prompt`);
+        log('User dismissed the install prompt');
       }
       setDeferredPrompt(null);
       setInstallable(false);

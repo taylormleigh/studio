@@ -3,6 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { GameType } from './use-settings';
+import { log } from '@/lib/utils';
 
 export interface GameStats {
   wins: number;
@@ -44,7 +45,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         }));
       }
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Could not load stats from localStorage`, error);
+      log('Could not load stats from localStorage', error);
     }
   }, []);
 
@@ -63,7 +64,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem('deck-of-cards-stats', JSON.stringify(updatedStats));
       } catch (error) {
-        console.error(`[${new Date().toISOString()}] Could not save stats to localStorage`, error);
+        log('Could not save stats to localStorage', error);
       }
       return updatedStats;
     });
@@ -75,7 +76,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         try {
             localStorage.setItem('deck-of-cards-stats', JSON.stringify(updatedStats));
         } catch (error) {
-            console.error(`[${new Date().toISOString()}] Could not save stats to localStorage`, error);
+            log('Could not save stats to localStorage', error);
         }
         return updatedStats;
     });

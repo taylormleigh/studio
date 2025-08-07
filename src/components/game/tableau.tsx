@@ -9,6 +9,7 @@ import { isRun as isSpiderRun } from '@/lib/spider';
 import { GameState, LocatedCard, CardLocation } from '@/lib/game-logic';
 import { Card } from './card';
 import type { HighlightedPile } from './game-board';
+import { log } from '@/lib/utils';
 
 interface TableauProps {
   gameState: GameState;
@@ -22,7 +23,7 @@ interface TableauProps {
 }
 
 function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
-  console.log(`[${new Date().toISOString()}] tableau.tsx: Tableau component rendered`);
+  log('tableau.tsx: Tableau component rendered');
   const getCardYOffset = (pile: CardType[], cardIndex: number) => {
     if (gameState.gameType === 'Spider') {
         return pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 26 : 10), 0)
@@ -34,7 +35,7 @@ function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handle
   }
 
   const isCardDraggable = useMemo(() => {
-    console.log(`[${new Date().toISOString()}] tableau.tsx: Recalculating isCardDraggable map`);
+    log('tableau.tsx: Recalculating isCardDraggable map');
     const draggableMap = new Map<string, boolean>();
 
     gameState.tableau.forEach((pile, pileIndex) => {
@@ -115,9 +116,9 @@ function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handle
                         onMouseUp={() => handleDrop(location)}
                         onTouchEnd={() => handleDrop(location)}
                         onClick={(e) => {
-                            console.log(`[${new Date().toISOString()}] tableau.tsx: Card clicked`);
+                            log('tableau.tsx: Card clicked');
                             if (card.faceUp) {
-                              console.log(`[${new Date().toISOString()}] tableau.tsx: conditional - card is face up`);
+                              log('tableau.tsx: conditional - card is face up');
                             }
                             e.stopPropagation();
                             handleCardClick(card, location);
