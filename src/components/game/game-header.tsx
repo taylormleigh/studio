@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { useSettings } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
-import { RotateCw, Snail, Sparkles } from 'lucide-react';
+import { AudioWaveform, Shell, Snail, Sparkles } from 'lucide-react';
 
 type GameHeaderProps = {
   onNewGame: () => void;
@@ -19,7 +19,7 @@ const iconStrokeWidth = 1.4;
 export default function GameHeader({ onNewGame, onRestartGame, onSettings, onGameMenuOpen }: GameHeaderProps) {
   const { settings } = useSettings();
 
-  const buttonContainerClasses = "flex items-center gap-1 md:gap-2";
+  const buttonContainerClasses = "flex items-center gap-3 md:gap-2";
   const buttonClasses = "flex-col h-auto p-3 lg:w-20";
 
   const Settings = () => (
@@ -31,14 +31,14 @@ export default function GameHeader({ onNewGame, onRestartGame, onSettings, onGam
 
   const NewGame = () => (
     <Button variant="ghost" onClick={onNewGame} aria-label="New Game" className={buttonClasses}>
-      <Snail size={iconSize} strokeWidth={iconStrokeWidth} />
+      <AudioWaveform size={iconSize} strokeWidth={iconStrokeWidth} />
       <span className="hidden lg:block text-xs font-medium">new</span>
     </Button>
   );
 
   const RestartGame = () => (
     <Button variant="ghost" onClick={onRestartGame} aria-label="Restart Game" className={buttonClasses}>
-        <RotateCw size={iconSize} strokeWidth={iconStrokeWidth} />
+        <Shell size={iconSize} strokeWidth={iconStrokeWidth} />
         <span className="hidden lg:block text-xs font-medium">restart</span>
     </Button>
   );
