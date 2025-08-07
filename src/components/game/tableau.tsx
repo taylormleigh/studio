@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { MouseEvent, TouchEvent } from 'react';
+import { useMemo, type MouseEvent, type TouchEvent } from 'react';
 import type { Card as CardType } from '@/lib/solitaire';
 import { isRun as isFreecellRun, getMovableCardCount } from '@/lib/freecell';
 import { isRun as isSolitaireRun } from '@/lib/solitaire';
@@ -22,6 +22,7 @@ interface TableauProps {
 }
 
 export default function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: TableauProps) {
+  console.log("tableau.tsx: Tableau component rendered");
   const getCardYOffset = (pile: CardType[], cardIndex: number) => {
     if (gameState.gameType === 'Spider') {
         return pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? 26 : 10), 0)
@@ -32,26 +33,46 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
     return pile.slice(0, cardIndex).reduce((total, c) => total + (c.faceUp ? faceUpOffset : faceDownOffset), 0);
   }
 
-  const isCardDraggable = (pile: CardType[], cardIndex: number) => {
-    const card = pile[cardIndex];
-    if (!card?.faceUp) return false;
+  const isCardDraggable = useMemo(() => {
+    console.log("tableau.tsx: Recalculating isCardDraggable map");
+    const draggableMap = new Map<string, boolean>();
 
-    const stackToMove = pile.slice(cardIndex);
-    switch (gameState.gameType) {
-        case 'Solitaire':
-            return isSolitaireRun(stackToMove);
-        case 'Freecell': {
-            if (!isFreecellRun(stackToMove)) return false;
-            const isDestinationEmpty = false; // Assume not moving to empty for general check
-            const movableCount = getMovableCardCount(gameState, isDestinationEmpty);
-            return stackToMove.length <= movableCount;
-        }
-        case 'Spider':
-            return isSpiderRun(stackToMove);
-        default:
-            return false;
-    }
-  }
+    gameState.tableau.forEach((pile, pileIndex) => {
+        pile.forEach((card, cardIndex) => {
+            const key = `${pileIndex}-${cardIndex}`;
+            if (!card?.faceUp) {
+                draggableMap.set(key, false);
+                return;
+            }
+
+            const stackToMove = pile.slice(cardIndex);
+            let isDraggable = false;
+            switch (gameState.gameType) {
+                case 'Solitaire':
+                    isDraggable = isSolitaireRun(stackToMove);
+                    break;
+                case 'Freecell': {
+                    if (!isFreecellRun(stackToMove)) {
+                       isDraggable = false;
+                       break;
+                    }
+                    const isDestinationEmpty = false; // Assume not moving to empty for general check
+                    const movableCount = getMovableCardCount(gameState, isDestinationEmpty);
+                    isDraggable = stackToMove.length <= movableCount;
+                    break;
+                }
+                case 'Spider':
+                    isDraggable = isSpiderRun(stackToMove);
+                    break;
+                default:
+                    isDraggable = false;
+            }
+             draggableMap.set(key, isDraggable);
+        });
+    });
+
+    return draggableMap;
+  }, [gameState]); // Only re-run when gameState changes
 
   return (
     <div className={`grid ${gridCols} gap-x-0 min-h-[28rem]`} data-testid="tableau-piles">
@@ -73,7 +94,7 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
             ) : (
               pile.map((card, cardIndex) => {
                 const isTopCard = cardIndex === pile.length - 1;
-                const draggable = isCardDraggable(pile, cardIndex);
+                const draggable = isCardDraggable.get(`${pileIndex}-${cardIndex}`) || false;
                 const yOffset = getCardYOffset(pile, cardIndex);
                 const location: CardLocation = { type: 'tableau', pileIndex, cardIndex };
                 
@@ -94,6 +115,10 @@ export default function Tableau({ gameState, gridCols, highlightedPile, handleCa
                         onMouseUp={() => handleDrop(location)}
                         onTouchEnd={() => handleDrop(location)}
                         onClick={(e) => {
+                            console.log("tableau.tsx: Card clicked");
+                            if (card.faceUp) {
+                              console.log("tableau.tsx: conditional - card is face up");
+                            }
                             e.stopPropagation();
                             handleCardClick(card, location);
                         }}
