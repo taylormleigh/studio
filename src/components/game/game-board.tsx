@@ -215,7 +215,7 @@ export default function GameBoard() {
     updateState(newState);
   }, [gameState, toast, updateState]);
 
-  const handleCardClick = (card: CardType | undefined, location: CardLocation) => {
+  const handleCardClick = useCallback((card: CardType | undefined, location: CardLocation) => {
     console.log("GameBoard: handleCardClick called", { card, location });
     if (!gameState) {
         console.log("GameBoard: handleCardClick - No game state, returning");
@@ -238,29 +238,29 @@ export default function GameBoard() {
 
     setSelectedCard(result.newSelectedCard);
     setHighlightedPile(result.highlightedPile);
-  };
+  }, [gameState, selectedCard, settings, toast, updateState]);
     
-  const handleMouseDown = (e: MouseEvent, card: CardType, location: CardLocation) => {
+  const handleMouseDown = useCallback((e: MouseEvent, card: CardType, location: CardLocation) => {
     console.log("GameBoard: handleMouseDown called", { card, location });
     e.stopPropagation();
     if (!gameState) return;
     const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
     setSelectedCard(result.newSelectedCard);
-};
+}, [gameState, settings, toast]);
 
-  const handleTouchStart = (e: TouchEvent, card: CardType, location: CardLocation) => {
+  const handleTouchStart = useCallback((e: TouchEvent, card: CardType, location: CardLocation) => {
     console.log("GameBoard: handleTouchStart called", { card, location });
       e.stopPropagation();
       if (!gameState) return;
       const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
       setSelectedCard(result.newSelectedCard);
-  };
+  }, [gameState, settings, toast]);
 
-  const handleDrop = (location: CardLocation) => {
+  const handleDrop = useCallback((location: CardLocation) => {
     console.log("GameBoard: handleDrop called", { location });
       if (!selectedCard) return;
       handleCardClick(undefined, location);
-  };
+  }, [selectedCard, handleCardClick]);
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,

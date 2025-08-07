@@ -1,6 +1,7 @@
 
 "use client";
 
+import { memo } from 'react';
 import { Pointer, Hourglass, Smile } from 'lucide-react';
 import { useSettings } from '@/hooks/use-settings';
 
@@ -13,7 +14,7 @@ interface GameFooterProps {
   score?: number;
 }
 
-export default function GameFooter({ moves, time, score }: GameFooterProps) {
+function GameFooter({ moves, time, score }: GameFooterProps) {
   const { settings } = useSettings();
   const formatTime = (seconds: number) => new Date(seconds * 1000).toISOString().substr(14, 5);
   const displayTime = settings.animationMode === 'limited' ? "00:00" : formatTime(time);
@@ -39,3 +40,5 @@ export default function GameFooter({ moves, time, score }: GameFooterProps) {
     </footer>
   );
 }
+
+export default memo(GameFooter);
