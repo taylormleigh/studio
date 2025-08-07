@@ -51,7 +51,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   
   const Stock = () => (
     <div className="cursor-pointer col-span-1" data-testid="stock-pile">
-        <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
+        <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" className="w-full max-w-[96px]" />
     </div>
   );
 
@@ -95,7 +95,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   };
   
   return (
-    <div className="col-span-3 grid grid-cols-3 gap-x-[clamp(2px,1vw,4px)]">
+    <div className="col-span-2 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
       {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
     </div>
   );
@@ -103,7 +103,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
 
 
 const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: SolitaireBoardProps) => (
-    <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-3 grid grid-cols-4 gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles`}>
+    <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-4 grid grid-cols-4 gap-x-[clamp(2px,1vw,4px)]`} data-testid="foundation-piles">
       {gameState.foundation.map((pile, i) => {
         const topCard = last(pile);
         const location: CardLocation = {type: 'foundation', pileIndex: i, cardIndex: pile.length-1};
