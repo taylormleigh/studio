@@ -95,7 +95,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
         {!isStacked && (
           <>
             {/* top card suite icon */}
-            <div className="self-center flex">
+            <div className="card-suite-icon-center-container self-center flex">
               <SuitIcon suit={card.suit} className="card-suite-icon-center text-2xl" />
             </div>
             <div>

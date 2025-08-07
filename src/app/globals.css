@@ -146,6 +146,13 @@ html, body, .font-body, .font-headline {
   font-size: clamp(1.1rem, 0.2vw, 3.5rem) !important;
 }
 
+.solitaire-waste-card.covered-card .card-suite-icon-center-container {
+  align-self: flex-start !important;
+}
+  .solitaire-waste-card.covered-card .card-suite-icon-center-container .card-suite-icon-center {
+    font-size: 1.3rem !important;
+  }
+
 .solitaire-tableau .card-suite-icon-center {
   font-size: clamp(2.2rem, 5vw, 3rem) !important;
 }
