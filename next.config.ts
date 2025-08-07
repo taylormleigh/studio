@@ -21,12 +21,10 @@ const nextConfig: NextConfig = {
     ],
   },
   devIndicators: false,
-  experimental: {
-    // This is required to allow requests from the studio UI
-    allowedDevOrigins: [
-      'https://*.cloudworkstations.dev',
-    ]
-  },
+  // This is required to allow requests from the studio UI
+  allowedDevOrigins: [
+    'https://*.cloudworkstations.dev',
+  ]
 };
 
 const pwaConfig = {
