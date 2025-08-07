@@ -49,33 +49,10 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
 
 const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
-  const [wasteTurn, setWasteTurn] = useState(0);
-  const prevStockLengthRef = useRef(gameState.stock.length);
-
-  useEffect(() => {
-    const prevStockLength = prevStockLengthRef.current;
-    
-    // Reset wasteTurn when stock is recycled
-    if (prevStockLength === 0 && gameState.stock.length > 0) {
-        log('solitaire-board.tsx: New game or stock recycle detected, resetting wasteTurn');
-        setWasteTurn(0);
-    }
-    
-    // This is crucial to keep the ref updated for the next render cycle.
-    prevStockLengthRef.current = gameState.stock.length;
-
-  }, [gameState.stock.length]);
-
 
   const handleStockClick = () => {
-    // If stock is not empty, it's a draw, so increment turn.
-    if(gameState.stock.length > 0) {
-      setWasteTurn(prev => prev + 1);
-    }
-    // Then, perform the actual draw logic from the parent.
     handleDraw();
   }
-
 
   const Stock = () => (
     <div className="col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
@@ -112,8 +89,7 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
       );
     }
     
-    const startIndex = Math.max(0, waste.length - 3);
-    const cardsToShow = waste.slice(startIndex);
+    const cardsToShow = waste.slice(Math.max(0, waste.length - 3));
   
     return (
       <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
