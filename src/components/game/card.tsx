@@ -33,7 +33,7 @@ export function Card({ card, isSelected, isHighlighted, className, onClick, onMo
         data-testid={dataTestId}
         className={cn(
           baseClasses,
-          'bg-muted/60 border-dashed border-muted-foreground/40'
+          'bg-muted/60 border-dashed border-muted-foreground/60'
         )}
       />
     );

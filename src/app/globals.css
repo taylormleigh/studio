@@ -99,7 +99,7 @@ html, body, .font-body, .font-headline {
 }
 
 .card-border {
-  border-width: 1.5px;
+  border-width: 1.75px;
   box-shadow: none; /* Removed box shadow for e-ink */
 }
 

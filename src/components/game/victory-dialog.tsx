@@ -58,7 +58,9 @@ export default function VictoryDialog({ isOpen, onNewGame, score, moves, time, b
             <DialogContent data-testid="victory-dialog">
                 <Confetti />
                 <DialogHeader>
-                    <DialogTitle>Game Over</DialogTitle>
+                    <DialogTitle className="text-xs">
+                        Game Over
+                    </DialogTitle>
                     <Table>
                         <TableHeader>
                             <TableRow>
