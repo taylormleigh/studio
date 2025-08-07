@@ -116,7 +116,7 @@ html, body, .font-body, .font-headline {
 }
 .dark-mode-card-bg {
   background-image: repeating-conic-gradient(var(--card-bg-color) 0% 25%, var(--card-bg-color-accent) 0% 50%);
-	background-position: -4 4, 10px 10px;
+	background-position: -5 5, 10px 10px;
 	background-size: 15px 15px;
 	background-color: var(--card-bg-color);
 }
@@ -140,7 +140,7 @@ html, body, .font-body, .font-headline {
 .solitaire-foundation [data-testid*="card-foundation-empty"],
 .freecell-foundation [data-testid*="card-foundation-empty"],
 .spider-foundation [data-testid*="card-foundation-empty"] {
-  background-image: repeating-radial-gradient(circle at 17% 32%, rgba(255,255,255, 0.2), rgba(0,0,0, 0.3) 0.00085px);
+  background-image: repeating-radial-gradient(circle at 17% 32%, rgba(255,255,255, 0.13), rgba(0,0,0, 0.3) 0.00085px);
 }
 
 
