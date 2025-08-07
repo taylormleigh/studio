@@ -49,22 +49,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
 
 const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
-  const [wasteTurn, setWasteTurn] = useState(0);
-  const prevStockLengthRef = useRef(gameState.stock.length);
-
-  useEffect(() => {
-    if (gameState.stock.length > prevStockLengthRef.current && prevStockLengthRef.current === 0) {
-      setWasteTurn(t => t + 1);
-    }
-    prevStockLengthRef.current = gameState.stock.length;
-  }, [gameState.stock.length]);
   
-  useEffect(() => {
-    if (gameState.moves === 0 && gameState.waste.length === 0 && gameState.stock.length === (52 - 28)) {
-      setWasteTurn(0);
-    }
-  }, [gameState.moves, gameState.waste.length, gameState.stock.length]);
-
   const Stock = () => (
     <div className="col-span-1 cursor-pointer w-full max-w-[96px]" data-testid="stock-pile">
         <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
