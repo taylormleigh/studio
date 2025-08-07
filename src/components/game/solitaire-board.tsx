@@ -58,9 +58,11 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   const Waste = () => {
     const wastePile = gameState.waste;
     const drawCount = gameState.drawCount;
+    const cardsToShow = drawCount === 1 ? wastePile.slice(-1) : wastePile.slice(-3);
+
 
     return (
-      <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
+      <div data-testid="waste-pile" className="solitaire-waste-pile col-span-1 w-full max-w-[96px] h-full relative">
         {wastePile.length === 0 ? (
           <Card 
             onClick={() => handleDraw()} 
@@ -68,7 +70,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
             className="w-full"
           />
         ) : (
-          (drawCount === 1 ? wastePile.slice(-1) : wastePile.slice(-3)).map((card, index, arr) => {
+          cardsToShow.map((card, index, arr) => {
             const isTopCard = index === arr.length - 1;
             const cardIndexInWaste = wastePile.length - arr.length + index;
             const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
@@ -82,7 +84,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
               >
                 <Card
                   card={card}
-                  className="w-full max-w-[96px]"
+                  className={`solitaire-waste-card draw-count-${drawCount} ${isTopCard ? '':'covered-card'} w-full max-w-[96px]`}
                   style={{ pointerEvents: isTopCard ? 'auto' : 'none' }}
                   onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
                   onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}

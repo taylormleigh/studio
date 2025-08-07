@@ -2,7 +2,6 @@
 {
   "name": "Deck of Cards",
   "short_name": "Cards",
-  "": "",
   "description": "Simple card games for web and mobile",
   "scope": "/",
   "start_url": "/",
