@@ -60,12 +60,12 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
     const displayCards = wastePile.slice(-3);
   
     return (
-      <div data-testid="waste-pile" className="relative col-span-2 w-full max-w-[calc(96px+40px)] h-full">
+      <div data-testid="waste-pile" className="relative col-span-1 w-full max-w-[96px] h-full">
         {wastePile.length === 0 ? (
           <Card 
             onClick={() => handleDraw()} 
             data-testid="card-waste-empty" 
-            className="w-full max-w-[96px]"
+            className="w-full"
           />
         ) : (
           displayCards.map((card, index) => {
@@ -79,7 +79,6 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
                 key={`${card.suit}-${card.rank}-${cardIndexInWaste}`}
                 card={card}
                 className="absolute w-full max-w-[96px]"
-                data-testid={`card-${card.suit}-${card.rank}`}
                 style={{ 
                   left: `${xOffset}px`,
                   pointerEvents: isTopCard ? 'auto' : 'none',
