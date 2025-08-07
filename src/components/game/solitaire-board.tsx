@@ -50,30 +50,37 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
 const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
   const [wasteTurn, setWasteTurn] = useState(0);
-  const prevGameStateRef = useRef<SolitaireGameState | null>(null);
+  const prevStockLengthRef = useRef(gameState.stock.length);
 
   useEffect(() => {
-    const prevGameState = prevGameStateRef.current;
+    const prevStockLength = prevStockLengthRef.current;
     
-    // New game or stock recycle
-    if (!prevGameState || (prevGameState.stock.length === 0 && gameState.stock.length > 0)) {
+    // Reset wasteTurn when stock is recycled
+    if (prevStockLength === 0 && gameState.stock.length > 0) {
         log('solitaire-board.tsx: New game or stock recycle detected, resetting wasteTurn');
         setWasteTurn(0);
     }
-    // Draw from stock
-    else if (gameState.waste.length > (prevGameState.waste.length || 0)) {
-        log('solitaire-board.tsx: Draw from stock detected, incrementing wasteTurn');
-        setWasteTurn(prev => prev + 1);
-    }
+    
+    // This is crucial to keep the ref updated for the next render cycle.
+    prevStockLengthRef.current = gameState.stock.length;
 
-    prevGameStateRef.current = JSON.parse(JSON.stringify(gameState));
-  }, [gameState.stock.length, gameState.waste.length]);
+  }, [gameState.stock.length]);
+
+
+  const handleStockClick = () => {
+    // If stock is not empty, it's a draw, so increment turn.
+    if(gameState.stock.length > 0) {
+      setWasteTurn(prev => prev + 1);
+    }
+    // Then, perform the actual draw logic from the parent.
+    handleDraw();
+  }
 
 
   const Stock = () => (
     <div className="col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
         <Card 
-          onClick={handleDraw} 
+          onClick={handleStockClick} 
           card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} 
           data-testid="card-stock" />
     </div>
@@ -85,33 +92,34 @@ const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouc
     if (waste.length === 0) {
       return (
         <div className="col-span-1 w-full max-w-[96px]">
-          <Card onClick={handleDraw} data-testid="card-waste-empty" />
+          <Card onClick={handleStockClick} data-testid="card-waste-empty" />
         </div>
       );
     }
     
     if (drawCount === 1) {
       const topCard = last(waste)!;
+      const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: waste.length - 1 };
       return (
         <div className="col-span-1 w-full max-w-[96px]">
           <Card
             card={topCard}
-            onMouseDown={(e) => handleMouseDown(e, topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
-            onTouchStart={(e) => handleTouchStart(e, topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
-            onClick={() => handleCardClick(topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length -1 })}
+            onMouseDown={(e) => handleMouseDown(e, topCard, location)}
+            onTouchStart={(e) => handleTouchStart(e, topCard, location)}
+            onClick={() => handleCardClick(topCard, location)}
           />
         </div>
       );
     }
     
-    const startIndex = Math.max(0, waste.length - (wasteTurn * drawCount % waste.length || waste.length) - drawCount);
-    const cardsToShow = waste.slice(startIndex, startIndex + 3);
+    const startIndex = Math.max(0, waste.length - 3);
+    const cardsToShow = waste.slice(startIndex);
   
     return (
       <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
-        {cardsToShow.map((card, index, arr) => {
-          const isTopCard = waste.indexOf(card) === waste.length - 1;
+        {cardsToShow.map((card, index) => {
           const cardIndexInWaste = waste.indexOf(card);
+          const isTopCard = cardIndexInWaste === waste.length - 1;
           const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
           const xOffset = index * 25;
           
