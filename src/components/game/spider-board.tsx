@@ -28,9 +28,7 @@ export default function SpiderBoard(props: SpiderBoardProps) {
 
   const DealCounter = () => (
     <div className="col-span-1 flex flex-col items-center justify-center text-center text-muted-foreground text-xs">
-        <span>{dealsLeft}</span>
-        <span>Deals</span>
-        <span>Left</span>
+        <span>{dealsLeft}/5</span>
     </div>
   );
 
