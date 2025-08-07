@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function log(message: string, data?: any) {
   if (process.env.NODE_ENV === 'development') {
-    const logMessage = `[${new Date().toISOString()}] ${message}`;
+    const logMessage = `[${new Date().toLocaleTimeString()}] ${message}`;
     if (data !== undefined) {
       console.log(logMessage, data);
     } else {
