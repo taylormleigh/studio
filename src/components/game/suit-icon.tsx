@@ -13,5 +13,9 @@ export const SuitIcon = ({ suit, className }: { suit: Suit, className?: string }
       CLUBS: '♣',
     };
   
-    return <span className={cn('select-none', colorClass, className)}>{icons[suit]}</span>;
+    return (
+      <span className={cn('select-none', colorClass, className)}>
+        {icons[suit]}
+      </span>
+    );
 }
