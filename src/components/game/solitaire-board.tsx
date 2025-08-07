@@ -49,59 +49,89 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
 
 const StockAndWaste = memo(({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
-  
+  const [wasteTurn, setWasteTurn] = useState(0);
+  const prevGameStateRef = useRef<SolitaireGameState | null>(null);
+
+  useEffect(() => {
+    const prevGameState = prevGameStateRef.current;
+    
+    // New game or stock recycle
+    if (!prevGameState || (prevGameState.stock.length === 0 && gameState.stock.length > 0)) {
+        log('solitaire-board.tsx: New game or stock recycle detected, resetting wasteTurn');
+        setWasteTurn(0);
+    }
+    // Draw from stock
+    else if (gameState.waste.length > (prevGameState.waste.length || 0)) {
+        log('solitaire-board.tsx: Draw from stock detected, incrementing wasteTurn');
+        setWasteTurn(prev => prev + 1);
+    }
+
+    prevGameStateRef.current = JSON.parse(JSON.stringify(gameState));
+  }, [gameState.stock.length, gameState.waste.length]);
+
+
   const Stock = () => (
-    <div className="col-span-1 cursor-pointer w-full max-w-[96px]" data-testid="stock-pile">
-        <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
+    <div className="col-span-1 w-full max-w-[96px]" data-testid="stock-pile">
+        <Card 
+          onClick={handleDraw} 
+          card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} 
+          data-testid="card-stock" />
     </div>
   );
 
   const Waste = () => {
     const { waste, drawCount } = gameState;
-    const cardsToShow = drawCount === 1 
-      ? waste.slice(-1) 
-      : waste.slice(Math.max(0, waste.length - 3), waste.length);
-
-    return (
-      <div data-testid="waste-pile" className="solitaire-waste-pile col-span-1 w-full max-w-[96px] h-full relative">
-        {waste.length === 0 ? (
-          <Card 
-            onClick={() => handleDraw()} 
-            data-testid="card-waste-empty" 
-          />
-        ) : drawCount === 1 ? (
+    
+    if (waste.length === 0) {
+      return (
+        <div className="col-span-1 w-full max-w-[96px]">
+          <Card onClick={handleDraw} data-testid="card-waste-empty" />
+        </div>
+      );
+    }
+    
+    if (drawCount === 1) {
+      const topCard = last(waste)!;
+      return (
+        <div className="col-span-1 w-full max-w-[96px]">
           <Card
-              card={last(waste)}
-              className="w-full max-w-[96px]"
-              onMouseDown={(e) => handleMouseDown(e, last(waste)!, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
-              onTouchStart={(e) => handleTouchStart(e, last(waste)!, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
-              onClick={() => handleCardClick(last(waste), { type: 'waste', pileIndex: 0, cardIndex: waste.length -1 })}
-            />
-        ) : (
-          cardsToShow.map((card, index, arr) => {
-            const isTopCard = index === arr.length - 1;
-            const cardIndexInWaste = waste.indexOf(card);
-            const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
-            const xOffset = index * 25;
-            
-            return (
-              <div 
-                key={`${card.suit}-${card.rank}-${cardIndexInWaste}`} 
-                className="absolute w-full"
-                style={{ transform: `translateX(${xOffset}px)`, zIndex: index }}
-              >
-                <Card
-                  card={card}
-                  className={`solitaire-waste-card ${isTopCard ? '':'covered-card'} w-full max-w-[96px]`}
-                  style={{ pointerEvents: isTopCard ? 'auto' : 'none' }}
-                  onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
-                  onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
-                  onClick={() => isTopCard && handleCardClick(card, location)}
-                />
-              </div>
-            );
-          })
-        )}
+            card={topCard}
+            onMouseDown={(e) => handleMouseDown(e, topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
+            onTouchStart={(e) => handleTouchStart(e, topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length-1})}
+            onClick={() => handleCardClick(topCard, { type: 'waste', pileIndex: 0, cardIndex: waste.length -1 })}
+          />
+        </div>
+      );
+    }
+    
+    const startIndex = Math.max(0, waste.length - (wasteTurn * drawCount % waste.length || waste.length) - drawCount);
+    const cardsToShow = waste.slice(startIndex, startIndex + 3);
+  
+    return (
+      <div data-testid="waste-pile" className="col-span-1 w-full max-w-[96px] h-full relative">
+        {cardsToShow.map((card, index, arr) => {
+          const isTopCard = waste.indexOf(card) === waste.length - 1;
+          const cardIndexInWaste = waste.indexOf(card);
+          const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
+          const xOffset = index * 25;
+          
+          return (
+            <div 
+              key={`${card.suit}-${card.rank}-${cardIndexInWaste}`} 
+              className="absolute w-full"
+              style={{ transform: `translateX(${xOffset}px)`, zIndex: index }}
+            >
+              <Card
+                card={card}
+                className={`solitaire-waste-card ${isTopCard ? '' : 'covered-card'} w-full max-w-[96px]`}
+                style={{ pointerEvents: isTopCard ? 'auto' : 'none' }}
+                onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
+                onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
+                onClick={() => isTopCard && handleCardClick(card, location)}
+              />
+            </div>
+          );
+        })}
       </div>
     );
   };
