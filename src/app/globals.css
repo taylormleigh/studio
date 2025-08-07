@@ -106,8 +106,14 @@ html, body, .font-body, .font-headline {
 .card-suite-icon-corner {
   font-size: clamp(1.1rem, 0.2vw, 3.5rem) !important;
 }
-.card-suite-icon-center {
-  font-size: clamp(2rem, 5vw, 3rem) !important;
+.solitaire-tableau .card-suite-icon-center {
+  font-size: clamp(2.2rem, 5vw, 3rem) !important;
+}
+.freecell-tableau .card-suite-icon-center {
+  font-size: clamp(2.2rem, 5vw, 3rem) !important;
+}
+.spider-tableau .card-suite-icon-center {
+  font-size: clamp(1.6rem, 5vw, 2rem) !important;
 }
 .bg-card {
   overflow: hidden;

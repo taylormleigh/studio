@@ -76,7 +76,7 @@ function Tableau({ gameState, gridCols, highlightedPile, handleCardClick, handle
   }, [gameState]); // Only re-run when gameState changes
 
   return (
-    <div className={`grid ${gridCols} gap-x-0 min-h-[28rem]`} data-testid="tableau-piles">
+    <div className={`${gameState.gameType.toLowerCase()}-tableau grid ${gridCols} gap-x-0 min-h-[28rem]`} data-testid="tableau-piles">
       {gameState.tableau.map((pile, pileIndex) => (
         <div 
           key={pileIndex} 
