@@ -27,10 +27,11 @@ const pwaConfig = {
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development'
 };
 
-// Ensure PWA is only enabled for production builds
-const withPWAConfig = withPWA(pwaConfig);
-
-export default withPWAConfig(nextConfig);
+// Only apply PWA plugin in production
+if (process.env.NODE_ENV === 'production') {
+  module.exports = withPWA(pwaConfig)(nextConfig);
+} else {
+  module.exports = nextConfig;
+}
