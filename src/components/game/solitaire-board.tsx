@@ -56,26 +56,47 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   );
 
   const Waste = () => {
-    const wasteCard = last(gameState.waste);
-    const location: CardLocation = {type: 'waste', pileIndex: 0, cardIndex: gameState.waste.length-1};
-    return (
-        <div data-testid="waste-pile">
-            {wasteCard ? (
-                <Card 
-                    card={wasteCard} 
-                    data-testid={`card-${wasteCard.suit}-${wasteCard.rank}`}
-                    onMouseDown={(e) => handleMouseDown(e, wasteCard, location)}
-                    onTouchStart={(e) => handleTouchStart(e, wasteCard, location)}
-                    onClick={() => handleCardClick(wasteCard, location)}
-                />
-            ) : (
-                <Card onClick={() => handleDraw()} data-testid="card-waste-empty" />
-            )}
-        </div>
-    );
-  }
+    const wastePile = gameState.waste;
+    const displayCards = wastePile.slice(-3); // Get the last 3 cards, or fewer.
   
-  return settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>
+    return (
+      <div data-testid="waste-pile" className="relative w-full aspect-[7/10] max-w-[96px]">
+        {wastePile.length === 0 ? (
+          <Card 
+            onClick={() => handleDraw()} 
+            data-testid="card-waste-empty" 
+            className="absolute w-full"
+          />
+        ) : (
+          displayCards.map((card, index) => {
+            const isTopCard = index === displayCards.length - 1;
+            const cardIndexInWaste = wastePile.length - displayCards.length + index;
+            const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
+            const xOffset = gameState.drawCount === 3 ? index * 20 : 0;
+            
+            return (
+              <Card
+                key={`${card.suit}-${card.rank}-${cardIndexInWaste}`}
+                card={card}
+                data-testid={`card-${card.suit}-${card.rank}`}
+                style={{ 
+                  position: 'absolute', 
+                  left: `${xOffset}px`,
+                  // Only the top card is interactive
+                  pointerEvents: isTopCard ? 'auto' : 'none',
+                }}
+                onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
+                onTouchStart={(e) => isTopCard && handleTouchStart(e, card, location)}
+                onClick={() => isTopCard && handleCardClick(card, location)}
+              />
+            );
+          })
+        )}
+      </div>
+    );
+  };
+  
+  return settings.leftHandMode ? <><Stock /><div className="col-span-2"><Waste /></div></> : <><div className="col-span-2"><Waste /></div><Stock /></>
 }
 
 
