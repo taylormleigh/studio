@@ -319,24 +319,24 @@ export default function GameBoard() {
   const handleMouseDown = useCallback((e: MouseEvent, card: CardType, location: CardLocation) => {
     log('GameBoard: handleMouseDown called', { card, location });
     e.stopPropagation();
-    if (!gameState) return;
-    const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
-    setSelectedCard(result.newSelectedCard);
-}, [gameState, settings, toast]);
+    // This is the start of a drag, just select the card.
+    setSelectedCard({ ...card, location });
+  }, []);
 
   const handleTouchStart = useCallback((e: TouchEvent, card: CardType, location: CardLocation) => {
-    log('GameBoard: handleTouchStart called', { card, location });
+      log('GameBoard: handleTouchStart called', { card, location });
       e.stopPropagation();
-      if (!gameState) return;
-      const result = processCardClick({ gameState, selectedCard: null, clickSource: location, clickedCard: card, settings, toast });
-      setSelectedCard(result.newSelectedCard);
-  }, [gameState, settings, toast]);
+      // This is the start of a drag, just select the card.
+      setSelectedCard({ ...card, location });
+  }, []);
 
   const handleDrop = useCallback((location: CardLocation) => {
-    log('GameBoard: handleDrop called', { location });
+      log('GameBoard: handleDrop called', { location });
       if (!selectedCard) return;
+      // This is the end of a drag, so we treat it like the second click in a two-click move.
       handleCardClick(undefined, location);
   }, [selectedCard, handleCardClick]);
+
 
   useKeyboardShortcuts({
     onNewGame: handleNewGame,
@@ -410,3 +410,4 @@ export default function GameBoard() {
     </>
   );
 }
+ 
