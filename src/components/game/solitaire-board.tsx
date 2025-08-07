@@ -46,26 +46,26 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
   );
 }
 
-const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick, handleDrop }: SolitaireBoardProps) => {
+const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
   const { settings } = useSettings();
   
   const Stock = () => (
-    <div className="cursor-pointer" data-testid="stock-pile">
+    <div className="cursor-pointer col-span-1" data-testid="stock-pile">
         <Card onClick={() => handleDraw()} card={gameState.stock.length > 0 ? { ...gameState.stock[0], faceUp: false } : undefined} data-testid="card-stock" />
     </div>
   );
 
   const Waste = () => {
     const wastePile = gameState.waste;
-    const displayCards = wastePile.slice(-3); // Get the last 3 cards, or fewer.
+    const displayCards = wastePile.slice(-3);
   
     return (
-      <div data-testid="waste-pile" className="relative w-full aspect-[7/10] max-w-[96px]">
+      <div data-testid="waste-pile" className="relative col-span-2 w-full max-w-[calc(96px+40px)] h-full">
         {wastePile.length === 0 ? (
           <Card 
             onClick={() => handleDraw()} 
             data-testid="card-waste-empty" 
-            className="absolute w-full"
+            className="w-full max-w-[96px]"
           />
         ) : (
           displayCards.map((card, index) => {
@@ -78,11 +78,10 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
               <Card
                 key={`${card.suit}-${card.rank}-${cardIndexInWaste}`}
                 card={card}
+                className="absolute w-full max-w-[96px]"
                 data-testid={`card-${card.suit}-${card.rank}`}
                 style={{ 
-                  position: 'absolute', 
                   left: `${xOffset}px`,
-                  // Only the top card is interactive
                   pointerEvents: isTopCard ? 'auto' : 'none',
                 }}
                 onMouseDown={(e) => isTopCard && handleMouseDown(e, card, location)}
@@ -96,12 +95,16 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
     );
   };
   
-  return settings.leftHandMode ? <><Stock /><div className="col-span-2"><Waste /></div></> : <><div className="col-span-2"><Waste /></div><Stock /></>
+  return (
+    <div className="col-span-3 grid grid-cols-3 gap-x-[clamp(2px,1vw,4px)]">
+      {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
+    </div>
+  );
 }
 
 
 const FoundationPiles = ({ gameState, highlightedPile, handleCardClick, handleMouseDown, handleTouchStart, handleDrop }: SolitaireBoardProps) => (
-    <div className={`${gameState.gameType.toLowerCase()}-foundation flex col-span-4 justify-end gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles`}>
+    <div className={`${gameState.gameType.toLowerCase()}-foundation col-span-3 grid grid-cols-4 gap-x-[clamp(2px,1vw,4px)]" data-testid="foundation-piles`}>
       {gameState.foundation.map((pile, i) => {
         const topCard = last(pile);
         const location: CardLocation = {type: 'foundation', pileIndex: i, cardIndex: pile.length-1};
