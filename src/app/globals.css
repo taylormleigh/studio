@@ -155,10 +155,10 @@ html, body, .font-body, .font-headline {
 .spider-tableau .card-suite-icon-center {
   font-size: clamp(1.6rem, 5vw, 2rem) !important;
 }
-.solitaire-foundation [data-testid*="card-foundation-empty"],
-.freecell-foundation [data-testid*="card-foundation-empty"],
-.spider-foundation [data-testid*="card-foundation-empty"] {
-  background-image: repeating-radial-gradient(circle at 17% 32%, rgba(255,255,255, 0.13), rgba(0,0,0, 0.3) 0.00085px);
+
+.freecell-piles [data-testid*="card-freecell-empty"] {
+  border-color:var(--foreground);
+  border-width: 2.2px;
 }
 
 
