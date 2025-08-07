@@ -14,6 +14,7 @@ interface SolitaireBoardProps {
   gameState: SolitaireGameState;
   selectedCard: LocatedCard | null;
   highlightedPile: HighlightedPile | null;
+  wasteTurn: number;
   handleCardClick: (card: CardType | undefined, location: CardLocation) => void;
   handleMouseDown: (e: MouseEvent, card: CardType, location: CardLocation) => void;
   handleTouchStart: (e: TouchEvent, card: CardType, location: CardLocation) => void;
@@ -30,13 +31,13 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
         {settings.leftHandMode ? (
           <>
             <StockAndWaste {...props} />
-            <div className="col-span-1" />
+            <div className="col-span-2" />
             <FoundationPiles {...props} />
           </>
         ) : (
           <>
             <FoundationPiles {...props} />
-            <div className="col-span-1" />
+            <div className="col-span-2" />
             <StockAndWaste {...props} />
           </>
         )}
@@ -46,7 +47,7 @@ export default function SolitaireBoard(props: SolitaireBoardProps) {
   );
 }
 
-const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick }: SolitaireBoardProps) => {
+const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStart, handleCardClick, wasteTurn }: SolitaireBoardProps) => {
   const { settings } = useSettings();
   
   const Stock = () => (
@@ -56,14 +57,14 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   );
 
   const Waste = () => {
-    const wastePile = gameState.waste;
-    const drawCount = gameState.drawCount;
-    const cardsToShow = drawCount === 1 ? wastePile.slice(-1) : wastePile.slice(-3);
-
+    const { waste, drawCount } = gameState;
+    const cardsToShow = drawCount === 1 
+      ? waste.slice(-1) 
+      : waste.slice(Math.max(0, waste.length - (wasteTurn * drawCount) % waste.length - 3), waste.length - (wasteTurn * drawCount) % waste.length);
 
     return (
       <div data-testid="waste-pile" className="solitaire-waste-pile col-span-1 w-full max-w-[96px] h-full relative">
-        {wastePile.length === 0 ? (
+        {waste.length === 0 ? (
           <Card 
             onClick={() => handleDraw()} 
             data-testid="card-waste-empty" 
@@ -72,7 +73,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
         ) : (
           cardsToShow.map((card, index, arr) => {
             const isTopCard = index === arr.length - 1;
-            const cardIndexInWaste = wastePile.length - arr.length + index;
+            const cardIndexInWaste = waste.indexOf(card);
             const location: CardLocation = { type: 'waste', pileIndex: 0, cardIndex: cardIndexInWaste };
             const xOffset = drawCount === 3 ? index * 25 : 0;
             
@@ -99,7 +100,7 @@ const StockAndWaste = ({ gameState, handleDraw, handleMouseDown, handleTouchStar
   };
   
   return (
-    <div className="col-span-2 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
+    <div className="col-span-1 grid grid-cols-2 gap-x-[clamp(2px,1vw,4px)]">
       {settings.leftHandMode ? <><Stock /><Waste /></> : <><Waste /><Stock /></>}
     </div>
   );
