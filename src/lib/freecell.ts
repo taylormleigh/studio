@@ -1,5 +1,4 @@
 
-
 import { Card, Suit, Rank, SUITS, RANKS, shuffleDeck, createDeck, getCardColor, last } from './solitaire';
 import { GameMove, LocatedCard } from './game-logic';
 
@@ -25,6 +24,7 @@ const RANK_VALUES: Record<Rank, number> = {
  * @returns A new GameState object.
  */
 export function createInitialState(): GameState {
+  console.log("freecell.ts: createInitialState called");
   const deck = shuffleDeck(createDeck()).map(c => ({ ...c, faceUp: true }));
   const tableau: Card[][] = Array.from({ length: 8 }, () => []);
   
@@ -47,43 +47,66 @@ export function createInitialState(): GameState {
  * Checks if a card can be legally moved to a tableau pile.
  */
 export function canMoveToTableau(cardToMove: Card, destinationCard: Card | undefined): boolean {
+  console.log("freecell.ts: canMoveToTableau called", { cardToMove, destinationCard });
   if (!destinationCard) {
+    console.log("freecell.ts: canMoveToTableau - destination is empty, valid");
     return true; 
   }
   const colorsMatch = getCardColor(cardToMove) === getCardColor(destinationCard);
   const ranksCorrect = RANK_VALUES[destinationCard.rank] === RANK_VALUES[cardToMove.rank] + 1;
-  return !colorsMatch && ranksCorrect;
+  const result = !colorsMatch && ranksCorrect;
+  console.log(`freecell.ts: canMoveToTableau - colorsMatch: ${colorsMatch}, ranksCorrect: ${ranksCorrect}, result: ${result}`);
+  return result;
 }
 
 /**
  * Checks if a card can be legally moved to a foundation pile.
  */
 export function canMoveToFoundation(cardToMove: Card, foundationPile: Card[]): boolean {
+  console.log("freecell.ts: canMoveToFoundation called", { cardToMove, foundationPile });
   const topCard = last(foundationPile);
   if (!topCard) {
-    return cardToMove.rank === 'A';
+    const result = cardToMove.rank === 'A';
+    console.log(`freecell.ts: canMoveToFoundation - foundation empty, card is Ace: ${result}`);
+    return result;
   }
   const suitsMatch = cardToMove.suit === topCard.suit;
   const ranksCorrect = RANK_VALUES[cardToMove.rank] === RANK_VALUES[topCard.rank] + 1;
-  return suitsMatch && ranksCorrect;
+  const result = suitsMatch && ranksCorrect;
+  console.log(`freecell.ts: canMoveToFoundation - suitsMatch: ${suitsMatch}, ranksCorrect: ${ranksCorrect}, result: ${result}`);
+  return result;
 }
 
 /**
  * Checks if the game has been won (all cards are in the foundation piles).
  */
 export function isGameWon(state: GameState): boolean {
-  return state.foundation.every(pile => pile.length === 13);
+  console.log("freecell.ts: isGameWon called");
+  const result = state.foundation.every(pile => pile.length === 13);
+  console.log(`freecell.ts: isGameWon - result: ${result}`);
+  return result;
 }
 
 /**
  * Checks if a stack of cards forms a valid run (alternating colors, descending rank).
  */
 export function isRun(cards: Card[]): boolean {
-  if (cards.length <= 1) return true;
-  for (let i = 0; i < cards.length - 1; i++) {
-    if (getCardColor(cards[i]) === getCardColor(cards[i+1])) return false;
-    if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) return false;
+  console.log("freecell.ts: isRun called", { cards });
+  if (cards.length <= 1) {
+      console.log("freecell.ts: isRun - card count <= 1, valid");
+      return true;
   }
+  for (let i = 0; i < cards.length - 1; i++) {
+    if (getCardColor(cards[i]) === getCardColor(cards[i+1])) {
+        console.log("freecell.ts: isRun - same color found, invalid");
+        return false;
+    }
+    if (RANK_VALUES[cards[i].rank] !== RANK_VALUES[cards[i+1].rank] + 1) {
+        console.log("freecell.ts: isRun - rank not sequential, invalid");
+        return false;
+    }
+  }
+  console.log("freecell.ts: isRun - valid run");
   return true;
 }
 
@@ -93,12 +116,16 @@ export function isRun(cards: Card[]): boolean {
  * empty freecells and empty tableau piles.
  */
 export function getMovableCardCount(state: GameState, isDestinationEmpty: boolean): number {
+    console.log("freecell.ts: getMovableCardCount called", { isDestinationEmpty });
     const emptyFreecells = state.freecells.filter(c => c === null).length;
     let emptyTableauPiles = state.tableau.filter(p => p.length === 0).length;
     if (isDestinationEmpty && emptyTableauPiles > 0) {
+        console.log("freecell.ts: getMovableCardCount - destination is empty, reducing empty tableau count for calculation");
         emptyTableauPiles--;
     }
-    return (1 + emptyFreecells) * (2 ** emptyTableauPiles);
+    const result = (1 + emptyFreecells) * (2 ** emptyTableauPiles);
+    console.log(`freecell.ts: getMovableCardCount - emptyFreecells: ${emptyFreecells}, emptyTableauPiles: ${emptyTableauPiles}, result: ${result}`);
+    return result;
 };
 
 /**
@@ -106,26 +133,34 @@ export function getMovableCardCount(state: GameState, isDestinationEmpty: boolea
  * Priority: Foundation -> Tableau -> Freecell.
  */
 export function findAutoMoveForFreecell(gs: GameState, selectedCard: LocatedCard): GameMove | null {
+    console.log("freecell.ts: findAutoMoveForFreecell called", { selectedCard });
     const cardsToMove = getCardsToMoveFromSource(gs, selectedCard.location);
-    if (cardsToMove.length === 0) return null;
+    if (cardsToMove.length === 0) {
+        console.log("freecell.ts: findAutoMoveForFreecell - no cards to move");
+        return null;
+    }
     const cardToMove = cardsToMove[0];
 
     // Priority 1: Try to move a single card to any foundation pile.
     if (cardsToMove.length === 1) {
+        console.log("freecell.ts: findAutoMoveForFreecell - checking foundation");
         for (let i = 0; i < gs.foundation.length; i++) {
             if (canMoveToFoundation(cardToMove, gs.foundation[i])) {
+                console.log(`freecell.ts: findAutoMoveForFreecell - found valid move to foundation pile ${i}`);
                 return { source: selectedCard.location, destination: { type: 'foundation', pileIndex: i } };
             }
         }
     }
 
     // Priority 2: Try to move the stack to any other tableau pile.
+    console.log("freecell.ts: findAutoMoveForFreecell - checking tableau");
     for (let i = 0; i < gs.tableau.length; i++) {
         if (selectedCard.location.type === 'tableau' && selectedCard.location.pileIndex === i) continue;
         if (canMoveToTableau(cardToMove, last(gs.tableau[i]))) {
             const isDestEmpty = gs.tableau[i].length === 0;
             const maxMove = getMovableCardCount(gs, isDestEmpty);
             if(cardsToMove.length <= maxMove) {
+                console.log(`freecell.ts: findAutoMoveForFreecell - found valid move to tableau pile ${i}`);
                 return { source: selectedCard.location, destination: { type: 'tableau', pileIndex: i } };
             }
         }
@@ -133,16 +168,20 @@ export function findAutoMoveForFreecell(gs: GameState, selectedCard: LocatedCard
 
     // Priority 3: Try to move a single card to an empty freecell.
     if (cardsToMove.length === 1) {
+        console.log("freecell.ts: findAutoMoveForFreecell - checking freecells");
         const emptyCellIndex = gs.freecells.findIndex(cell => cell === null);
         if (emptyCellIndex !== -1) {
+            console.log(`freecell.ts: findAutoMoveForFreecell - found valid move to freecell ${emptyCellIndex}`);
             return { source: selectedCard.location, destination: { type: 'freecell', pileIndex: emptyCellIndex } };
         }
     }
 
+    console.log("freecell.ts: findAutoMoveForFreecell - no valid auto-move found");
     return null;
 }
 
 function getCardsToMoveFromSource(gs: GameState, source: LocatedCard['location']): Card[] {
+    console.log("freecell.ts: getCardsToMoveFromSource called", { source });
     if (source.type === 'tableau') {
         return gs.tableau[source.pileIndex]?.slice(source.cardIndex) || [];
     }
